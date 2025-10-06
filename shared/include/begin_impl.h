@@ -1,6 +1,12 @@
 #pragma once
 
-#include "private/begin_common.h"
+#include <stdlib.h>   // IWYU pragma: keep
+#include <assert.h>   // IWYU pragma: keep
+#include <stdarg.h>   // IWYU pragma: keep
+#include <string.h>   // IWYU pragma: keep
+#include <inttypes.h> // IWYU pragma: keep
+
+#include "../src/include/begin_common.h"
 
 
 #define begin_impl \
@@ -35,3 +41,8 @@
 #define CLAMP( a, min, max ) \
 	({ def _a = (a); def _min = (min); def _max = (max); \
 		(_a < _min ? _min : (_a > _max ? _max : _a) })
+
+
+#define guard_def( name, value )                  \
+	def name = (typeof(*value) *_Nonnull)(value); \
+	if (name)

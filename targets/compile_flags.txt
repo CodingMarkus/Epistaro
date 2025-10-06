@@ -1,0 +1,35 @@
+# Assume TESTING and DEBUGGING by default.
+# Compile scripts can later on override that.
+-D
+TESTING
+-D
+DEBUGGING
+
+
+# Always search the shared include path
+-I
+../shared/include
+
+
+# Be very strict about warnings
+# and treat all warnings as errors by default
+-Wall
+-Wextra
+-Werror
+
+# Be strict about nullability
+-Wnonnull
+-Wnull-dereference
+-Wnullability-completeness
+-Wnullable-to-nonnull-conversion
+
+# Warn about misuse of open, closed, and flag enums
+-Wflag-enum
+
+# Ignore when not all struct fields are explicitly initialized
+-Wno-missing-field-initializers
+
+# Do not propagate unused warnings to errors
+-Wno-error=unused-function
+-Wno-error=unused-variable
+-Wno-error=unused-parameter
