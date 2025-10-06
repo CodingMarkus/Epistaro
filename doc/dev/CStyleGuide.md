@@ -34,30 +34,41 @@ Lines must not exceed 80 characters. The line break itself counts as a character
 
 When lines must be broken, indent the continuation line.
 
-Break lines before mathematical operators (+, -, *, /) and logical operators (&&, ||, &, |).
+When an expression break spans more than one line, enclose the entire expression in parentheses to mark its extent.
+
+Break lines before mathematical operators (+, -, *, /, %) and logical operators (&&, ||, &, |, ^, <<, >>).
 
 Break lines after assignment operators (=).
 
 Break lines before comparison operators (==).
 
-Break lines directly after (, [, or {. In that case the closing ), ], or } appears on a line of its own and is not indented.
+Break lines directly after (, [, or { if required. In that case the closing ), ], or } appears on a line of its own and is not indented.
 
 Examples:
 
 	a = b
+		+ c;
+
+	a = (
+		b
 		+ c
-		+ d;
+		+ d
+	);
 
-	a = b
-		&& c
-		&& d;
-
-	a = x + (
-		a + b + c
+	a = (
+		x + (
+			a + b
+			+ c
+		)
 	);
 
 	veryLongName =
 		very long expression;
+
+	veryLongName = (
+		very long expression
+		going over more than one line
+	);
 
 	veryLongName = (
 		(a + b) * c
@@ -224,7 +235,7 @@ Function attributes are placed on their own line above the function definition.
 
 Between the closing brace of a function and the next statement there are two blank lines. Three blank lines separate groups of functions. Inside functions there is at most one blank line to group instructions.
 
-Function declarations and definitions may be broken along their parameters:
+Function declarations, definitions and calls may be broken along their parameters:
 - If they fit on one line, keep them on one line.
 - If two lines are required, multiple parameters per line are allowed.
 - If more than two lines are required, use one parameter per line.
@@ -332,10 +343,25 @@ Examples:
 		}
 	}
 
+Return may contain only a single value. If it contains an expression, wrap the expression in parentheses.
+
+Examples:
+
+	return 10;
+
+	return a;
+
+	return getValueFrom(x);
+
+	return (a + b);
+
+	return (getValueFrom(x) >> 3);
+
+
 
 9. Expressions and Operators
 ----------------------------
-Always use parentheses around == when its result is part of a larger expression, but omit them if the expression is already enclosed in braces.
+Always use parentheses around ==, <, >, <=, >= when its result is part of a larger expression, but omit them if the expression is already enclosed in braces.
 
 Examples:
 

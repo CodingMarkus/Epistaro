@@ -15,10 +15,12 @@ C CODING STYLE GUIDE — CHEAT SHEET
 3. Line Breaking
 ----------------
 - Max 80 characters (line break counts).
-- Break before operators (+, -, *, /, &&, ||, &, |).
+- Indent continuation lines.
+- If break spans >1 line, wrap whole expression in ( ).
+- Break before operators (+, -, *, /, %, &&, ||, &, |, ^, <<, >>).
 - Break after assignment (=).
 - Break line before comparison (==).
-- Break after (, [, { — closing symbol alone on line.
+- Break after (, [, { if required — closing symbol alone on line.
 
 4. Preprocessor Macros
 ----------------------
@@ -55,7 +57,8 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - { on own line in definitions.
 - Attributes on line above function.
 - Two blank lines after function, three between groups.
-- Declarations/definitions break: all on one line, or grouped, or one per line.
+- One blank line between instruction groups inside functions.
+- Declarations/definitions/calls break: one line if fits, grouped if two lines, one per line if more.
 
 8. Control Flow
 ---------------
@@ -69,10 +72,11 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - goto only for cleanup.
 - switch: indent case and body. Use { } unless simple single-line.
 - Each case ends with break/return/goto. Fallthrough requires comment.
+- return only one value; if expression, wrap in ( ).
 
 9. Expressions and Operators
 ----------------------------
-- Parentheses around == if part of larger expression.
+- Parentheses around ==, <, >, <=, >= if part of larger expression.
 - Add parentheses for clarity even if not required.
 - Ternary (?:) only if clear. Break after ? and before : if needed.
 - Parenthesize ternary if inside larger expression.
