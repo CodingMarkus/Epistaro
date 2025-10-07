@@ -1,5 +1,7 @@
 #include "object.h"
 
+#include "fletcher32.h"
+
 #include <stdalign.h>
 
 #include "begin_impl.h"
@@ -22,45 +24,22 @@ struct Fletcher16State {
 
 // ----------------------------------------------------------------------------
 
-static
-struct Fletcher16State fletcher16Update(
-	struct Fletcher16State state, const void * data, size_t len )
-{
-    const unsigned char * p = data;
-    while (len--){
-        state.s1 += *p++;
-		if (state.s1 >= 255) state.s1 -= 255;
-        state.s2 += state.s1;
-		if (state.s2 >= 255) state.s2 -= 255;
-    }
-	return state;
-}
-
-
 static inline
-uint16_t fletcher16Finalize( const struct Fletcher16State state )
+uint32_t calcObjectChecksum( struct Object *object )
 {
-	return (uint16_t)((state.s2 << 8) | state.s1);
-}
+#define f32feed(state, value) ({ \
+    def _tmp = (value); \
+    def _size = sizeof(_tmp); \
+    Fletcher32Update((state), &_tmp, _size); \
+})
 
+    struct Fletcher32State st = { 0 };
+    st = f32feed(st, object->size);
+    st = f32feed(st, (const void *)object->type);
+    st = f32feed(st, (const void *)object->type->name);
 
-static inline
-uint16_t calcObjectChecksum( struct Object * object )
-{
-#define f16feed( state, value )                  \
-	({                                           \
-		def _tmp = (value);                      \
-		def _size = sizeof(_tmp);                \
-		fletcher16Update((state), &_tmp, _size); \
-	})
-
-	struct Fletcher16State fstate = { 0 };
-	fstate = f16feed(fstate, object->size);
-	fstate = f16feed(fstate, (const void *)object->type);
-	fstate = f16feed(fstate, (const void *)object->type->name);
-
-#undef f16feed
-	return fletcher16Finalize(fstate);
+#undef f32feed
+    return Fletcher32Finalize(st);
 }
 
 
