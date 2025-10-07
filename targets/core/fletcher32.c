@@ -12,8 +12,8 @@ struct Fletcher32State Fletcher32Update(
 	const struct Fletcher32State state, const void * data, size_t len )
 {
 	const unsigned char * p = (const unsigned char *)data;
-	uint_fast32_t s1 = state.s1 & 0xFFFFu;
-	uint_fast32_t s2 = state.s2 & 0xFFFFu;
+	init s1 = state.s1 & 0xFFFFu;
+	init s2 = state.s2 & 0xFFFFu;
 
 	// Process in chunks to cap growth of s1/s2.
 	while (len >= 2) {
