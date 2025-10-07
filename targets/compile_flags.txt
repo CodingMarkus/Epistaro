@@ -1,5 +1,7 @@
-# Assume TESTING and DEBUGGING by default.
+# Assume DEVELOPING, TESTING and DEBUGGING by default.
 # Compile scripts can later on override that.
+-D
+DEVELOPING
 -D
 TESTING
 -D
@@ -33,3 +35,7 @@ DEBUGGING
 -Wno-error=unused-function
 -Wno-error=unused-variable
 -Wno-error=unused-parameter
+
+
+#Unless otherwise specified, all symbols are hidden by default
+-fvisibility=hidden

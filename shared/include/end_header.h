@@ -1,7 +1,5 @@
 // From begin_common.h
 
-#pragma clang visibility pop
-
 #undef nil
 
 #undef _nil
