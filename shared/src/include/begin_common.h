@@ -1,6 +1,6 @@
+#include <stddef.h> // IWYU pragma: keep
 #include <stdint.h>  // IWYU pragma: keep
 #include <stdbool.h>  // IWYU pragma: keep
-
 
 #pragma clang visibility push(hidden)
 
