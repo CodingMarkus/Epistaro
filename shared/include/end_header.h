@@ -8,6 +8,11 @@
 #undef _STR
 #undef STR
 
+#undef defEnum
+#undef defOpenEnum
+#undef defOptions
+
+
 // From begin_hader.h
 
 #undef begin_header

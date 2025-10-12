@@ -8,4 +8,4 @@
 	_Pragma("clang assume_nonnull end")
 
 
-#define public __attribute__((__visibility__("default")))
+#define public __attribute__((visibility("default")))
