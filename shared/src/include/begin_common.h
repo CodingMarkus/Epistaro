@@ -2,16 +2,18 @@
 #include <stdint.h>  // IWYU pragma: keep
 #include <stdbool.h>  // IWYU pragma: keep
 
-
 #define nil  NULL
 
-#define _nil      _Nullable
-#define _not_nil  _Nonnull
+#define _opt  _Nullable
+#define _req  _Nonnull
 
+#define Opt( type ) type _opt
 
-#define _STR(x)  #x
-#define STR(x)   _STR(x)
+#define _STR( x )  #x
+#define STR( x )   _STR(x)
 
+#define _CONCAT( x, y )  x ## y
+#define CONCAT( x, y )   _CONCAT(x, y)
 
 #define defEnum( name, type ) \
     enum __attribute__((enum_extensibility(closed))) name : type

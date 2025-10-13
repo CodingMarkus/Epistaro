@@ -2,11 +2,16 @@
 
 #undef nil
 
-#undef _nil
-#undef _not_nil
+#undef _opt
+#undef _req
+
+#undef Opt
 
 #undef _STR
 #undef STR
+
+#undef _CONCAT
+#undef CONCAT
 
 #undef defEnum
 #undef defOpenEnum
