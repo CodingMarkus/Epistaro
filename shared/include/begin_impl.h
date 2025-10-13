@@ -21,7 +21,6 @@
 #define init  __auto_type
 #define def   const __auto_type
 
-
 #define _assertFail_0( )                         assert(false)
 #define _assertFail_1( msg )                     assert(false && msg)
 #define _assertFail_x(_1, _2, assertFunc, ...)   assertFunc
@@ -34,9 +33,22 @@
 	)
 
 
-#define if_def( name, value )                  \
-	def name = (typeof(*value) *_Nonnull)(value); \
-	if (name)
+#define _guardTmp( n )  CONCAT(_guardTmpValue, n)
+#define _guardBegin( var, expr, n )                \
+	{                                              \
+		def _guardTmp(n) = (expr);                 \
+		if (_guardTmp(n)) {                        \
+			def var =                              \
+				(typeof(*_guardTmp(n)) * _Nonnull) \
+				(_guardTmp(n));
+
+#define guard( var, expr )  _guardBegin(var, expr, __COUNTER__)
+#define endguard            } }
+
+
+#define return_unless( returnValue, var, expr ) \
+	def var = (typeof(*expr) * _Nonnull)(expr); \
+	if (!var) return (returnValue)
 
 
 #define likely_true(x)   __builtin_expect(!!(x), 1)
