@@ -27,7 +27,7 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - Directives start at column 0.
 - Indent nested #if/#ifdef like code.
 - Function-like macros use function spacing.
-- Align backslashes, add a space before each.
+- Align backslashes, add at least one space before each, ignore last line.
 
 5. Types, Variables, and Constants
 ----------------------------------

@@ -97,13 +97,13 @@ Examples:
 
 Function-like macros must be defined and invoked with the same spacing conventions as regular functions.
 
-When breaking macros across multiple lines, align the backslashes. Place a space before each backslash. If the last line is the longest, align as if it also had a backslash.
+When breaking macros across multiple lines, align the backslashes. Place at least one space before each backslash. Ignore the last line.
 
 Examples:
 
-	#define XXX                     \
-		statement;                  \
-		very_long_statement;        \
+	#define XXX              \
+		statement;           \
+		very_long_statement; \
 		last_statement_even_longer;
 
 
