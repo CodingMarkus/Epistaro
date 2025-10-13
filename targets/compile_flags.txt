@@ -1,12 +1,15 @@
-# Assume DEVELOPING, TESTING and DEBUGGING by default.
-# Compile scripts can later on override that.
--D
-DEVELOPING
--D
-TESTING
--D
-DEBUGGING
+# Assume all headers are C headers
+-x c
 
+# We want to have C11 features available but also GNU extensions
+-std=gnu11
+
+# Assume DEVELOPING, TESTING, DEBUGGING, and PROFILING by default.
+# Compile scripts can later on override that.
+-DDEVELOPING
+-DTESTING
+-DDEBUGGING
+-DPROFILING
 
 # Always search the shared include path
 -I
