@@ -149,8 +149,8 @@ struct ValueTypeDescriptor {
 	HashFunc_Value * hashFunc;
 	CopyFunc_Value * copyFunc;
 	EqualFunc_Value * equalFunc;
-	FreezeFunc_Value *_nil freezeFunc;
-	DestroyFunc_Value *_nil destroyFunc;
+	Opt(FreezeFunc_Value *) freezeFunc;
+	Opt(DestroyFunc_Value *) destroyFunc;
 	CreateDescFunc_Value * createDescFunc;
 };
 
@@ -160,7 +160,7 @@ struct ValueTypeDescriptor {
 	Increment the object's reference count and return the same pointer.
 */
 public
-void *_nil retain_Value( void *_nil value );
+Opt(void *) retain_Value( Opt(void *) value );
 
 
 /**
@@ -168,14 +168,14 @@ void *_nil retain_Value( void *_nil value );
 	reference count reaches zero.
 */
 public
-void discard_Value( void *_nil value );
+void discard_Value( Opt(void *) value );
 
 
 /**
 	Get name of the value type as a printable string.
 */
 public
-const char * getName_Value( void *_nil value );
+const char * getName_Value( Opt(void *) value );
 
 
 /**
@@ -208,7 +208,7 @@ Hash_Value hash_Value( void * value, bool hashIsDeep );
 	referenced values to make them thread-safe as well.
  */
 public
-void *_nil copy_Value( void *_nil value, enum CopyStyle_Value style );
+Opt(void *) copy_Value( Opt(void *) value, enum CopyStyle_Value style );
 
 
 /**
@@ -219,7 +219,7 @@ void *_nil copy_Value( void *_nil value, enum CopyStyle_Value style );
 	`false` if either value is `nil`!
 */
 public
-bool isEqual_Value( void *_nil value, void *_nil otherValue );
+bool isEqual_Value( Opt(void *) value, Opt(void *) otherValue );
 
 
 /**
@@ -228,7 +228,7 @@ bool isEqual_Value( void *_nil value, void *_nil otherValue );
 	is immutable, as immutable values are always frozen.
 */
 public
-const void *_nil freeze_Value( void *_nil value );
+Opt(const void *) freeze_Value( Opt(void *) value );
 
 
 /**
@@ -236,8 +236,40 @@ const void *_nil freeze_Value( void *_nil value );
 	Caller must free description using `free()`.
 */
 public
-const char * createDescription_Value( void *_nil value );
+const char * createDescription_Value( Opt(void *) value );
 
+
+/**
+	If the value is not frozen, just retains the value and returns it.
+	If the value is frozen, creates a deep copy and returns it.
+*/
+public
+Opt(void *) unfreeze_Value( Opt(void *) value );
+
+
+/**
+	Discards the current value `valuePtr` points to, retains `newValue` and
+	assigns it to `valuePtr`. It does in a safe manner, so nothing goes wrong,
+	even if `valuePtr` already points to `newValue`.
+
+	@code
+	// Equivalent code but set_Value() is more efficient
+	if (*valuePtr == newValue) return false;
+	def oldValue = *valuePtr;
+	*valuePtr = retain_Value(newValue);
+	discard_Value(oldValue);
+	return true;
+	@endcode
+
+	@returns Whether `valuePtr` was actually mutated or not.
+*/
+public
+void set_Value( Opt(void *) * valuePtr,  Opt(void *) newValue );
+
+
+
+
+// ----------------------------------------------------------------------------
 
 /**
 	@param size Total size of the value in bytes, including the leading
@@ -271,7 +303,6 @@ void * create_Value(
 	uint16_t size,
 	const struct ValueTypeDescriptor * const typeDesc
 );
-
 
 // ============================================================================
 end_header

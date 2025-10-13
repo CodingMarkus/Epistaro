@@ -86,17 +86,18 @@ void assertIsValue( void * ptr )
 
 
 static inline
-void incRefCount( struct Value * value )
+struct Value * incRefCount( struct Value * value )
 {
 	if (likely_true(!value->threadSafeFlag)) {
 		assert(value->refCount > 0);
 		assert(value->refCount < UINT32_MAX);
 		value->refCount++;
-		return;
+		return value;
 	}
 	def oldCount = atomic_fetch_add(&value->atomicRefCount, 1);
 	assert(oldCount > 0);
 	assert(oldCount < UINT32_MAX);
+	return value;
 }
 
 
@@ -112,37 +113,44 @@ bool decRefCount( struct Value * value )
 	return (oldCount != 1);
 }
 
-// ----------------------------------------------------------------------------
 
-void *_nil retain_Value( void *_nil maybePtr )
+static inline
+void decRefCountAndFree( struct Value * value, void * ptr )
 {
-	if_def (ptr, maybePtr) {
-		assertIsValue(ptr);
-		def value = *(struct Value **)ptr;
-		incRefCount(value);
-	}
-	return maybePtr;
-}
-
-
-void discard_Value( void *_nil maybePtr )
-{
-	if_def (ptr, maybePtr) { } else { return; }
-	assertIsValue(ptr);
-	def value = *(struct Value **)ptr;
-
 	if (likely_false(!decRefCount(value))) {
-		if_def (destroyFunc, value->typeDesc->destroyFunc) {
+		guard (destroyFunc, value->typeDesc->destroyFunc) {
 			destroyFunc(ptr);
-		}
+		} endguard;
 		free(ptr);
 	}
 }
 
+// ----------------------------------------------------------------------------
 
-void *_nil copy_Value( void *_nil maybePtr, enum CopyStyle_Value style )
+Opt(void *) retain_Value( Opt(void *) maybePtr )
 {
-	if_def (ptr, maybePtr) { } else { return nil; }
+	guard (ptr, maybePtr) {
+		assertIsValue(ptr);
+		def value = *(struct Value **)ptr;
+		incRefCount(value);
+	} endguard;
+	return maybePtr;
+}
+
+
+void discard_Value( Opt(void *) maybePtr )
+{
+	guard (ptr, maybePtr) {
+		assertIsValue(ptr);
+		def value = *(struct Value **)ptr;
+		decRefCountAndFree(value, ptr);
+	} endguard;
+}
+
+
+Opt(void *) copy_Value( Opt(void *) maybePtr, enum CopyStyle_Value style )
+{
+	return_unless (nil, ptr, maybePtr);
 	assertIsValue(ptr);
 	def value = *(struct Value **)ptr;
 
@@ -162,10 +170,10 @@ void *_nil copy_Value( void *_nil maybePtr, enum CopyStyle_Value style )
 }
 
 
-bool isEqual_Value( void *_nil maybePtr1, void *_nil maybePtr2 )
+bool isEqual_Value( Opt(void *) maybePtr1, Opt(void *) maybePtr2 )
 {
-	if_def (ptr1, maybePtr1) { } else { return false; }
-	if_def (ptr2, maybePtr2) { } else { return false; }
+	return_unless (false, ptr1, maybePtr1);
+	return_unless (false, ptr2, maybePtr2);
 	assertIsValue(ptr1);
 	assertIsValue(ptr2);
 	def value1 = *(struct Value **)ptr1;
@@ -176,9 +184,9 @@ bool isEqual_Value( void *_nil maybePtr1, void *_nil maybePtr2 )
 }
 
 
-const char * getName_Value( void *_nil maybePtr )
+const char * getName_Value( Opt(void *) maybePtr )
 {
-	if_def (ptr, maybePtr) { } else { return ""; }
+	return_unless ("", ptr, maybePtr);
 	assertIsValue(ptr);
 	def value = *(struct Value **)ptr;
 	return value->typeDesc->name;
@@ -193,18 +201,18 @@ Hash_Value hash_Value( void * ptr, bool hashIsDeep )
 }
 
 
-const char * createDescription_Value( void *_nil maybePtr )
+const char * createDescription_Value( Opt(void *) maybePtr )
 {
-	if_def (ptr, maybePtr) { } else { return strdup("<nil>"); }
+	return_unless ("<nil>", ptr, maybePtr);
 	assertIsValue(ptr);
 	def value = *(struct Value **)ptr;
 	return value->typeDesc->createDescFunc(ptr);
 }
 
 
-const void *_nil freeze_Value( void *_nil maybePtr )
+Opt(const void *) freeze_Value( Opt(void *) maybePtr )
 {
-	if_def (ptr, maybePtr) { } else { return nil; }
+	return_unless (nil, ptr, maybePtr);
 	assertIsValue(ptr);
 	def value = *(struct Value **)ptr;
 
@@ -213,15 +221,50 @@ const void *_nil freeze_Value( void *_nil maybePtr )
 		return maybePtr;
 	}
 
+
+
 	if (!value->frozenFlag) {
 		value->frozenFlag = true;
-		if_def (freezeFunc, value->typeDesc->freezeFunc) {
+		guard (freezeFunc, value->typeDesc->freezeFunc) {
 			freezeFunc(ptr);
-		}
+		} endguard;
 	}
+
 	return maybePtr;
 }
 
+
+Opt(void *) unfreeze_Value( Opt(void *) maybePtr )
+{
+	return_unless (nil, ptr, maybePtr);
+	assertIsValue(ptr);
+	def value = *(struct Value **)ptr;
+
+	if (value->frozenFlag) return copy_Value(ptr, Deep_CopyStyle_Value);
+
+	incRefCount(value);
+	return ptr;
+}
+
+
+void set_Value( Opt(void *) * oldValuePtr,  Opt(void *) maybePtr )
+{
+	if (*oldValuePtr == maybePtr) return;
+	guard (newPtr, maybePtr) {
+		assertIsValue(newPtr);
+		def newValue = *(struct Value **)newPtr;
+		incRefCount(newValue);
+	} endguard;
+	guard (oldPtr, *oldValuePtr) {
+		assertIsValue(oldPtr);
+		def oldValue = *(struct Value **)oldPtr;
+		decRefCountAndFree(oldValue, oldPtr);
+	} endguard;
+	*oldValuePtr = maybePtr;
+	return;
+}
+
+// ----------------------------------------------------------------------------
 
 void * create_Value(
 	bool mutable,
