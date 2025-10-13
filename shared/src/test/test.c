@@ -1,6 +1,6 @@
-#include "../../include/test/test.h"
+#include "test/test.h"
 
-#include "../../include/begin_impl.h"
+#include "begin_impl.h"
 begin_impl
 // ============================================================================
 
