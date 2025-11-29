@@ -1,19 +1,23 @@
 #ifdef STRICT_INCLUDE_CHECKS
-	#ifndef _beginHeaderActive
-		#error end_header.h includes without including begin_header.h first
+	#ifndef _beginCppActive
+		#error end_cpp.h included without including begin_cpp.h first
 	#endif
-#undef _beginHeaderActive
 #endif
+#undef _beginCppActive
 
 // ============================================================================
 
-#include "base/common/end_common.h"
+#undef _STR
+#undef STR
 
 // ============================================================================
 
-#undef begin_header
-#undef end_header
+#undef _CONCAT
+#undef CONCAT
 
 // ============================================================================
 
-#undef public
+#undef COUNT_ARGS
+#undef _COUNT_ARGS_
+#undef _COUNT_ARGS_SELECT_
+#undef _COUNT_ARGS_SEQ_
