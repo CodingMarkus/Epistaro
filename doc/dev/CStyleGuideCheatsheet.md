@@ -15,12 +15,14 @@ C CODING STYLE GUIDE — CHEAT SHEET
 3. Line Breaking
 ----------------
 - Max 80 characters (line break counts).
-- Indent continuation lines.
-- If break spans >1 line, wrap whole expression in ( ).
+- Indent continuation lines when breaking an expression.
+- Do not indent again when breaking the same expression multiple times unless breaking a sub-expression.
 - Break before operators (+, -, *, /, %, &&, ||, &, |, ^, <<, >>).
 - Break after assignment (=).
-- Break line before comparison (==).
-- Break after (, [, { if required — closing symbol alone on line.
+- Break before comparison operators (==, !=, <, >).
+- Break before reference operators (. and ->).
+- Break directly after (, [, {.
+- Place closing ), ], } on their own unindented line, unless that line starts a new {-block.
 
 4. Preprocessor Macros
 ----------------------
@@ -35,11 +37,12 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - Constants ALL_CAPS, variables camelCase.
 - Use size_t for array indices and counters.
 - Avoid signed unless needed.
-- Use stdint.h types.
-- char only for characters; use (u)int8_t for bytes.
+- char only for characters, not for byte-sized ints.
+- Make no assumption about char being signed or unsigned.
 - Enums/structs start uppercase, { on same line, one field per line.
-- Enum values prefixed with enum name.
-- Do not typedef everything; typedef only if clarity improves.
+- Enum values prefixed with enum name, separated by underscore.
+- Do not typedef all structures and enums.
+- typedef only opaque types and enums used as options.
 
 6. Pointers and Arrays
 ----------------------
@@ -51,14 +54,15 @@ C CODING STYLE GUIDE — CHEAT SHEET
 7. Functions
 ------------
 - External linkage: Uppercase. File-local: lowercase.
-- Namespaced as submodule_function.
 - No space between call name and ( ).
 - Space inside ( ) in declarations/definitions.
 - { on own line in definitions.
 - Attributes on line above function.
 - Two blank lines after function, three between groups.
 - One blank line between instruction groups inside functions.
-- Declarations/definitions/calls break: one line if fits, grouped if two lines, one per line if more.
+- Break declarations/definitions/calls along their parameters.
+- Place up to 3 parameters per line for at most 2 lines.
+- Place one parameter per line if more than 2 lines are required.
 
 8. Control Flow
 ---------------
@@ -66,12 +70,14 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - No braces for single-statement branches (unless broken).
 - Use braces for multi-statement branches.
 - Multi-line conditions: ) on last line, { on next line.
+- In do-while loops, break the while keyword as you would break a function call.
 - do { } while — break while like function call.
 - One line may contain two statements only if second is control flow.
 - Prefer early returns.
 - goto only for cleanup.
 - switch: indent case and body. Use { } unless simple single-line.
-- Each case ends with break/return/goto. Fallthrough requires comment.
+- Each case ends with break/return/goto.
+- Fallthrough requires comment or the use of a fallthrough statement.
 - return only one value; if expression, wrap in ( ).
 
 9. Expressions and Operators
@@ -92,6 +98,12 @@ C CODING STYLE GUIDE — CHEAT SHEET
 - Prefer end-of-line comments if explaining an assigned value.
 - Documentation: /** ... */ before functions, indented, no * prefix per line.
 - Normal comments: do not need full sentences.
+- A single-sentence normal comment omits final punctuation.
+- Multi-sentence normal comments end each sentence with punctuation.
 - Doc comments: must be full sentences.
 - Single-sentence normal comment: omit final punctuation.
 - Multi-sentence normal comment: end each with punctuation.
+
+12. Consistency and Readably Always Win
+---------------------------------------
+- Keep similar adjacent blocks visually consistent, even if that slightly breaks the rules.

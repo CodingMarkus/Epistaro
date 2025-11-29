@@ -32,51 +32,79 @@ Examples:
 ----------------
 Lines must not exceed 80 characters. The line break itself counts as a character, so the last visible character may only occupy column 79.
 
-When lines must be broken, indent the continuation line.
+When a single expression must be broken, indent the continuation line. When broken again, do not indent again, unless this time a sub-expression is broken.
 
-When an expression break spans more than one line, enclose the entire expression in parentheses to mark its extent.
+Break before mathematical operators (+, -, *, /, %) and logical operators (&&, ||, &, |, ^, <<, >>).
 
-Break lines before mathematical operators (+, -, *, /, %) and logical operators (&&, ||, &, |, ^, <<, >>).
+Break after assignment operators (=).
 
-Break lines after assignment operators (=).
+Break before comparison operators (==, !=, <, >).
 
-Break lines before comparison operators (==).
+Break before reference operators (. and ->).
 
-Break lines directly after (, [, or { if required. In that case the closing ), ], or } appears on a line of its own and is not indented.
+Break directly after (, [, or {.
+
+The closing delimiters ), ], or } appear on an own, unindented line, unless that same line starts a new code block with {, in which case they appear on the last intended line.
 
 Examples:
 
 	a = b
-		+ c;
-
-	a = (
-		b
 		+ c
-		+ d
+		+ d;
+
+	a = x + (
+		a + b
+		+ c
 	);
 
-	a = (
-		x + (
-			a + b
-			+ c
-		)
+	a = fetchValue(
+		source, type,
+		style
+	);
+
+	a = fetchValue(
+		source, getType(
+			Argument
+		),
+		style
 	);
 
 	veryLongName =
 		very long expression;
 
-	veryLongName = (
-		very long expression
-		going over more than one line
+	isEqual = (
+		value1 == value2
 	);
 
-	veryLongName = (
-		(a + b) * c
+	value = ptr
+		->subPtr
+		->subPtr2;
+
+	value = otherValue
+		.field
+		.subField;
+
+	a = fetchValue(
+		source
+	) + c;
+
+	a = fetchValue(
+		getSource(
+			srcPtr
+		).value
 	);
 
-	isEqual = (value1
-		== value2
-	);
+	if (
+		a == b
+		&& c == d
+		&& (
+			e || someFunction(
+				someArgument
+			)
+		))
+	{
+		// code
+	}
 
 
 4. Preprocessor Macros
@@ -121,17 +149,11 @@ Examples:
 
 	for (size_t tableIndex = 0; tableIndex < MAX_USERS; tableIndex++) {
 
-Do not expose variables and constants outside the current module (no extern). Use getter functions so external code can only obtain those values at runtime.
+Do not expose variables and constants outside the current module (no extern). Use getter functions so external code can only obtain those values through function calls.
 
 Avoid signed types unless negative values are required.
 
-Always index arrays with size_t, never with int.
-
-Use stdint.h types when you need a minimum bit depth, or exact-width types if required.
-
-Do not assume the size of short, int, long, or long long, except that int/unsigned is at least 32 bits.
-
-Only use char for character values. Use (u)int8_t for byte values. Do not assume whether char is signed or unsigned; for character data this does not matter.
+Only use char for character values, not for byte sized ints. Do not assume whether char is signed or unsigned; for character data this does not matter.
 
 Enum names and structure names start with uppercase.
 
@@ -172,7 +194,7 @@ Examples:
 		// All other fields are zero/NULL
 	};
 
-Do not typedef every structure and enum into the global namespace. Only typedef where it improves readability; keeping namespaces separate is often advantageous.
+Do not typedef every structure and enum into the global namespace. Only typedef opaque types and enums used as options; keeping namespaces separate is often advantageous.
 
 
 6. Pointers and Arrays
@@ -202,22 +224,19 @@ When declaring function parameters:
 
 7. Functions
 ------------
-Functions with external linkage start with an uppercase letter. File-local functions start with a lowercase letter. Functions use underscores to separate submodule and function name.
-
-Examples:
-
-	int GetValue();
-
-	// Array is the submodule, addValue the function name
-	void Array_addValue( struct Array * ar, const void * value );
-
-	int sumUp( int values[], size_t count );
+Functions with external linkage start with an uppercase letter. File-local functions start with a lowercase letter.
 
 There is no space between a function name and its parentheses when calling it.
 
 There is a space inside parentheses when declaring or defining functions.
 
 Examples:
+
+	int GetValue( );
+
+	void addValue( struct Array * ar, const void * value );
+
+	int sumUp( int values[], size_t count );
 
 	void func1( int a, int b );
 
@@ -233,27 +252,33 @@ In function definitions the opening brace { is on its own line.
 
 Function attributes are placed on their own line above the function definition.
 
-Between the closing brace of a function and the next statement there are two blank lines. Three blank lines separate groups of functions. Inside functions there is at most one blank line to group instructions.
+Between the closing brace of a function and the next statement there are two blank lines. Three blank lines separate groups of functions. Inside functions there is at most one blank line to group instructions. If you need to group multiple instructions groups, use grouping comments.
 
-Function declarations, definitions and calls may be broken along their parameters:
-- If they fit on one line, keep them on one line.
-- If two lines are required, multiple parameters per line are allowed.
-- If more than two lines are required, use one parameter per line.
+Function declarations, definitions and calls may be broken along their parameters. There may be up to three parameters per line for up to two lines. If more than two lines are required, there is one parameter per line.
+
 
 Examples:
 
 	void func1( param1, param2 );
 
 	void func1(
-		param1, param2,
-		param3, param4
+		param1, param2, param3
+	);
+
+	void func1(
+		param1, param2, param3,
+		param4, param5, param6
 	);
 
 	void func1(
 		param1,
 		param2,
 		param3,
-		param4
+		param4,
+		param5,
+		param6,
+		param7,
+		param8
 	);
 
 
@@ -312,7 +337,7 @@ Switch statements:
 
 Indent every case as well as every case body. Always use { and }, unless the statement fits a single line and doesn't require new stack variables.
 
-Each case must end with break, return, or goto. If fallthrough is intended, it must be documented with a comment.
+Each case must end with break, return, or goto. If fallthrough is intended, it must be documented with a comment, unless using a fallthrough statement is already required.
 
 Examples:
 
@@ -419,7 +444,7 @@ Examples:
 	// Prefer this
 	statement; // over that
 
-	// Unless comment explains assigned value
+	// That is, unless comment explains assigned value
 	speed = 100; // 100 Mbit/s
 
 	/**
@@ -432,4 +457,16 @@ Examples:
 
 Normal comments do not need to form full sentences. Documentation comments must always form full sentences.
 
-If a normal comment is a single sentence, omit the final punctuation. If it consists of multiple sentences, end each sentence with a punctuation character.
+If a normal comment is a single sentence, omit the final punctuation. If it consists of multiple sentences, end each sentence with a punctuation character, including the last one.
+
+Use grouping comments to group blocks of code if this is required for better readability.
+
+
+12. Consistency and Readably Always Win
+---------------------------------------
+
+Sometimes two or more adjacent blocks of code are closely related or perform the same operations but, due to different identifiers, would be formatted differently under the rules. In these cases, consistency takes priority, so the code forms a clear visual pattern.
+
+For example, it is acceptable to add line breaks or adjust formatting, even when not strictly required, to keep similar statements aligned or to have the same line layout across multiple blocks.
+
+Readability outweighs strict rule-following!
