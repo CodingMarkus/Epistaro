@@ -1,7 +1,7 @@
-#ifdef _beginTargetActive
-	#error begin_target.h included twice without including end_target.h first
+#ifdef _targetsActive
+	#error targets.h included twice without including end_targets.h first
 #endif
-#define _beginTargetActive
+#define _targetsActive
 
 // ============================================================================
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "begin_header.h"
+#include "base/begin_header.h"
 begin_header
 // ============================================================================
 
@@ -20,4 +20,4 @@ uint32_t Fletcher32Finalize( const struct Fletcher32State state );
 
 // ============================================================================
 end_header
-#include "end_header.h"
+#include "base/end_header.h"

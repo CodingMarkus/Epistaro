@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../begin_header.h"
+#include "../base/begin_header.h"
 begin_header
 // ============================================================================
 
@@ -24,4 +24,4 @@ begin_header
 
 // ============================================================================
 end_header
-#include "../end_header.h"
+#include "../base/end_header.h"

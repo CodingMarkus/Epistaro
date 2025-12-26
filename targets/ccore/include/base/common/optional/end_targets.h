@@ -1,9 +1,9 @@
 #ifdef STRICT_INCLUDE_CHECKS
-	#ifndef _beginTargetActive
-		#error end_target.h included without including begin_target.h first
+	#ifndef _targetsActive
+		#error end_targets.h included without including targets.h first
 	#endif
 #endif
-#undef _beginTargetActive
+#undef _targetsActive
 
 // ============================================================================
 // CPU Byte Order

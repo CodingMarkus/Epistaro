@@ -11,8 +11,8 @@
 
 // ============================================================================
 
-#ifdef _beginTargetActive
-	#include "optional/end_target.h"
+#ifdef _targetsActive
+	#include "optional/end_targets.h"
 #endif
 
 // ============================================================================
