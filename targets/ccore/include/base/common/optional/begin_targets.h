@@ -1,7 +1,9 @@
-#ifdef _targetsActive
-	#error targets.h included twice without including end_targets.h first
+#ifdef STRICT_INCLUDE_CHECKS
+	#ifndef _targetsActive
+		#error end_targets.h included without including targets.h first
+	#endif
 #endif
-#define _targetsActive
+#undef _targetsActive
 
 // ============================================================================
 

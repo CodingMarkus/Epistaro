@@ -1,36 +1,10 @@
 #pragma once
 
+#include "hasher.h"
+
 #include "base/begin_header.h"
 begin_header
 // ============================================================================
-
-/**
-	Opaque type for internal value data.
-
- 	Every struct that should act as a value type must start with the
-	`ValueStruct` macro.
-
-	```
-	struct String {
-		ValueStruct
-		// String-specific fields follow
-	}
-	```
-*/
-#define ValueStruct                           \
-	int32e _valueStructHeader1;               \
-	union {                                   \
-		int32m _valueStructHeader2a;          \
-		_Atomic(int32m) _valueStructHeader2b; \
-	} _valueStructHeader2;
-
-
-/**
-	The hash value of a value to be returned by `HashFunc_Value`.
-	@see HashFunc_Value
-*/
-typedef int32 Hash_Value;
-
 
 /**
 	Provide a list of all referenced values.
@@ -63,7 +37,7 @@ typedef void IterateRefsCallback_Value(
 		IterateRefsCallback_Value callback )
 	{
 		def val = (struct SomeValue *)anyValue;
-		callback((void *[]){ &val->v1, &val->v2, &val->v3, nil });
+		callback((void * []){ &val->v1, &val->v2, &val->v3, nil });
 	}
 
 	```
@@ -80,7 +54,7 @@ typedef void (IterateRefsFunc_Value)(
 	The hash must change when any state that affects `EqualFunc_Value` changes.
 	Equal values must yield identical hashes. Collisions remain possible.
 */
-typedef Hash_Value (HashFunc_Value)( const void * anyValue );
+typedef void (HashFunc_Value)( const void * anyValue, Hasher hasher );
 
 
 /**
@@ -153,26 +127,23 @@ struct ValueTypeDescriptor {
 
 // // ----------------------------------------------------------------------------
 
-// /**
-// 	Increment the object's reference count and return the same pointer.
-// */
-// public
-// Opt(void *) retain_Value( Opt(void *) value );
+/**
+	Increment the object's reference count and return the same pointer.
+*/
+Opt(void *) retain_Value( Opt(void *) value );
 
 
-// /**
-// 	Balance a previous creation or retain. Destroys the value when the
-// 	reference count reaches zero.
-// */
-// public
-// void discard_Value( Opt(void *) value );
+/**
+	Balance a previous creation or retain. Destroys the value when the
+	reference count reaches zero.
+*/
+void discard_Value( Opt(void *) value );
 
 
-// /**
-// 	Get name of the value type as a printable string.
-// */
-// public
-// const char * getName_Value( Opt(void *) value );
+/**
+	Get name of the value type as a printable string.
+*/
+Opt(const char *) getName_Value( Opt(void *) value );
 
 
 // /**
@@ -208,15 +179,14 @@ struct ValueTypeDescriptor {
 // Opt(void *) copy_Value( Opt(void *) value, enum CopyStyle_Value style );
 
 
-// /**
-// 	Test two values for equality.
+/**
+	Test two values for equality.
 
-// 	@return `true` only if they are fully functionally equivalent. All
-// 	observable behavior and referenced state must match exactly. Always
-// 	`false` if either value is `nil`!
-// */
-// public
-// bool isEqual_Value( Opt(void *) value, Opt(void *) otherValue );
+	@return `true` only if they are fully functionally equivalent. All
+	observable behavior and referenced state must match exactly. Always
+	`false` if either value is `nil`!
+*/
+bool isEqual_Value( Opt(const void *) value, Opt(const void *) otherValue );
 
 
 // /**
@@ -269,21 +239,22 @@ struct ValueTypeDescriptor {
 // ----------------------------------------------------------------------------
 
 /**
-	@param size Total size of the value in bytes, including the leading
-		`ValueHeader`.
+	@param size Total size of the encapsulated struct in bytes, including
+		any struct padding.
 	@param typeDesc Pointer to the value's type descriptor.
 
-	@return Pointer to a newly allocated object block. You may cast the
-		result to any structure of the requested size, provided the
-		structure begins with a field of type `struct Object * <any_name>;`.
+	@return Pointer to the newly allocated value.
 
 	```
-	struct String {
-		ValueHeader
-		// String-specific fields follow
+	typedef NativeValue StringStorage;
+
+	struct StringStorage {
+		// StringStorage-specific fields
 	};
 
-	String *str = create_Value(false, sizeof(String), &StringType);
+	StringStorage * str = create_NativeValue(
+		false, sizeof(struct StringStorage), &StringStorageType
+	);
 	```
 
 	@note
@@ -291,10 +262,9 @@ struct ValueTypeDescriptor {
 
 	@warning
 	If the structure ends with a flexible array member
-	(e.g. `uint8_t data[];` or `uint8_t data[0];`), include the
+	(e.g. `int8e data[];` or `int8e data[0];`), include the
 	runtime size of that array in `size`.
 */
-public
 void * create_Value(
 	bool mutable,
 	uint16_t size,

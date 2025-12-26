@@ -2,8 +2,8 @@
 	#ifndef _beginHeaderActive
 		#error end_header.h includes without including begin_header.h first
 	#endif
-#undef _beginHeaderActive
 #endif
+#undef _beginHeaderActive
 
 // ============================================================================
 

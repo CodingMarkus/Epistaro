@@ -14,7 +14,3 @@
 
 #define end_header \
 	_Pragma("clang assume_nonnull end")
-
-// ============================================================================
-
-#define public __attribute__((visibility("default")))

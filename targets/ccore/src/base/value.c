@@ -1,3 +1,6 @@
+#include "value.h"
+
+#include "type.h"
 #include "fletcher32.h"
 
 #include <stdalign.h>
@@ -18,22 +21,16 @@ begin_impl
 #endif
 
 
-defEnum( Type, int ) {
-	Type_NativeCStruct = 0
-};
-
-
 struct ValueHeader {
 	// First byte
-	int32e type:2;
-	int32e threadSafeFlag:1;
-	int32e frozenFlag:1;
-	int32e immutableFlag:1;
-	int32e reserved:3;
+	struct TypeHeader typeHdr;
 	// Second byte
-	int32e reserved2:8;
+	int8e threadSafeFlag:1;
+	int8e frozenFlag:1;
+	int8e immutableFlag:1;
+	int8e reserved:5;
 	// Third and fourth byte
-	int32e size:16;
+	int16e size:16;
 
 	union {
 		int32m refCount;
@@ -42,38 +39,34 @@ struct ValueHeader {
 };
 
 
-struct AnyValue {
-	ValueStruct
-};
-static_assert(
-	sizeof(struct AnyValue) == sizeof(struct ValueHeader),
-	"ValueStruct has incorrect size"
-);
-
-
 struct ValueFooter {
 	const struct ValueTypeDescriptor * typeDesc;
 #if ANY_CHECKS_ENABLED
 	int32e checksum;
 #endif
 #if HEAVY_CHECKS_ENABLED
-	Hash_Value hash;
+	Hash_Hasher hash;
 #endif
 };
 
 // ----------------------------------------------------------------------------
 
 static inline
-const struct ValueFooter * getFooter( const struct AnyValue * value )
+const struct ValueFooter * getFooter( const struct ValueHeader * header )
 {
-
+	def alignment = alignof(struct ValueHeader);
+	def size = (size_t)header->size;
+	def alignedSize = (size + alignment - 1) & ~(alignment - 1);
+	return (struct ValueFooter *)((const int8e *)header + alignedSize);
 }
 
 
 #if ANY_CHECKS_ENABLED
 
 static inline
-int32e calcChecksum( const struct AnyValue * value )
+int32e calcChecksum(
+	const struct ValueHeader * header,
+	const struct ValueFooter * footer )
 {
 #define f32feed(state, value) ({ \
     def _tmp = (value); \
@@ -82,106 +75,124 @@ int32e calcChecksum( const struct AnyValue * value )
 })
 	struct Fletcher32State st = { 0 };
 
-	def header = (const struct ValueHeader *)value;
 	def size = (int16e)header->size;
     st = f32feed(st, size);
 
-	def footer = getFooter(value);
     st = f32feed(st, (const void *)footer->typeDesc);
 #if HEAVY_CHECKS_ENABLED
 	st = f32feed(st, (const void *)footer->typeDesc->name);
 	st = f32feed(st, (const void *)footer->typeDesc->copyFunc);
 	st = f32feed(st, (const void *)footer->typeDesc->destroyFunc);
 	st = f32feed(st, (const void *)footer->typeDesc->createDescFunc);
-#endif
+#endif // HEAVY_CHECKS_ENABLED
 
 #undef f32feed
     return Fletcher32Finalize(st);
 }
 
+#endif // ANY_CHECKS_ENABLED
+
+
+static inline
+const struct ValueFooter * assertIsValueAndGetFooter( const void * ptr )
+{
+	def header = (struct ValueHeader *)ptr;
+	def footer = getFooter(header);
+
+#if ANY_CHECKS_ENABLED
+	def type = (enum BaseType)header->typeHdr.type;
+	assert(type == BaseType_Value_NativeCStruct);
+
+	assert(calcChecksum(header, footer) == footer->checksum);
+
+	if (likely_true(!header->threadSafeFlag)) {
+		assert(header->refCount > 0);
+	} else {
+		def count = atomic_load(&header->atomicRefCount);
+		assert(count > 0);
+	}
 #endif
 
-// static inline
-// void assertIsValue( void * ptr )
-// {
-// 	def value = *(struct Value **)ptr;
-// 	assert(
-// 		calcChecksum(value) == value->checksum
-// 	);
-// 	if (likely_true(!value->threadSafeFlag)) {
-// 		assert(value->refCount > 0);
-// 	} else {
-// 		def count = atomic_load(&value->atomicRefCount);
-// 		assert(count > 0);
-// 	}
-// }
-
-// #else
-// 	#define assertIsValue(...)
-// #endif
+	return footer;
+}
 
 
-// static inline
-// struct Value * incRefCount( struct Value * value )
-// {
-// 	if (likely_true(!value->threadSafeFlag)) {
-// 		assert(value->refCount > 0);
-// 		assert(value->refCount < UINT32_MAX);
-// 		value->refCount++;
-// 		return value;
-// 	}
-// 	def oldCount = atomic_fetch_add(&value->atomicRefCount, 1);
-// 	assert(oldCount > 0);
-// 	assert(oldCount < UINT32_MAX);
-// 	return value;
-// }
+static inline
+struct ValueHeader * incRefCount( struct ValueHeader * header )
+{
+	if (likely_true(!header->threadSafeFlag)) {
+		assert(header->refCount > 0);
+		assert(header->refCount < UINT32_MAX);
+		header->refCount++;
+		return header;
+	}
+	def oldCount = atomic_fetch_add(&header->atomicRefCount, 1);
+	assert(oldCount > 0);
+	assert(oldCount < UINT32_MAX);
+	return header;
+}
 
 
-// static inline
-// bool decRefCount( struct Value * value )
-// {
-// 	if (likely_true(!value->threadSafeFlag)) {
-// 		assert(value->refCount > 0);
-// 		return (--value->refCount != 0);
-// 	}
-// 	uint_fast32_t oldCount = atomic_fetch_sub(&value->atomicRefCount, 1);
-// 	assert(oldCount > 0);
-// 	return (oldCount != 1);
-// }
+static inline
+bool decRefCount( struct ValueHeader * header )
+{
+	if (likely_true(!header->threadSafeFlag)) {
+		assert(header->refCount > 0);
+		return (--header->refCount != 0);
+	}
+	uint_fast32_t oldCount = atomic_fetch_sub(&header->atomicRefCount, 1);
+	assert(oldCount > 0);
+	return (oldCount != 1);
+}
 
 
-// static inline
-// void decRefCountAndFree( struct Value * value, void * ptr )
-// {
-// 	if (likely_false(!decRefCount(value))) {
-// 		guard (destroyFunc, value->typeDesc->destroyFunc) {
-// 			destroyFunc(ptr);
-// 		} endguard;
-// 		free(ptr);
-// 	}
-// }
+static inline
+void decRefCountAndFree(
+	struct ValueHeader * header, const struct ValueFooter * footer )
+{
+	if (likely_false(!decRefCount(header))) {
+		guard (destroyFunc, footer->typeDesc->destroyFunc) {
+			destroyFunc(header);
+		} endguard;
+		free(header);
+	}
+}
 
 // // ----------------------------------------------------------------------------
 
-// Opt(void *) retain_Value( Opt(void *) maybePtr )
-// {
-// 	guard (ptr, maybePtr) {
-// 		assertIsValue(ptr);
-// 		def value = *(struct Value **)ptr;
-// 		incRefCount(value);
-// 	} endguard;
-// 	return maybePtr;
-// }
+public
+Opt(void *) retain_Value( Opt(void *) maybePtr )
+{
+	guard (ptr, maybePtr) {
+		assertIsValueAndGetFooter(ptr);
+		def header = (struct ValueHeader *)ptr;
+		incRefCount(header);
+	} endguard;
+	return maybePtr;
+}
 
 
-// void discard_Value( Opt(void *) maybePtr )
-// {
-// 	guard (ptr, maybePtr) {
-// 		assertIsValue(ptr);
-// 		def value = *(struct Value **)ptr;
-// 		decRefCountAndFree(value, ptr);
-// 	} endguard;
-// }
+public
+void discard_Value( Opt(void *) maybePtr )
+{
+	guard (ptr, maybePtr) {
+		def footer = assertIsValueAndGetFooter(ptr);
+		def header = (struct ValueHeader *)ptr;
+		decRefCountAndFree(header, footer);
+	} endguard;
+}
+
+
+public
+Opt(const char *) getName_Value( Opt(void *) maybePtr )
+{
+	guard (ptr, maybePtr) {
+		assertIsValueAndGetFooter(ptr);
+		def footer = assertIsValueAndGetFooter(ptr);
+		return footer->typeDesc->name;
+	} endguard;
+	return nil;
+}
 
 
 // Opt(void *) copy_Value( Opt(void *) maybePtr, enum CopyStyle_Value style )
@@ -206,18 +217,24 @@ int32e calcChecksum( const struct AnyValue * value )
 // }
 
 
-// bool isEqual_Value( Opt(void *) maybePtr1, Opt(void *) maybePtr2 )
-// {
-// 	return_unless (false, ptr1, maybePtr1);
-// 	return_unless (false, ptr2, maybePtr2);
-// 	assertIsValue(ptr1);
-// 	assertIsValue(ptr2);
-// 	def value1 = *(struct Value **)ptr1;
-// 	def value2 = *(struct Value **)ptr2;
-// 	if (value1->typeDesc != value2->typeDesc) return false;
-// 	assert(value1->typeDesc->name == value2->typeDesc->name);
-// 	return value1->typeDesc->equalFunc(ptr1, ptr2);
-// }
+bool isEqual_Value( Opt(const void *) maybePtr1, Opt(const void *) maybePtr2 )
+{
+	return_unless (false, ptr1, maybePtr1);
+	return_unless (false, ptr2, maybePtr2);
+	def footer1 = assertIsValueAndGetFooter(ptr1);
+	def footer2 = assertIsValueAndGetFooter(ptr2);
+	if (footer1->typeDesc != footer2->typeDesc) return false;
+#if ANY_CHECKS_ENABLED
+	assert(footer1->typeDesc->name == footer2->typeDesc->name);
+	assert(
+		0 == strcmp(
+			footer1->typeDesc->name,
+			footer2->typeDesc->name
+		)
+	);
+#endif
+	return footer1->typeDesc->equalFunc(ptr1, ptr2);
+}
 
 
 // const char * getName_Value( Opt(void *) maybePtr )
@@ -302,35 +319,38 @@ int32e calcChecksum( const struct AnyValue * value )
 
 // // ----------------------------------------------------------------------------
 
-// void * create_Value(
-// 	bool mutable,
-// 	uint16_t size,
-// 	const struct ValueTypeDescriptor * const typeDesc )
-// {
-// 	assert(size >= sizeof(struct Value *));
-// 	def valueAlignment = alignof(struct Value);
-// 	def alignedSize =
-// 		(size + valueAlignment - 1) & ~(valueAlignment - 1);
-// 	def totalSize = alignedSize + sizeof(struct Value);
+public
+void * create_Value(
+	bool mutable,
+	uint16_t size,
+	const struct ValueTypeDescriptor * const typeDesc )
+{
+	assert(size >= sizeof(struct Value *));
+	def valueAlignment = alignof(struct ValueHeader);
+	def alignedSize =
+		(size + valueAlignment - 1) & ~(valueAlignment - 1);
+	def totalSize = alignedSize
+		+ sizeof(struct ValueHeader)
+		+ sizeof(struct ValueFooter);
 
-// 	def result = calloc(1, totalSize);
+	def result = calloc(1, totalSize);
+	def header = (struct ValueHeader *)result;
 
-// 	def value = (struct Value *)((uint8_t *)result + alignedSize);
-//     *(struct Value **)result = value;
+	header->typeHdr.type = BaseType_Value_NativeCStruct;
+	header->refCount = 1;
+	header->size = alignedSize;
+	header->frozenFlag = !mutable;
+	header->immutableFlag = !mutable;
 
-// 	value->typeDesc = typeDesc;
-// 	value->refCount = 1;
-// 	value->size = alignedSize;
+	def footer = (struct ValueFooter *)getFooter(result);
+	footer->typeDesc = typeDesc;
 
-// 	value->frozenFlag = !mutable;
-// 	value->immutableFlag = !mutable;
+#if LIGHT_CHECKS_ENABLED
+	footer->checksum = calcChecksum(header, footer);
+#endif
 
-// #if CHECKS_ARE_ENABLED
-// 	value->checksum = calcChecksum(value);
-// #endif
-
-// 	return result;
-// }
+	return result;
+}
 
 // ============================================================================
 end_impl

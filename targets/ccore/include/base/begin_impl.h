@@ -16,6 +16,7 @@
 #include "implementation/continue_unless.h" // IWYU pragma: keep
 #include "implementation/guard.h"           // IWYU pragma: keep
 #include "implementation/return_unless.h"   // IWYU pragma: keep
+#include "implementation/ptr.h"             // IWYU pragma: keep
 
 // ============================================================================
 
@@ -29,3 +30,7 @@
 
 #define init  __auto_type
 #define def   const __auto_type
+
+// ============================================================================
+
+#define public __attribute__((visibility("default")))
