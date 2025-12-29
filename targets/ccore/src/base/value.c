@@ -40,30 +40,20 @@ struct ValueHeader {
 
 
 struct ValueFooter {
-	const struct ValueTypeDescriptor * typeDesc;
 #if ANY_CHECKS_ENABLED
 	int32e checksum;
 #endif
 #if HEAVY_CHECKS_ENABLED
-	Hash_Hasher hash;
+	HashValue_Hasher hash;
 #endif
+	const struct TypeDescriptor_NativeValue * typeDesc;
 };
 
 // ----------------------------------------------------------------------------
 
-static inline
-const struct ValueFooter * getFooter( const struct ValueHeader * header )
-{
-	def alignment = alignof(struct ValueHeader);
-	def size = (size_t)header->size;
-	def alignedSize = (size + alignment - 1) & ~(alignment - 1);
-	return (struct ValueFooter *)((const int8e *)header + alignedSize);
-}
-
-
 #if ANY_CHECKS_ENABLED
 
-static inline
+static
 int32e calcChecksum(
 	const struct ValueHeader * header,
 	const struct ValueFooter * footer )
@@ -94,15 +84,24 @@ int32e calcChecksum(
 
 
 static inline
-const struct ValueFooter * assertIsValueAndGetFooter( const void * ptr )
+const struct ValueFooter * getFooter( const struct ValueHeader * header )
 {
-	def header = (struct ValueHeader *)ptr;
-	def footer = getFooter(header);
+	def alignment = alignof(struct ValueHeader);
+	def size = (intS)header->size;
+	def alignedSize = (size + alignment - 1) & ~(alignment - 1);
+	return (struct ValueFooter *)((const int8e *)header + alignedSize);
+}
 
+
+static inline
+Opt(const struct ValueFooter *) assertIsValue( const NativeValue * value )
+{
+	def header = (struct ValueHeader *)value;
 #if ANY_CHECKS_ENABLED
 	def type = (enum BaseType)header->typeHdr.type;
-	assert(type == BaseType_Value_NativeCStruct);
+	assert(type == BaseType_Value_Native);
 
+	def footer = getFooter(header);
 	assert(calcChecksum(header, footer) == footer->checksum);
 
 	if (likely_true(!header->threadSafeFlag)) {
@@ -111,9 +110,18 @@ const struct ValueFooter * assertIsValueAndGetFooter( const void * ptr )
 		def count = atomic_load(&header->atomicRefCount);
 		assert(count > 0);
 	}
-#endif
-
 	return footer;
+#else
+	return nil;
+#endif
+}
+
+
+static inline
+const struct ValueFooter * assertIsValueAndGetFooter(
+	const NativeValue * value )
+{
+	return assertIsValue(value) ?: getFooter((struct ValueHeader *)value);
 }
 
 
@@ -152,7 +160,7 @@ void decRefCountAndFree(
 {
 	if (likely_false(!decRefCount(header))) {
 		guard (destroyFunc, footer->typeDesc->destroyFunc) {
-			destroyFunc(header);
+			destroyFunc((NativeValue *)header);
 		} endguard;
 		free(header);
 	}
@@ -161,69 +169,91 @@ void decRefCountAndFree(
 // // ----------------------------------------------------------------------------
 
 public
-Opt(void *) retain_Value( Opt(void *) maybePtr )
+NativeValue * retain_NativeValue( NativeValue * value )
 {
-	guard (ptr, maybePtr) {
-		assertIsValueAndGetFooter(ptr);
-		def header = (struct ValueHeader *)ptr;
+	assertIsValue(value);
+	def header = (struct ValueHeader *)value;
+	incRefCount(header);
+	return value;
+}
+
+
+public
+void discard_NativeValue( Opt(NativeValue *) optValue )
+{
+	return_unless(no_value, value, optValue);
+	def footer = assertIsValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+	decRefCountAndFree(header, footer);
+}
+
+
+public
+const char * getName_NativeValue( Opt(NativeValue *) optValue )
+{
+	return_unless(strdup("<nil>"), value, optValue);
+	def footer = assertIsValueAndGetFooter(value);
+	return footer->typeDesc->name;
+}
+
+
+public
+const char * createDescription_NativeValue( Opt(NativeValue *) optValue )
+{
+	return_unless(strdup("<nil>"), value, optValue);
+	def footer = assertIsValueAndGetFooter(value);
+	return footer->typeDesc->createDescFunc(value);
+}
+
+
+public
+HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) optValue )
+{
+	return_unless(0, value, optValue);
+	assertIsValue(value);
+	int8e hasherStorage[getRequiredSize_Hasher()];
+	def hasher = init_Hasher(hasherStorage);
+	hashWithHasher_NativeValue(value, hasher);
+	return finalize_Hasher(hasher);
+}
+
+
+public
+void hashWithHasher_NativeValue(
+	Opt(const NativeValue *) optValue, Hasher * hasher )
+{
+	return_unless(no_value, value, optValue);
+	def footer = assertIsValueAndGetFooter(value);
+	footer->typeDesc->hashFunc(value, hasher);
+}
+
+
+public
+NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep )
+{
+	def footer = assertIsValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+
+	if (header->immutableFlag) {
 		incRefCount(header);
-	} endguard;
-	return maybePtr;
+		return value;
+	}
+
+	return footer->typeDesc->copyFunc(value, copyIsDeep);
 }
 
 
 public
-void discard_Value( Opt(void *) maybePtr )
+bool isEqual_NativeValue(
+	Opt(const NativeValue *) optValue,
+	Opt(const NativeValue *) optOtherValue )
 {
-	guard (ptr, maybePtr) {
-		def footer = assertIsValueAndGetFooter(ptr);
-		def header = (struct ValueHeader *)ptr;
-		decRefCountAndFree(header, footer);
-	} endguard;
-}
-
-
-public
-Opt(const char *) getName_Value( Opt(void *) maybePtr )
-{
-	guard (ptr, maybePtr) {
-		assertIsValueAndGetFooter(ptr);
-		def footer = assertIsValueAndGetFooter(ptr);
-		return footer->typeDesc->name;
-	} endguard;
-	return nil;
-}
-
-
-// Opt(void *) copy_Value( Opt(void *) maybePtr, enum CopyStyle_Value style )
-// {
-// 	return_unless (nil, ptr, maybePtr);
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-
-// 	if (value->immutableFlag) {
-// 		incRefCount(value);
-// 		if (likely_false(style == ThreadSafe_CopyStyle_Value)) {
-// 			value->threadSafeFlag = true;
-// 			def copy = value->typeDesc->copyFunc(ptr, style);
-// 			assert(copy == ptr);
-// 			return copy;
-// 		}
-// 		return ptr;
-// 	}
-
-// 	assert(!value->threadSafeFlag);
-// 	return value->typeDesc->copyFunc(ptr, style);
-// }
-
-
-bool isEqual_Value( Opt(const void *) maybePtr1, Opt(const void *) maybePtr2 )
-{
-	return_unless (false, ptr1, maybePtr1);
-	return_unless (false, ptr2, maybePtr2);
-	def footer1 = assertIsValueAndGetFooter(ptr1);
-	def footer2 = assertIsValueAndGetFooter(ptr2);
+	return_unless(false, value1, optValue);
+	return_unless(false, value2, optOtherValue);
+	def footer1 = assertIsValueAndGetFooter(value1);
+	def footer2 = assertIsValueAndGetFooter(value2);
 	if (footer1->typeDesc != footer2->typeDesc) return false;
+
 #if ANY_CHECKS_ENABLED
 	assert(footer1->typeDesc->name == footer2->typeDesc->name);
 	assert(
@@ -233,97 +263,163 @@ bool isEqual_Value( Opt(const void *) maybePtr1, Opt(const void *) maybePtr2 )
 		)
 	);
 #endif
-	return footer1->typeDesc->equalFunc(ptr1, ptr2);
+
+	return footer1->typeDesc->equalFunc(value1, value2);
 }
 
 
-// const char * getName_Value( Opt(void *) maybePtr )
-// {
-// 	return_unless ("", ptr, maybePtr);
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-// 	return value->typeDesc->name;
-// }
+public
+NativeValue * freeze_NativeValue( NativeValue * value )
+{
+	assertIsValue(value);
+	def header = (struct ValueHeader *)value;
 
+	// Requires no freezing?
+	if (header->immutableFlag) {
+		assert(header->frozenFlag);
+#if HEAVY_CHECKS_ENABLED
+		def footer = (struct ValueFooter *)getFooter(header);
+		footer->hash = hash_NativeValue(value);
+#endif
+		return value;
+	}
 
-// Hash_Value hash_Value( void * ptr, bool hashIsDeep )
-// {
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-// 	return value->typeDesc->hashFunc(ptr, hashIsDeep);
-// }
+	// Is already frozen?
+	if (header->frozenFlag) {
+#if HEAVY_CHECKS_ENABLED
+		def footer = (struct ValueFooter *)getFooter(header);
+		def currentHash = hash_NativeValue(value);
+		assert(
+			currentHash == footer->hash,
+			"Frozen value was modified after freezing."
+		);
+#endif
+		return value;
+	}
 
+	// Freeze it!
+	def footer = (struct ValueFooter *)getFooter(header);
+	header->frozenFlag = true;
+	guard (freezeFunc, footer->typeDesc->freezeFunc) {
+		freezeFunc(value);
+	} endguard;
+#if HEAVY_CHECKS_ENABLED
+	footer->hash = hash_NativeValue(value);
+#endif
 
-// const char * createDescription_Value( Opt(void *) maybePtr )
-// {
-// 	return_unless ("<nil>", ptr, maybePtr);
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-// 	return value->typeDesc->createDescFunc(ptr);
-// }
+	return value;
+}
 
-
-// Opt(const void *) freeze_Value( Opt(void *) maybePtr )
-// {
-// 	return_unless (nil, ptr, maybePtr);
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-
-// 	if (value->immutableFlag) {
-// 		assert(value->frozenFlag);
-// 		return maybePtr;
-// 	}
-
-
-
-// 	if (!value->frozenFlag) {
-// 		value->frozenFlag = true;
-// 		guard (freezeFunc, value->typeDesc->freezeFunc) {
-// 			freezeFunc(ptr);
-// 		} endguard;
-// 	}
-
-// 	return maybePtr;
-// }
-
-
-// Opt(void *) unfreeze_Value( Opt(void *) maybePtr )
-// {
-// 	return_unless (nil, ptr, maybePtr);
-// 	assertIsValue(ptr);
-// 	def value = *(struct Value **)ptr;
-
-// 	if (value->frozenFlag) return copy_Value(ptr, Deep_CopyStyle_Value);
-
-// 	incRefCount(value);
-// 	return ptr;
-// }
-
-
-// void set_Value( Opt(void *) * oldValuePtr,  Opt(void *) maybePtr )
-// {
-// 	if (*oldValuePtr == maybePtr) return;
-// 	guard (newPtr, maybePtr) {
-// 		assertIsValue(newPtr);
-// 		def newValue = *(struct Value **)newPtr;
-// 		incRefCount(newValue);
-// 	} endguard;
-// 	guard (oldPtr, *oldValuePtr) {
-// 		assertIsValue(oldPtr);
-// 		def oldValue = *(struct Value **)oldPtr;
-// 		decRefCountAndFree(oldValue, oldPtr);
-// 	} endguard;
-// 	*oldValuePtr = maybePtr;
-// 	return;
-// }
-
-// // ----------------------------------------------------------------------------
 
 public
-void * create_Value(
+NativeValue * unfreeze_NativeValue( NativeValue * value )
+{
+	def footer = assertIsValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+
+	if (!header->frozenFlag) {
+		incRefCount(header);
+		return value;
+	}
+
+#if HEAVY_CHECKS_ENABLED
+	def currentHash = hash_NativeValue(value);
+	assert(
+		currentHash == footer->hash,
+		"Frozen value was modified after freezing."
+	);
+#endif
+	return footer->typeDesc->copyFunc(value, false);
+}
+
+
+public
+bool set_NativeValue( NativeValue ** valuePtr, NativeValue * newValue )
+{
+	assertIsValue(newValue);
+	def oldValue = *valuePtr;
+	if (oldValue == newValue) return false;
+
+	*valuePtr = (struct NativeValue *)incRefCount(
+		(struct ValueHeader *)newValue);
+	discard_NativeValue(oldValue);
+	return true;
+}
+
+
+public
+bool setOpt_NativeValue(
+	Opt(NativeValue *) * valuePtr, Opt(NativeValue *) newValue )
+{
+	if (newValue) assertIsValue((NativeValue *)newValue);
+	def oldValue = *valuePtr;
+	if (oldValue == newValue) return false;
+
+	*valuePtr = (newValue ?
+		(struct NativeValue *)incRefCount((struct ValueHeader *)newValue)
+		: nil
+	);
+	if (oldValue) discard_NativeValue(oldValue);
+	return true;
+}
+
+
+public
+bool unfreezeInPlace_NativeValue( NativeValue ** valuePtr )
+{
+	def value = *valuePtr;
+	def footer = assertIsValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+
+	if (!header->frozenFlag) return false;
+
+#if HEAVY_CHECKS_ENABLED
+	def currentHash = hash_NativeValue(value);
+	assert(
+		currentHash == footer->hash,
+		"Frozen value was modified after freezing."
+	);
+#endif
+
+	*valuePtr = footer->typeDesc->copyFunc(value, false);
+	discard_NativeValue(value);
+	return true;
+}
+
+
+public
+bool unfreezeInPlaceOpt_NativeValue( Opt(NativeValue *) * optValuePtr )
+{
+	if (!*optValuePtr) return false;
+	def value = (NativeValue *)*optValuePtr;
+
+	assertIsValue(value);
+	def header = (struct ValueHeader *)value;
+	if (!header->frozenFlag) return false;
+
+	def footer = getFooter(header);
+
+#if HEAVY_CHECKS_ENABLED
+	def currentHash = hash_NativeValue(value);
+	assert(
+		currentHash == footer->hash,
+		"Frozen value was modified after freezing."
+	);
+#endif
+
+	*optValuePtr = footer->typeDesc->copyFunc(value, false);
+	discard_NativeValue(value);
+	return true;
+}
+
+
+// ----------------------------------------------------------------------------
+
+public
+NativeValue * create_NativeValue(
 	bool mutable,
 	uint16_t size,
-	const struct ValueTypeDescriptor * const typeDesc )
+	const struct TypeDescriptor_NativeValue * const typeDesc )
 {
 	assert(size >= sizeof(struct Value *));
 	def valueAlignment = alignof(struct ValueHeader);
@@ -336,9 +432,9 @@ void * create_Value(
 	def result = calloc(1, totalSize);
 	def header = (struct ValueHeader *)result;
 
-	header->typeHdr.type = BaseType_Value_NativeCStruct;
+	header->typeHdr.type = BaseType_Value_Native;
 	header->refCount = 1;
-	header->size = alignedSize;
+	header->size = size;
 	header->frozenFlag = !mutable;
 	header->immutableFlag = !mutable;
 

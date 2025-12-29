@@ -5,9 +5,9 @@ begin_header
 // ============================================================================
 
 defEnum( BaseType, int8e ) {
-	BaseType_Intf_NativeCStruct = 0,
+	BaseType_Intf_Native = 0,
 
-	BaseType_Value_NativeCStruct = 1,
+	BaseType_Value_Native = 1,
 
 	BaseType_Reserved = 7,
 };

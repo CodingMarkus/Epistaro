@@ -151,3 +151,16 @@ void _assertionHasFailed(
 	#define assertFail( ... ) \
 		_assertFail_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
 #endif
+
+// ============================================================================
+
+#if TESTING
+
+__attribute__((visibility("default")))
+int _armAssertTrap( const char * expectedExpr );
+
+__attribute__((visibility("default")))
+void _disarmAssertTrap( void );
+
+
+#endif // TESTING

@@ -42,62 +42,105 @@
 // ============================================================================
 
 /*
-Integer aliases: pick based on goal.
+	Integer aliases: pick based on goal.
 
-fast:    Prioritize speed. Width may exceed N if the CPU prefers it.
-         Often maps to native register size. Good for hot loops, counters,
-         indexes, math where exact width does not matter. Prefer those types
-         by default.
+	fast:    Prioritize speed. Width may exceed N if the CPU prefers it.
+	         Often maps to native register size. Good for hot loops, counters,
+	         indexes, math where exact width does not matter. Prefer those
+	         types by default.
 
-exact:   Fixed width. Required for on-disk formats, wire protocols,
-         SIMD masks, bit packing, ABI boundaries. May be emulated and slow
-         on some targets. Avoid unless required.
+	exact:   Fixed width. Required for on-disk formats, wire protocols,
+	         SIMD masks, bit packing, ABI boundaries. May be emulated and slow
+	         on some targets. Avoid unless required.
 
-minimum: At least N bits. Width may exceed N if the target benefits.
-         Balances size and speed. Useful for compact data structures
-         where exact width is unimportant, but extreme slowness is unwanted.
+	minimum: At least N bits. Width may exceed N if the target benefits.
+	         Balances size and speed. Useful for compact data structures
+	         where exact width is unimportant, but extreme slowness is
+	         unwanted.
 */
 
 // Fast Ints
 
 // Fast Unsigned Ints
-#define int8  uint_fast8_t
-#define int16 uint_fast16_t
-#define int32 uint_fast32_t
-#define int64 uint_fast64_t
+
+/** Fast unsigned integer with at least 8 bits. */
+typedef uint_fast8_t int8;
+/** Fast unsigned integer with at least 16 bits. */
+typedef uint_fast16_t int16;
+/** Fast unsigned integer with at least 32 bits. */
+typedef uint_fast32_t int32;
+/** Fast unsigned integer with at least 64 bits. */
+typedef uint_fast64_t int64;
 
 // Fast Signed Ints
-#define sint8  int_fast8_t
-#define sint16 int_fast16_t
-#define sint32 int_fast32_t
-#define sint64 int_fast64_t
+
+/** Fast signed integer with at least 8 bits. */
+typedef int_fast8_t sint8;
+/** Fast signed integer with at least 16 bits. */
+typedef int_fast16_t sint16;
+/** Fast signed integer with at least 32 bits. */
+typedef int_fast32_t sint32;
+/** Fast signed integer with at least 64 bits. */
+typedef int_fast64_t sint64;
 
 
 // Exakt Ints
 
 // Exact Unsigned Ints
-#define int8e  uint8_t
-#define int16e uint16_t
-#define int32e uint32_t
-#define int64e uint64_t
+
+/** Exact-width unsigned 8-bit integer. */
+typedef uint8_t int8e;
+/** Exact-width unsigned 16-bit integer. */
+typedef uint16_t int16e;
+/** Exact-width unsigned 32-bit integer. */
+typedef uint32_t int32e;
+/** Exact-width unsigned 64-bit integer. */
+typedef uint64_t int64e;
 
 // Exact Singed Ints
-#define sint8e  int8_t
-#define sint16e int16_t
-#define sint32e int32_t
-#define sint64e int64_t
+
+/** Exact-width signed 8-bit integer. */
+typedef int8_t sint8e;
+/** Exact-width signed 16-bit integer. */
+typedef int16_t sint16e;
+/** Exact-width signed 32-bit integer. */
+typedef int32_t sint32e;
+/** Exact-width signed 64-bit integer. */
+typedef int64_t sint64e;
 
 
 // Minimum Ints
 
 // Minimum Unsigned Ints
-#define int8m  uint_least8_t
-#define int16m uint_least16_t
-#define int32m uint_least32_t
-#define int64m uint_least64_t
+
+/** Minimum-width unsigned integer with at least 8 bits. */
+typedef uint_least8_t int8m;
+/** Minimum-width unsigned integer with at least 16 bits. */
+typedef uint_least16_t int16m;
+/** Minimum-width unsigned integer with at least 32 bits. */
+typedef uint_least32_t int32m;
+/** Minimum-width unsigned integer with at least 64 bits. */
+typedef uint_least64_t int64m;
 
 // Minimum Signed Ints
-#define sint8m  int_least8_t
-#define sint16m int_least16_t
-#define sint32m int_least32_t
-#define sint64m int_least64_t
+
+/** Minimum-width signed integer with at least 8 bits. */
+typedef int_least8_t sint8m;
+/** Minimum-width signed integer with at least 16 bits. */
+typedef int_least16_t sint16m;
+/** Minimum-width signed integer with at least 32 bits. */
+typedef int_least32_t sint32m;
+/** Minimum-width signed integer with at least 64 bits. */
+typedef int_least64_t sint64m;
+
+
+// ============================================================================
+
+/*
+	Integer types for size and indexing
+*/
+
+/** Size type for byte counts and object sizes. */
+typedef size_t intS;
+/** Index type for array and buffer indexing. */
+typedef size_t intI;
