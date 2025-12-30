@@ -17,6 +17,10 @@ printHelp( )
       If no target is provided, all targets are build.
       If no style is provided, all targets are build deployment style.
 
+  build -c[lean] [<style> [<target>]]
+
+      Clean all builds, or only builds for a style and optional target.
+
 
   build -t[argets]
 
@@ -44,6 +48,8 @@ printHelpAndExit( )
 
 
 . lib_list.sh
+. lib_error.sh
+. lib_paths.sh
 
 case "${1:-}" in
 	-help|-h)
@@ -62,6 +68,43 @@ case "${1:-}" in
 		listStylesAndExit "$projDir"
 		;;
 
+	-clean|-c)
+		shift
+		cleanStyle=${1:-}
+		cleanTarget=
+
+		if [ -n "$cleanStyle" ]
+		then
+			ensureValidStyleName "$cleanStyle"
+			shift
+			cleanTarget=${1:-}
+			if [ -n "$cleanTarget" ]
+			then
+				ensureValidTargetName "$cleanTarget"
+				shift
+			fi
+		fi
+
+		[ "$#" -eq 0 ] || printHelpAndExit
+
+		buildsRoot=$( buildsRootPath "$projDir" )
+		cleanPath=$buildsRoot
+		if [ -n "$cleanStyle" ]
+		then
+			cleanPath=$cleanPath/$cleanStyle
+		fi
+		if [ -n "$cleanTarget" ]
+		then
+			cleanPath=$cleanPath/$cleanTarget
+		fi
+
+		if [ -d "$cleanPath" ]
+		then
+			rm -rf "$cleanPath"
+		fi
+		exit 0
+		;;
+
 	-*)
 		printHelpAndExit
 		;;
@@ -73,13 +116,9 @@ if [ -z "$styleName" ]
 then
 	styleName=deploy
 else
-	case "$styleName" in
-		*/*) printErrorAndExit "Style name must not contain '/': $styleName" ;;
-	esac
+	ensureValidStyleName "$styleName"
 	shift
 fi
-
-. lib_error.sh
 
 styleFile=$styleName
 case "$styleFile" in
@@ -126,7 +165,7 @@ fi
 
 case "$origDir" in
 	"$projDir"/*|"$projDir")
-		buildDir="$projDir/.out"
+		buildDir=$( outRootPath "$projDir" )
 		;;
 	*)
 		buildDir="$origDir"

@@ -9,6 +9,7 @@ __included_lib_build_sh=1
 . lib_quote.sh
 . lib_clang.sh
 . lib_outdated.sh
+. lib_paths.sh
 
 # $1 - Project root directory.
 # $2 - Source directory for the file.
@@ -105,7 +106,7 @@ buildTarget( )
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
-	buildTargetDir=$buildDir/builds/$styleName/$target
+	buildTargetDir=$( buildTargetDirPath "$buildDir" "$styleName" "$target" )
 	objRoot=$buildTargetDir/obj
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
