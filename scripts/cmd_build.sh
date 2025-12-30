@@ -8,13 +8,6 @@ projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
 
 cd "$scriptDir"
 
-. lib_assert.sh
-. lib_error.sh
-. lib_list.sh
-. lib_build_settings.sh
-. lib_quote.sh
-. lib_build.sh
-
 printHelp( )
 {
 	helpText="
@@ -50,6 +43,8 @@ printHelpAndExit( )
 }
 
 
+. lib_list.sh
+
 case "${1:-}" in
 	-help|-h)
 		[ "$#" -eq 1 ] || printHelpAndExit
@@ -84,6 +79,8 @@ else
 	shift
 fi
 
+. lib_error.sh
+
 styleFile=$styleName
 case "$styleFile" in
 	/*) ;;
@@ -97,6 +94,8 @@ then
 	printErrorAndExit "Style not found: $styleFile"
 fi
 
+. lib_build_settings.sh
+. lib_quote.sh
 
 styleSettings=$( expandStyle "$styleFile" )
 buildSettings=$( quoteSettings "$styleSettings" )
@@ -119,10 +118,11 @@ else
 		if [ ! -d "$projDir/targets/$target" ]
 		then
 			printErrorAndExit "Target not found: $target"
-		fi
-	done
+	fi
+done
 fi
 
+. lib_build.sh
 
 case "$origDir" in
 	"$projDir"/*|"$projDir")

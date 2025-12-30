@@ -34,7 +34,7 @@ printHelpAndExit( )
 
 
 case "${1:-}" in
-	-help|-h|--help)
+	-help|-h)
 		[ "$#" -eq 1 ] || printHelpAndExit
 		printHelp
 		exit 0
