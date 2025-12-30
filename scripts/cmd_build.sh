@@ -4,10 +4,9 @@ set -eu
 
 origDir=$( pwd -P )
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-rootDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
+projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
 
 cd "$scriptDir"
-PROJECT_ROOT_DIR=$rootDir
 
 . lib_assert.sh
 . lib_error.sh
@@ -60,12 +59,12 @@ case "${1:-}" in
 
 	-targets|-t)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		listTargetsAndExit
+		listTargetsAndExit "$projDir"
 		;;
 
 	-styles|-s)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		listStylesAndExit
+		listStylesAndExit "$projDir"
 		;;
 
 	-*)
@@ -88,9 +87,9 @@ fi
 styleFile=$styleName
 case "$styleFile" in
 	/*) ;;
-	*/*.txt|*/*) styleFile="$rootDir/$styleFile" ;;
-	*.txt) styleFile="$rootDir/styles/$styleFile" ;;
-	*) styleFile="$rootDir/styles/$styleName.txt" ;;
+	*/*.txt|*/*) styleFile="$projDir/$styleFile" ;;
+	*.txt) styleFile="$projDir/styles/$styleFile" ;;
+	*) styleFile="$projDir/styles/$styleName.txt" ;;
 esac
 
 if [ ! -f "$styleFile" ]
@@ -105,7 +104,7 @@ buildSettings=$( quoteSettings "$styleSettings" )
 if [ "$#" -eq 0 ]
 then
 	set --
-	for targetDir in "$rootDir"/targets/*
+	for targetDir in "$projDir"/targets/*
 	do
 		[ -d "$targetDir" ] || continue
 		set -- "$@" "$( basename -- "$targetDir" )"
@@ -117,7 +116,7 @@ then
 else
 	for target in "$@"
 	do
-		if [ ! -d "$rootDir/targets/$target" ]
+		if [ ! -d "$projDir/targets/$target" ]
 		then
 			printErrorAndExit "Target not found: $target"
 		fi
@@ -125,14 +124,17 @@ else
 fi
 
 
-if [ "$origDir" = "$rootDir" ]
-then
-	buildDir="$rootDir/.out"
-else
-	buildDir="$origDir"
-fi
+case "$origDir" in
+	"$projDir"/*|"$projDir")
+		buildDir="$projDir/.out"
+		;;
+	*)
+		buildDir="$origDir"
+		;;
+esac
 
 for target in "$@"
 do
-	buildTarget "$target" "$styleName" "$buildDir" "$buildSettings"
+	buildTarget "$projDir" "$target" "$styleName" "$buildDir" \
+		"$buildSettings"
 done

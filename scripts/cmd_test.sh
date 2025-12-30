@@ -4,10 +4,9 @@ set -eu
 
 origDir=$( pwd -P )
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-rootDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
+projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
 
 cd "$scriptDir"
-PROJECT_ROOT_DIR=$rootDir
 
 . lib_error.sh
 

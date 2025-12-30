@@ -87,14 +87,11 @@ expandStyle( )
 findCompileFlags( )
 (
 	srcDir=$1
+	projectRoot=$2
 
 	assert "[ -n \"${srcDir:-}\" ]" "findCompileFlags() missing source dir"
 
-	projectRoot=${PROJECT_ROOT_DIR:-}
-	if [ -z "$projectRoot" ]
-	then
-		projectRoot=$( pwd -P )
-	fi
+	assert "[ -n \"${projectRoot:-}\" ]" "findCompileFlags() missing project root dir"
 
 	case "$projectRoot" in
 		/*) ;;

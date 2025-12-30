@@ -10,21 +10,23 @@ __included_lib_build_sh=1
 . lib_clang.sh
 . lib_outdated.sh
 
-# $1 - Source directory for the file.
-# $2 - Quoted build settings string.
+# $1 - Project root directory.
+# $2 - Source directory for the file.
+# $3 - Quoted build settings string.
 #
 # Sets workDir and fileFlags for the file build step.
 #
 _prepareFlags( )
 {
-	flagsSrcDir=$1
-	flagsBuildSettings=$2
+	flagsProjectRoot=$1
+	flagsSrcDir=$2
+	flagsBuildSettings=$3
 
 	[ "${fileFlagsReady:-0}" -eq 0 ] || return 0
 	fileFlagsReady=1
 
 	# Find any compile_flags.txt and read it
-	flagsPath=$( findCompileFlags "$flagsSrcDir" )
+	flagsPath=$( findCompileFlags "$flagsSrcDir" "$flagsProjectRoot" )
 	flagsDir=""
 	dirSettings=""
 	if [ -n "$flagsPath" ]
@@ -62,40 +64,45 @@ _prepareFlags( )
 }
 
 
-# $1 - Source file path.
-# $2 - Object file output path.
-# $3 - Source directory for the file.
-# $4 - Quoted build settings string.
+# $1 - Project root directory.
+# $2 - Source file path.
+# $3 - Object file output path.
+# $4 - Source directory for the file.
+# $5 - Quoted build settings string.
 #
 # Prepares flags and compiles the file.
 #
 _buildFile( )
 {
-	buildSrcPath=$1
-	buildObjPath=$2
-	buildSrcDir=$3
-	buildSettings=$4
+	buildProjectRoot=$1
+	buildSrcPath=$2
+	buildObjPath=$3
+	buildSrcDir=$4
+	buildSettings=$5
 
-	_prepareFlags "$buildSrcDir" "$buildSettings"
+	_prepareFlags "$buildProjectRoot" "$buildSrcDir" "$buildSettings"
 	buildFile "$buildSrcPath" "$buildObjPath" "$workDir" "$fileFlags"
 }
 
 
-# $1 - Target name.
-# $2 - Style name.
-# $3 - Build output root directory.
-# $4 - Quoted build settings string.
+# $1 - Project root directory.
+# $2 - Target name.
+# $3 - Style name.
+# $4 - Build output root directory.
+# $5 - Quoted build settings string.
 #
 # Builds all C sources for the target.
 #
 buildTarget( )
 {
-	target=$1
-	styleName=$2
-	buildDir=$3
-	buildSettings=$4
+	projectRoot=$1
+	target=$2
+	styleName=$3
+	buildDir=$4
+	buildSettings=$5
 
-	projectRoot=${PROJECT_ROOT_DIR:-$( pwd -P )}
+	assert "[ -n \"${projectRoot:-}\" ]" "buildTarget() missing project dir"
+
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
 	buildTargetDir=$buildDir/builds/$styleName/$target
@@ -125,14 +132,15 @@ buildTarget( )
 
 		if depFileIsOutdated "$depPath"
 		then
-			_prepareFlags "$srcDir" "$buildSettings"
+			_prepareFlags "$projectRoot" "$srcDir" "$buildSettings"
 			generateDepFile "$srcPath" "$depPath" "$workDir" "$fileFlags"
 		fi
 
 		# Object file older than dep file?
 		if isOutdated "$objPath" "$depPath"
 		then
-			_buildFile "$srcPath" "$objPath" "$srcDir" "$buildSettings"
+			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+				"$buildSettings"
 			continue
 		fi
 
@@ -150,13 +158,15 @@ buildTarget( )
 
 		if [ "$#" -eq 0 ]
 		then
-			_buildFile "$srcPath" "$objPath" "$srcDir" "$buildSettings"
+			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+				"$buildSettings"
 			continue
 		fi
 
 		if isOutdated "$objPath" "$@"
 		then
-			_buildFile "$srcPath" "$objPath" "$srcDir" "$buildSettings"
+			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+				"$buildSettings"
 		fi
 	done
 }
