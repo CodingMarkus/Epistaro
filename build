@@ -6,7 +6,7 @@ set -eu
 origDir=$( pwd -P )
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 if [ "$origDir" = "$scriptDir" ]; then
-	buildDir="$scriptDir/.build"
+	buildDir="$scriptDir/.out"
 else
 	buildDir="$origDir"
 	cd "$scriptDir"

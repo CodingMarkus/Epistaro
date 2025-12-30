@@ -93,7 +93,7 @@ buildTarget( )
 
 	targetDir=targets/$target
 	srcRoot=$targetDir/src
-	buildTargetDir=$buildDir/$styleName/$target
+	buildTargetDir=$buildDir/builds/$styleName/$target
 	objRoot=$buildTargetDir/obj
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
