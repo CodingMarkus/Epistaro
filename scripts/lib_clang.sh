@@ -2,13 +2,11 @@
 
 set -eu
 
-[ -n "${__included_clang_sh:-}" ] && return 0
-__included_clang_sh=1
+[ -n "${__included_lib_clang_sh:-}" ] && return 0
+__included_lib_clang_sh=1
 
-
-. scripts/assert.sh
-. scripts/error.sh
-
+. lib_assert.sh
+. lib_error.sh
 
 # $1 - C source file path.
 # $2 - Dependency file path to generate (.dep).

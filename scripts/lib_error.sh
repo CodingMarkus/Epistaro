@@ -2,12 +2,10 @@
 
 set -eu
 
-[ -n "${__included_error_sh:-}" ] && return 0
-__included_error_sh=1
+[ -n "${__included_lib_error_sh:-}" ] && return 0
+__included_lib_error_sh=1
 
-
-. scripts/assert.sh
-
+. lib_assert.sh
 
 # $1 - The error text to print.
 #

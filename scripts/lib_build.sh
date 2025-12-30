@@ -2,9 +2,13 @@
 
 set -eu
 
-[ -n "${__included_build_sh:-}" ] && return 0
-__included_build_sh=1
+[ -n "${__included_lib_build_sh:-}" ] && return 0
+__included_lib_build_sh=1
 
+. lib_build_settings.sh
+. lib_quote.sh
+. lib_clang.sh
+. lib_outdated.sh
 
 # $1 - Source directory for the file.
 # $2 - Quoted build settings string.
@@ -91,7 +95,8 @@ buildTarget( )
 	buildDir=$3
 	buildSettings=$4
 
-	targetDir=targets/$target
+	projectRoot=${PROJECT_ROOT_DIR:-$( pwd -P )}
+	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
 	buildTargetDir=$buildDir/builds/$styleName/$target
 	objRoot=$buildTargetDir/obj

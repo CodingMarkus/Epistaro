@@ -1,0 +1,138 @@
+#!/bin/sh
+
+set -eu
+
+origDir=$( pwd -P )
+scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+rootDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
+
+cd "$scriptDir"
+PROJECT_ROOT_DIR=$rootDir
+
+. lib_assert.sh
+. lib_error.sh
+. lib_list.sh
+. lib_build_settings.sh
+. lib_quote.sh
+. lib_build.sh
+
+printHelp( )
+{
+	helpText="
+  build [<style> [<target> ...]]
+
+      Build target(s) using style.
+      If no target is provided, all targets are build.
+      If no style is provided, all targets are build deployment style.
+
+
+  build -t[argets]
+
+      List available targets.
+
+
+  build -s[tyles]
+
+      List available styles.
+
+
+  build -h[elp]
+
+      Show this help screen.
+"
+	printf '%s' "$helpText"
+}
+
+
+printHelpAndExit( )
+{
+	printHelp >&2
+	exit 1
+}
+
+
+case "${1:-}" in
+	-help|-h)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		printHelp
+		exit 0
+		;;
+
+	-targets|-t)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		listTargetsAndExit
+		;;
+
+	-styles|-s)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		listStylesAndExit
+		;;
+
+	-*)
+		printHelpAndExit
+		;;
+esac
+
+
+styleName=${1:-}
+if [ -z "$styleName" ]
+then
+	styleName=deploy
+else
+	case "$styleName" in
+		*/*) printErrorAndExit "Style name must not contain '/': $styleName" ;;
+	esac
+	shift
+fi
+
+styleFile=$styleName
+case "$styleFile" in
+	/*) ;;
+	*/*.txt|*/*) styleFile="$rootDir/$styleFile" ;;
+	*.txt) styleFile="$rootDir/styles/$styleFile" ;;
+	*) styleFile="$rootDir/styles/$styleName.txt" ;;
+esac
+
+if [ ! -f "$styleFile" ]
+then
+	printErrorAndExit "Style not found: $styleFile"
+fi
+
+
+styleSettings=$( expandStyle "$styleFile" )
+buildSettings=$( quoteSettings "$styleSettings" )
+
+if [ "$#" -eq 0 ]
+then
+	set --
+	for targetDir in "$rootDir"/targets/*
+	do
+		[ -d "$targetDir" ] || continue
+		set -- "$@" "$( basename -- "$targetDir" )"
+	done
+	if [ "$#" -eq 0 ]
+	then
+		printErrorAndExit "No targets found"
+	fi
+else
+	for target in "$@"
+	do
+		if [ ! -d "$rootDir/targets/$target" ]
+		then
+			printErrorAndExit "Target not found: $target"
+		fi
+	done
+fi
+
+
+if [ "$origDir" = "$rootDir" ]
+then
+	buildDir="$rootDir/.out"
+else
+	buildDir="$origDir"
+fi
+
+for target in "$@"
+do
+	buildTarget "$target" "$styleName" "$buildDir" "$buildSettings"
+done

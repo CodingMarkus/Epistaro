@@ -2,13 +2,11 @@
 
 set -eu
 
-[ -n "${__included_build_settings_sh:-}" ] && return 0
-__included_build_settings_sh=1
+[ -n "${__included_lib_build_settings_sh:-}" ] && return 0
+__included_lib_build_settings_sh=1
 
-
-. scripts/error.sh
-. scripts/assert.sh
-
+. lib_error.sh
+. lib_assert.sh
 
 # $1 - Build style file path.
 #

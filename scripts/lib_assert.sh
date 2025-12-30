@@ -2,10 +2,8 @@
 
 set -eu
 
-[ -n "${__included_assert_sh:-}" ] && return 0
-__included_assert_sh=1
-
-
+[ -n "${__included_lib_assert_sh:-}" ] && return 0
+__included_lib_assert_sh=1
 
 # $1 - condition to be asserted.
 # ($2) - Optional error message to print

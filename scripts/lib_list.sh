@@ -2,13 +2,14 @@
 
 set -eu
 
-[ -n "${__included_list_sh:-}" ] && return 0
-__included_list_sh=1
-
+[ -n "${__included_lib_list_sh:-}" ] && return 0
+__included_lib_list_sh=1
 
 listTargetsAndExit( )
 {
-	for targetDir in targets/*
+	projectRoot=${PROJECT_ROOT_DIR:-$( pwd -P )}
+
+	for targetDir in "$projectRoot"/targets/*
 	do
 		[ -d "$targetDir" ] || continue
 		printf '%s\n' "$( basename -- "$targetDir" )"
@@ -19,7 +20,9 @@ listTargetsAndExit( )
 
 listStylesAndExit( )
 {
-	for styleFile in styles/*.txt
+	projectRoot=${PROJECT_ROOT_DIR:-$( pwd -P )}
+
+	for styleFile in "$projectRoot"/styles/*.txt
 	do
 		[ -f "$styleFile" ] || continue
 		styleName=$( basename -- "$styleFile" .txt )

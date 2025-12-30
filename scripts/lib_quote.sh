@@ -2,12 +2,10 @@
 
 set -eu
 
-[ -n "${__included_quote_sh:-}" ] && return 0
-__included_quote_sh=1
+[ -n "${__included_lib_quote_sh:-}" ] && return 0
+__included_lib_quote_sh=1
 
-
-. scripts/assert.sh
-
+. lib_assert.sh
 
 # $1 - A string to be quoted so it is safe to be used as shell argument.
 #
