@@ -13,16 +13,13 @@ __included_lib_list_sh=1
 #
 listTargetsAndExit( )
 {
-	projectRoot=$1
-
-	assert "[ -n \"${projectRoot:-}\" ]" \
+	assert "[ -n \"${1:-}\" ]" \
 		"listTargetsAndExit() missing project dir"
 
-	for targetDir in "$projectRoot"/targets/*
-	do
-		[ -d "$targetDir" ] || continue
-		printf '%s\n' "$( basename -- "$targetDir" )"
-	done
+	[ -d "$1/targets" ] || exit 0
+
+	find "$1/targets" -mindepth 1 -maxdepth 1 -type d -print \
+		2>/dev/null | sed 's#.*/##'
 	exit 0
 }
 
@@ -33,19 +30,12 @@ listTargetsAndExit( )
 #
 listStylesAndExit( )
 {
-	projectRoot=$1
-
-	assert "[ -n \"${projectRoot:-}\" ]" \
+	assert "[ -n \"${1:-}\" ]" \
 		"listStylesAndExit() missing project dir"
 
-	for styleFile in "$projectRoot"/styles/*.txt
-	do
-		[ -f "$styleFile" ] || continue
-		styleName=$( basename -- "$styleFile" .txt )
-		case $styleName in
-			_*) continue ;;
-		esac
-		printf '%s\n' "$styleName"
-	done
+	[ -d "$1/styles" ] || exit 0
+
+	find "$1/styles" -maxdepth 1 -type f -name '*.txt' -print \
+		2>/dev/null | sed -e 's#.*/##' -e 's/\.txt$//' -e '/^_/d'
 	exit 0
 }

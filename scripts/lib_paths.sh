@@ -24,19 +24,20 @@ buildsDirName( )
 	printf '%s\n' "builds"
 }
 
-# $1 - Project root directory.
+# Prints the name of the object directory.
 #
-# Prints the builds root path.
-#
+objDirName( )
+{
+	printf '%s\n' "obj"
+}
+
 # Prints the build output root path.
 #
 outRootPath( )
 {
-	projectRoot=$1
+	assert "[ -n \"${1:-}\" ]" "outRootPath() missing project dir"
 
-	assert "[ -n \"${projectRoot:-}\" ]" "outRootPath() missing project dir"
-
-	printf '%s/%s\n' "$projectRoot" "$( buildOutputDirName )"
+	printf '%s/%s\n' "$1" "$( buildOutputDirName )"
 }
 
 
@@ -46,12 +47,10 @@ outRootPath( )
 #
 buildsRootPathFromBuildDir( )
 {
-	buildDir=$1
-
-	assert "[ -n \"${buildDir:-}\" ]" \
+	assert "[ -n \"${1:-}\" ]" \
 		"buildsRootPathFromBuildDir() missing build dir"
 
-	printf '%s/%s\n' "$buildDir" "$( buildsDirName )"
+	printf '%s/%s\n' "$1" "$( buildsDirName )"
 }
 
 
@@ -61,12 +60,41 @@ buildsRootPathFromBuildDir( )
 #
 buildsRootPath( )
 {
-	projectRoot=$1
+	assert "[ -n \"${1:-}\" ]" "buildsRootPath() missing project dir"
 
-	assert "[ -n \"${projectRoot:-}\" ]" "buildsRootPath() missing project dir"
+	buildsRootPathFromBuildDir "$( outRootPath "$1" )"
+}
 
-	buildDir=$( outRootPath "$projectRoot" )
-	buildsRootPathFromBuildDir "$buildDir"
+
+# $1 - Build output root directory.
+# ($2) - Optional style name.
+# ($3) - Optional target name.
+#
+# Prints the build target directory.
+#
+buildTargetDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" "buildTargetDirPath() missing build dir"
+
+	if [ -n "${3:-}" ] && [ -z "${2:-}" ]
+	then
+		printErrorAndExit \
+			"Target name requires style name: ${3:-}"
+	fi
+
+	if [ -z "${2:-}" ]
+	then
+		buildsRootPathFromBuildDir "$1"
+		return 0
+	fi
+
+	if [ -z "${3:-}" ]
+	then
+		printf '%s/%s\n' "$( buildsRootPathFromBuildDir "$1" )" "$2"
+		return 0
+	fi
+
+	printf '%s/%s/%s\n' "$( buildsRootPathFromBuildDir "$1" )" "$2" "$3"
 }
 
 
@@ -74,22 +102,19 @@ buildsRootPath( )
 # $2 - Style name.
 # $3 - Target name.
 #
-# Prints the build target directory.
+# Prints the object directory for a build target.
 #
-buildTargetDirPath( )
+buildTargetObjDirPath( )
 {
-	buildDir=$1
-	styleName=$2
-	targetName=$3
+	assert "[ -n \"${1:-}\" ]" \
+		"buildTargetObjDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"buildTargetObjDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"buildTargetObjDirPath() missing target name"
 
-	assert "[ -n \"${buildDir:-}\" ]" "buildTargetDirPath() missing build dir"
-	assert "[ -n \"${styleName:-}\" ]" \
-		"buildTargetDirPath() missing style name"
-	assert "[ -n \"${targetName:-}\" ]" \
-		"buildTargetDirPath() missing target name"
-
-	buildsRoot=$( buildsRootPathFromBuildDir "$buildDir" )
-	printf '%s/%s/%s\n' "$buildsRoot" "$styleName" "$targetName"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" \
+		"$( objDirName )"
 }
 
 
@@ -99,12 +124,10 @@ buildTargetDirPath( )
 #
 ensureValidStyleName( )
 {
-	styleName=$1
+	assert "[ -n \"${1:-}\" ]" "ensureValidStyleName() missing style name"
 
-	assert "[ -n \"${styleName:-}\" ]" "ensureValidStyleName() missing style name"
-
-	case "$styleName" in
-		*/*) printErrorAndExit "Style name must not contain '/': $styleName" ;;
+	case "$1" in
+		*/*) printErrorAndExit "Style name must not contain '/': $1" ;;
 	esac
 }
 
@@ -115,11 +138,9 @@ ensureValidStyleName( )
 #
 ensureValidTargetName( )
 {
-	targetName=$1
+	assert "[ -n \"${1:-}\" ]" "ensureValidTargetName() missing target name"
 
-	assert "[ -n \"${targetName:-}\" ]" "ensureValidTargetName() missing target name"
-
-	case "$targetName" in
-		*/*) printErrorAndExit "Target name must not contain '/': $targetName" ;;
+	case "$1" in
+		*/*) printErrorAndExit "Target name must not contain '/': $1" ;;
 	esac
 }

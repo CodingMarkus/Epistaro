@@ -19,42 +19,42 @@ __included_lib_build_sh=1
 #
 _prepareFlags( )
 {
-	flagsProjectRoot=$1
-	flagsSrcDir=$2
-	flagsBuildSettings=$3
+	flags_projectRoot=$1
+	flags_srcDir=$2
+	flags_buildSettings=$3
 
 	[ "${fileFlagsReady:-0}" -eq 0 ] || return 0
 	fileFlagsReady=1
 
 	# Find any compile_flags.txt and read it
-	flagsPath=$( findCompileFlags "$flagsSrcDir" "$flagsProjectRoot" )
-	flagsDir=""
-	dirSettings=""
-	if [ -n "$flagsPath" ]
+	flags_path=$( findCompileFlags "$flags_srcDir" "$flags_projectRoot" )
+	flags_dir=""
+	flags_dirSettings=""
+	if [ -n "$flags_path" ]
 	then
-		case "$flagsPath" in
-			*/*) flagsDir=${flagsPath%/*} ;;
-			*) flagsDir="." ;;
+		case "$flags_path" in
+			*/*) flags_dir=${flags_path%/*} ;;
+			*) flags_dir="." ;;
 		esac
-		dirSettings=$( readCompileFlags "$flagsPath" )
+		flags_dirSettings=$( readCompileFlags "$flags_path" )
 	fi
-	dirFlags=$( quoteSettings "$dirSettings" )
-	if [ -n "$flagsDir" ]
+	flags_dirFlags=$( quoteSettings "$flags_dirSettings" )
+	if [ -n "$flags_dir" ]
 	then
-		workDir=$flagsDir
+		workDir=$flags_dir
 	else
-		workDir=$flagsSrcDir
+		workDir=$flags_srcDir
 	fi
 
 	# Create final build flags for the file to build
-	fileFlags=$flagsBuildSettings
-	if [ -n "$dirFlags" ]
+	fileFlags=$flags_buildSettings
+	if [ -n "$flags_dirFlags" ]
 	then
 		if [ -n "$fileFlags" ]
 		then
-			fileFlags="$fileFlags $dirFlags"
+			fileFlags="$fileFlags $flags_dirFlags"
 		else
-			fileFlags=$dirFlags
+			fileFlags=$flags_dirFlags
 		fi
 	fi
 
@@ -75,14 +75,14 @@ _prepareFlags( )
 #
 _buildFile( )
 {
-	buildProjectRoot=$1
-	buildSrcPath=$2
-	buildObjPath=$3
-	buildSrcDir=$4
-	buildSettings=$5
+	build_projectRoot=$1
+	build_srcPath=$2
+	build_objPath=$3
+	build_srcDir=$4
+	build_settings=$5
 
-	_prepareFlags "$buildProjectRoot" "$buildSrcDir" "$buildSettings"
-	buildFile "$buildSrcPath" "$buildObjPath" "$workDir" "$fileFlags"
+	_prepareFlags "$build_projectRoot" "$build_srcDir" "$build_settings"
+	buildFile "$build_srcPath" "$build_objPath" "$workDir" "$fileFlags"
 }
 
 
@@ -95,7 +95,7 @@ _buildFile( )
 # Builds all C sources for the target.
 #
 buildTarget( )
-{
+(
 	projectRoot=$1
 	target=$2
 	styleName=$3
@@ -106,8 +106,7 @@ buildTarget( )
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
-	buildTargetDir=$( buildTargetDirPath "$buildDir" "$styleName" "$target" )
-	objRoot=$buildTargetDir/obj
+	objRoot=$( buildTargetObjDirPath "$buildDir" "$styleName" "$target" )
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 	[ -d "$srcRoot" ] || return 0
@@ -170,4 +169,4 @@ buildTarget( )
 				"$buildSettings"
 		fi
 	done
-}
+)

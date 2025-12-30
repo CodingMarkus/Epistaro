@@ -50,6 +50,7 @@ printHelpAndExit( )
 . lib_list.sh
 . lib_error.sh
 . lib_paths.sh
+. lib_clean.sh
 
 case "${1:-}" in
 	-help|-h)
@@ -70,38 +71,7 @@ case "${1:-}" in
 
 	-clean|-c)
 		shift
-		cleanStyle=${1:-}
-		cleanTarget=
-
-		if [ -n "$cleanStyle" ]
-		then
-			ensureValidStyleName "$cleanStyle"
-			shift
-			cleanTarget=${1:-}
-			if [ -n "$cleanTarget" ]
-			then
-				ensureValidTargetName "$cleanTarget"
-				shift
-			fi
-		fi
-
-		[ "$#" -eq 0 ] || printHelpAndExit
-
-		buildsRoot=$( buildsRootPath "$projDir" )
-		cleanPath=$buildsRoot
-		if [ -n "$cleanStyle" ]
-		then
-			cleanPath=$cleanPath/$cleanStyle
-		fi
-		if [ -n "$cleanTarget" ]
-		then
-			cleanPath=$cleanPath/$cleanTarget
-		fi
-
-		if [ -d "$cleanPath" ]
-		then
-			rm -rf "$cleanPath"
-		fi
+		cleanBuilds "$projDir" "$@" || printHelpAndExit
 		exit 0
 		;;
 

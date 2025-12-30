@@ -13,23 +13,20 @@ __included_lib_assert_sh=1
 #
 assert( )
 {
-	cond=$1
-	msg=${2:-}
-
-	if [ -z "$cond" ]
+	if [ -z "${1:-}" ]
 	then
 		printf 'Error: %s\n' "assert() missing condition" >&2
 		exit 1
 	fi
 
-	eval "$cond" && return 0
+	eval "$1" && return 0
 
-	if [ -n "$msg" ]
+	if [ -n "${2:-}" ]
 	then
-		printf 'Error: Assertion failed: %s (%s)\n' "$msg" "$cond" >&2
+		printf 'Error: Assertion failed: %s (%s)\n' "$2" "$1" >&2
 		exit 1
 	fi
 
-	printf 'Error: Assertion failed: %s\n' "$cond" >&2
+	printf 'Error: Assertion failed: %s\n' "$1" >&2
 	exit 1
 }
