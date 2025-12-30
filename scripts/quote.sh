@@ -20,3 +20,34 @@ quote( )
     # Replace each single quote with: '\'' (close, escape, reopen).
     printf "'%s'" "$( printf "%s" "$1" | sed "s/'/'\\\\''/g" )"
 }
+
+
+# $1 - Settings string containing one entry per line.
+#
+# Prints a single string with each setting shell-quoted and space-delimited.
+#
+quoteSettings( )
+(
+	settings=$1
+
+	output=""
+	if [ -n "$settings" ]
+	then
+		oldIFS=$IFS
+		IFS='
+'
+		for setting in $settings
+		do
+			quoted=$( quote "$setting" )
+			if [ -z "$output" ]
+			then
+				output=$quoted
+			else
+				output="$output $quoted"
+			fi
+		done
+		IFS=$oldIFS
+	fi
+
+	printf '%s' "$output"
+)

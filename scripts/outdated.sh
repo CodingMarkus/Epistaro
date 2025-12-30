@@ -10,10 +10,10 @@ __included_outdated_sh=1
 
 
 # $1 - File or folder to check for being outdated. If it doesn't exist, it
-#	is always consider outdated.
+#   is always consider outdated.
 # $* - Files or folders to compare it to. If any of these is newer
-#	(last mod date), then $1 is outdated. All those files and folder must
-#	exist, otherwise $1 is also considered outdated.
+#   (last mod date), then $1 is outdated. All those files and folder must
+#   exist, otherwise $1 is also considered outdated.
 #
 # Returns 0 if outdated, 1 otherwise.
 #
@@ -38,9 +38,9 @@ isOutdated( )
 )
 
 
-# $1 - Dependency file. This file contains one file per line, path relative
-# to dependency file itself. If any file listed in the dependency file is newer
-# than the dependency file itself, it is outdated.
+# $1 - Dependency file. This file contains one absolute file path per line.
+#   If any file listed in the dependency file is newer than the dependency
+#   file itself, it is outdated.
 #
 # Returns 0 if outdated, 1 otherwise.
 #
@@ -52,20 +52,13 @@ depFileIsOutdated( )
 
 	[ -e "$depFile" ] || return 0
 
-	depDir=$( dirname "$depFile" )
-
 	set --
 
 	while IFS= read -r dep || [ -n "$dep" ]
 	do
 		[ -n "$dep" ] || continue
 
-		case $dep in
-			/*) depPath=$dep ;;
-			*) depPath=$depDir/$dep ;;
-		esac
-
-		set -- "$@" "$depPath"
+		set -- "$@" "$dep"
 	done < "$depFile"
 
 	[ $# -gt 0 ] || return 1

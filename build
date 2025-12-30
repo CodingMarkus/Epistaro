@@ -14,6 +14,7 @@ fi
 
 
 . scripts/error.sh
+. scripts/list.sh
 
 
 printHelp( )
@@ -51,32 +52,6 @@ printHelpAndExit( )
 }
 
 
-printTargetsAndExit( )
-{
-	for targetDir in targets/*
-	do
-		[ -d "$targetDir" ] || continue
-		printf '%s\n' "$( basename -- "$targetDir" )"
-	done
-	exit 0
-}
-
-
-printStylesAndExit( )
-{
-	for styleFile in styles/*.txt
-	do
-		[ -f "$styleFile" ] || continue
-		styleName=$( basename -- "$styleFile" .txt )
-		case $styleName in
-			_*) continue ;;
-		esac
-		printf '%s\n' "$styleName"
-	done
-	exit 0
-}
-
-
 case "${1:-}" in
 	-help|-h)
 		[ "$#" -eq 1 ] || printHelpAndExit
@@ -86,12 +61,12 @@ case "${1:-}" in
 
 	-targets|-t)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		printTargetsAndExit
+		listTargetsAndExit
 		;;
 
 	-styles|-s)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		printStylesAndExit
+		listStylesAndExit
 		;;
 
 	-*)
@@ -105,6 +80,9 @@ if [ -z "$styleName" ]
 then
 	styleName=deploy
 else
+	case "$styleName" in
+		*/*) printErrorAndExit "Style name must not contain '/': $styleName" ;;
+	esac
 	shift
 fi
 
@@ -121,30 +99,15 @@ then
 fi
 
 
-. scripts/style.sh
+. scripts/build_settings.sh
 . scripts/quote.sh
-
+. scripts/clang.sh
+. scripts/outdated.sh
+. scripts/build.sh
 
 
 styleSettings=$( expandStyle "$styleFile" )
-buildSettings=""
-if [ -n "$styleSettings" ]
-then
-	oldIFS=$IFS
-	IFS='
-'
-	for setting in $styleSettings
-	do
-		quoted=$( quote "$setting" )
-		if [ -z "$buildSettings" ]
-		then
-			buildSettings=$quoted
-		else
-			buildSettings="$buildSettings $quoted"
-		fi
-	done
-	IFS=$oldIFS
-fi
+buildSettings=$( quoteSettings "$styleSettings" )
 
 if [ "$#" -eq 0 ]
 then
@@ -167,3 +130,9 @@ else
 		fi
 	done
 fi
+
+
+for target in "$@"
+do
+	buildTarget "$target" "$styleName" "$buildDir" "$buildSettings"
+done
