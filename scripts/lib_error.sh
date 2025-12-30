@@ -5,7 +5,9 @@ set -eu
 [ -n "${__included_lib_error_sh:-}" ] && return 0
 __included_lib_error_sh=1
 
+
 . lib_assert.sh
+
 
 # $1 - The error text to print.
 #

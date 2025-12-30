@@ -5,7 +5,9 @@ set -eu
 [ -n "${__included_lib_clean_sh:-}" ] && return 0
 __included_lib_clean_sh=1
 
+
 . lib_paths.sh
+
 
 # $1 - Project root directory.
 # ($2) - Optional style name.

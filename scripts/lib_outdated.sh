@@ -5,7 +5,9 @@ set -eu
 [ -n "${__included_lib_outdated_sh:-}" ] && return 0
 __included_lib_outdated_sh=1
 
+
 . lib_assert.sh
+
 
 # $1 - File or folder to check for being outdated. If it doesn't exist, it
 #   is always consider outdated.

@@ -5,8 +5,11 @@ set -eu
 [ -n "${__included_lib_clang_sh:-}" ] && return 0
 __included_lib_clang_sh=1
 
+
 . lib_assert.sh
 . lib_error.sh
+. lib_quote.sh
+
 
 # $1 - C source file path.
 # $2 - Dependency file path to generate (.dep).
@@ -229,5 +232,226 @@ buildFile( )
 	(
 		cd "$workDirAbs"
 		"$clang" -c -o "$objPath" "$@" "$srcPathAbs"
+	)
+)
+
+
+_dynamicLibFlag( )
+{
+	if command -v uname >/dev/null 2>&1
+	then
+		case "$( uname -s 2>/dev/null )" in
+			Darwin) printf '%s\n' "-dynamiclib" ;;
+			*) printf '%s\n' "-shared" ;;
+		esac
+	else
+		printf '%s\n' "-shared"
+	fi
+}
+
+
+# $1 - Output object file path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4.. - Object file paths.
+#
+# Pre-links object files into a single relocatable object file.
+#
+prelinkObjects( )
+(
+	outPath=$1
+	workDir=$2
+	flags=$3
+	shift 3
+
+	assert "[ -n \"${outPath:-}\" ]" "prelinkObjects() missing output path"
+	assert "[ -n \"${workDir:-}\" ]" "prelinkObjects() missing work dir"
+	assert "[ -n \"${flags:-}\" ]" "prelinkObjects() missing flags"
+	assert "[ $# -gt 0 ]" "prelinkObjects() missing object files"
+
+	clang=${CLANG:-${CC:-clang}}
+	command -v "$clang" >/dev/null 2>&1 \
+		|| printErrorAndExit "clang not found: $clang"
+
+	case "$outPath" in
+		*/*) outDir=${outPath%/*} ;;
+		*) outDir="." ;;
+	esac
+	[ -d "$outDir" ] || mkdir -p "$outDir"
+
+	case "$workDir" in
+		/*) workDirAbs=$workDir ;;
+		*)
+			workDirAbs=$(
+				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
+			) || printErrorAndExit "Work dir not found: $workDir"
+			;;
+	esac
+
+	case "$workDirAbs" in
+		*/) workDirAbs=${workDirAbs%/} ;;
+	esac
+
+	objArgs=""
+	for objPath in "$@"
+	do
+		[ -n "$objPath" ] || continue
+		case "$objPath" in
+			/*) objAbs=$objPath ;;
+			*) objAbs=$workDirAbs/$objPath ;;
+		esac
+		[ -f "$objAbs" ] \
+			|| printErrorAndExit "Object file not found: $objAbs"
+		quotedObj=$( quote "$objAbs" )
+		if [ -z "$objArgs" ]
+		then
+			objArgs=$quotedObj
+		else
+			objArgs="$objArgs $quotedObj"
+		fi
+	done
+
+	eval "set -- $flags $objArgs"
+	(
+		cd "$workDirAbs"
+		"$clang" -r -o "$outPath" "$@"
+	)
+)
+
+
+# $1 - Output dynamic library path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4.. - Object file paths.
+#
+# Links object files into a dynamic library.
+#
+linkDynamicLibrary( )
+(
+	outPath=$1
+	workDir=$2
+	flags=$3
+	shift 3
+
+	assert "[ -n \"${outPath:-}\" ]" "linkDynamicLibrary() missing output path"
+	assert "[ -n \"${workDir:-}\" ]" "linkDynamicLibrary() missing work dir"
+	assert "[ -n \"${flags:-}\" ]" "linkDynamicLibrary() missing flags"
+	assert "[ $# -gt 0 ]" "linkDynamicLibrary() missing object files"
+
+	clang=${CLANG:-${CC:-clang}}
+	command -v "$clang" >/dev/null 2>&1 \
+		|| printErrorAndExit "clang not found: $clang"
+
+	case "$outPath" in
+		*/*) outDir=${outPath%/*} ;;
+		*) outDir="." ;;
+	esac
+	[ -d "$outDir" ] || mkdir -p "$outDir"
+
+	case "$workDir" in
+		/*) workDirAbs=$workDir ;;
+		*)
+			workDirAbs=$(
+				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
+			) || printErrorAndExit "Work dir not found: $workDir"
+			;;
+	esac
+
+	case "$workDirAbs" in
+		*/) workDirAbs=${workDirAbs%/} ;;
+	esac
+
+	objArgs=""
+	for objPath in "$@"
+	do
+		[ -n "$objPath" ] || continue
+		case "$objPath" in
+			/*) objAbs=$objPath ;;
+			*) objAbs=$workDirAbs/$objPath ;;
+		esac
+		[ -f "$objAbs" ] \
+			|| printErrorAndExit "Object file not found: $objAbs"
+		quotedObj=$( quote "$objAbs" )
+		if [ -z "$objArgs" ]
+		then
+			objArgs=$quotedObj
+		else
+			objArgs="$objArgs $quotedObj"
+		fi
+	done
+
+	eval "set -- $flags $objArgs"
+	(
+		cd "$workDirAbs"
+		"$clang" "$( _dynamicLibFlag )" -o "$outPath" "$@"
+	)
+)
+
+
+# $1 - Output binary path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4.. - Object file paths.
+#
+# Links object files into a binary.
+#
+linkBinary( )
+(
+	outPath=$1
+	workDir=$2
+	flags=$3
+	shift 3
+
+	assert "[ -n \"${outPath:-}\" ]" "linkBinary() missing output path"
+	assert "[ -n \"${workDir:-}\" ]" "linkBinary() missing work dir"
+	assert "[ -n \"${flags:-}\" ]" "linkBinary() missing flags"
+	assert "[ $# -gt 0 ]" "linkBinary() missing object files"
+
+	clang=${CLANG:-${CC:-clang}}
+	command -v "$clang" >/dev/null 2>&1 \
+		|| printErrorAndExit "clang not found: $clang"
+
+	case "$outPath" in
+		*/*) outDir=${outPath%/*} ;;
+		*) outDir="." ;;
+	esac
+	[ -d "$outDir" ] || mkdir -p "$outDir"
+
+	case "$workDir" in
+		/*) workDirAbs=$workDir ;;
+		*)
+			workDirAbs=$(
+				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
+			) || printErrorAndExit "Work dir not found: $workDir"
+			;;
+	esac
+
+	case "$workDirAbs" in
+		*/) workDirAbs=${workDirAbs%/} ;;
+	esac
+
+	objArgs=""
+	for objPath in "$@"
+	do
+		[ -n "$objPath" ] || continue
+		case "$objPath" in
+			/*) objAbs=$objPath ;;
+			*) objAbs=$workDirAbs/$objPath ;;
+		esac
+		[ -f "$objAbs" ] \
+			|| printErrorAndExit "Object file not found: $objAbs"
+		quotedObj=$( quote "$objAbs" )
+		if [ -z "$objArgs" ]
+		then
+			objArgs=$quotedObj
+		else
+			objArgs="$objArgs $quotedObj"
+		fi
+	done
+
+	eval "set -- $flags $objArgs"
+	(
+		cd "$workDirAbs"
+		"$clang" -o "$outPath" "$@"
 	)
 )

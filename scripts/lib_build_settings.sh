@@ -6,8 +6,8 @@ set -eu
 __included_lib_build_settings_sh=1
 
 
-. lib_error.sh
 . lib_assert.sh
+. lib_error.sh
 . lib_quote.sh
 
 

@@ -46,11 +46,10 @@ printHelpAndExit( )
 	exit 1
 }
 
-
-. lib_list.sh
-. lib_error.sh
-. lib_paths.sh
 . lib_clean.sh
+. lib_error.sh
+. lib_list.sh
+. lib_paths.sh
 
 case "${1:-}" in
 	-help|-h)

@@ -6,11 +6,12 @@ set -eu
 __included_lib_build_sh=1
 
 
+. lib_ar.sh
 . lib_build_settings.sh
-. lib_quote.sh
 . lib_clang.sh
 . lib_outdated.sh
 . lib_paths.sh
+. lib_quote.sh
 
 
 # $1 - Project root directory.
@@ -171,4 +172,29 @@ buildTarget( )
 				"$targetBuildSettings"
 		fi
 	done
+)
+
+
+# $1 - Output static library path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4.. - Object file paths.
+#
+# Pre-links objects into a single object file, then archives it.
+#
+createStaticLibrary( )
+(
+	outPath=$1
+	workDir=$2
+	flags=$3
+	shift 3
+
+	assert "[ -n \"${outPath:-}\" ]" "createStaticLibrary() missing output path"
+	assert "[ -n \"${workDir:-}\" ]" "createStaticLibrary() missing work dir"
+	assert "[ -n \"${flags:-}\" ]" "createStaticLibrary() missing flags"
+	assert "[ $# -gt 0 ]" "createStaticLibrary() missing object files"
+
+	prelinkPath=$outPath.prelink.o
+	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
+	createStaticLibraryFromObjects "$outPath" "$workDir" "$prelinkPath"
 )
