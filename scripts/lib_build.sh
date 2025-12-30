@@ -5,11 +5,13 @@ set -eu
 [ -n "${__included_lib_build_sh:-}" ] && return 0
 __included_lib_build_sh=1
 
+
 . lib_build_settings.sh
 . lib_quote.sh
 . lib_clang.sh
 . lib_outdated.sh
 . lib_paths.sh
+
 
 # $1 - Project root directory.
 # $2 - Source directory for the file.

@@ -104,10 +104,8 @@ then
 fi
 
 . lib_build_settings.sh
-. lib_quote.sh
 
-styleSettings=$( expandStyle "$styleFile" )
-buildSettings=$( quoteSettings "$styleSettings" )
+buildSettings=$( buildSettingsForStyle "$styleFile" )
 
 if [ "$#" -eq 0 ]
 then

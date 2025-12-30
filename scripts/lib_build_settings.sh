@@ -5,8 +5,11 @@ set -eu
 [ -n "${__included_lib_build_settings_sh:-}" ] && return 0
 __included_lib_build_settings_sh=1
 
+
 . lib_error.sh
 . lib_assert.sh
+. lib_quote.sh
+
 
 # $1 - Build style file path.
 #
@@ -89,9 +92,10 @@ findCompileFlags( )
 	srcDir=$1
 	projectRoot=$2
 
-	assert "[ -n \"${srcDir:-}\" ]" "findCompileFlags() missing source dir"
-
-	assert "[ -n \"${projectRoot:-}\" ]" "findCompileFlags() missing project root dir"
+	assert "[ -n \"${srcDir:-}\" ]" \
+		"findCompileFlags() missing source dir"
+	assert "[ -n \"${projectRoot:-}\" ]" \
+		"findCompileFlags() missing project root dir"
 
 	case "$projectRoot" in
 		/*) ;;
@@ -160,4 +164,39 @@ readCompileFlags( )
 
 		printf '%s\n' "$trimmed"
 	done < "$flagsPath"
+)
+
+
+# Prints hardcoded build settings (one per line).
+#
+hardcodedBuildSettings( )
+{
+	printf '%s\n' "-flto=thin"
+}
+
+
+# $1 - Build style file path.
+#
+# Prints the quoted build settings string for the style.
+#
+buildSettingsForStyle( )
+(
+	stylePath=$1
+
+	assert "[ -n \"${stylePath:-}\" ]" "buildSettingsForStyle() missing path"
+
+	styleSettings=$( expandStyle "$stylePath" )
+	hardcodedSettings=$( hardcodedBuildSettings )
+	if [ -n "$hardcodedSettings" ]
+	then
+		if [ -n "$styleSettings" ]
+		then
+			styleSettings="$styleSettings
+$hardcodedSettings"
+		else
+			styleSettings=$hardcodedSettings
+		fi
+	fi
+
+	quoteSettings "$styleSettings"
 )
