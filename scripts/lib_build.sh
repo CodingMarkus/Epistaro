@@ -100,15 +100,15 @@ buildTarget( )
 (
 	projectRoot=$1
 	target=$2
-	styleName=$3
+	targetStyleName=$3
 	buildDir=$4
-	buildSettings=$5
+	targetBuildSettings=$5
 
 	assert "[ -n \"${projectRoot:-}\" ]" "buildTarget() missing project dir"
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
-	objRoot=$( buildTargetObjDirPath "$buildDir" "$styleName" "$target" )
+	objRoot=$( buildTargetObjDirPath "$buildDir" "$targetStyleName" "$target" )
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 	[ -d "$srcRoot" ] || return 0
@@ -134,7 +134,7 @@ buildTarget( )
 
 		if depFileIsOutdated "$depPath"
 		then
-			_prepareFlags "$projectRoot" "$srcDir" "$buildSettings"
+			_prepareFlags "$projectRoot" "$srcDir" "$targetBuildSettings"
 			generateDepFile "$srcPath" "$depPath" "$workDir" "$fileFlags"
 		fi
 
@@ -142,7 +142,7 @@ buildTarget( )
 		if isOutdated "$objPath" "$depPath"
 		then
 			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$buildSettings"
+				"$targetBuildSettings"
 			continue
 		fi
 
@@ -161,14 +161,14 @@ buildTarget( )
 		if [ "$#" -eq 0 ]
 		then
 			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$buildSettings"
+				"$targetBuildSettings"
 			continue
 		fi
 
 		if isOutdated "$objPath" "$@"
 		then
 			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$buildSettings"
+				"$targetBuildSettings"
 		fi
 	done
 )
