@@ -4,13 +4,19 @@
 begin_header
 // ============================================================================
 
-typedef struct Hasher Hasher;
+typedef struct NativeValue  NativeValue;
 
-typedef int32 HashValue_Hasher;
+typedef struct Hasher  Hasher;
+
+typedef int32  HashValue_Hasher;
 
 // ----------------------------------------------------------------------------
 
-void addByteValue_Hasher( const void * bytes, intS size );
+#define addPrimitive_Hasher( prim ) addByteValue_Hasher(prim, sizeof(prim))
+
+void addNativeValue( Opt(NativeValue *) value );
+
+void addBytes_Hasher( Opt(const void *) bytes, intS size );
 
 HashValue_Hasher finalize_Hasher( Hasher * hasher );
 

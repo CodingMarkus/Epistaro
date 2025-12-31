@@ -1,7 +1,7 @@
-#include "value.h"
+#include "native_value.h"
 
-#include "type.h"
-#include "fletcher32.h"
+#include "base/type.h"
+#include "base/fletcher32.h"
 
 #include <stdalign.h>
 #include <stdatomic.h>
@@ -96,8 +96,8 @@ const struct ValueFooter * getFooter( const struct ValueHeader * header )
 static inline
 Opt(const struct ValueFooter *) assertIsValue( const NativeValue * value )
 {
-	def header = (struct ValueHeader *)value;
 #if ANY_CHECKS_ENABLED
+	def header = (struct ValueHeader *)value;
 	def type = (enum BaseType)header->typeHdr.type;
 	assert(type == BaseType_Value_Native);
 

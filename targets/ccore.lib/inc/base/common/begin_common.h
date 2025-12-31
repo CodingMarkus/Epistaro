@@ -16,12 +16,6 @@
 
 // ============================================================================
 
-#define _opt  _Nullable
-#define _req  _Nonnull
-#define Opt( type ) type _opt
-
-// ============================================================================
-
 #define defEnum( name, type ) \
 	enum __attribute__((enum_extensibility(closed))) name : type
 
