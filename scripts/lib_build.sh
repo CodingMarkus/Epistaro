@@ -404,7 +404,7 @@ EOF
 
 	case "$target" in
 		*.lib)
-			prelinkPath=$objDir/$target
+			prelinkPath=$objDir/${target%.*}.o
 			staticPath=$targetDir/$target
 			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
 
