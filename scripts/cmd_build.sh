@@ -92,9 +92,9 @@ fi
 styleFile=$styleName
 case "$styleFile" in
 	/*) ;;
-	*/*.txt|*/*) styleFile="$projDir/$styleFile" ;;
-	*.txt) styleFile="$projDir/styles/$styleFile" ;;
-	*) styleFile="$projDir/styles/$styleName.txt" ;;
+	*/*.cfg|*/*) styleFile="$projDir/$styleFile" ;;
+	*.cfg) styleFile="$projDir/styles/$styleFile" ;;
+	*) styleFile="$projDir/styles/$styleName.cfg" ;;
 esac
 
 if [ ! -f "$styleFile" ]

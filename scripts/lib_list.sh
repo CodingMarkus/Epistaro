@@ -37,7 +37,7 @@ listStylesAndExit( )
 
 	[ -d "$1/styles" ] || exit 0
 
-	find "$1/styles" -maxdepth 1 -type f -name '*.txt' -print \
-		2>/dev/null | sed -e 's#.*/##' -e 's/\.txt$//' -e '/^_/d'
+	find "$1/styles" -maxdepth 1 -type f -name '*.cfg' -print \
+		2>/dev/null | sed -e 's#.*/##' -e 's/\.cfg$//' -e '/^_/d'
 	exit 0
 }
