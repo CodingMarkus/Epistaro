@@ -42,6 +42,14 @@ objSrcDirName( )
 }
 
 
+# Prints the name of the include directory.
+#
+incDirName( )
+{
+	printf '%s\n' "inc"
+}
+
+
 # Prints the build output root path.
 #
 outRootPath( )
@@ -146,6 +154,26 @@ buildTargetObjSrcDirPath( )
 
 	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" )" \
 		"$( objSrcDirName )"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the include directory for a build target.
+#
+buildTargetIncDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"buildTargetIncDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"buildTargetIncDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"buildTargetIncDirPath() missing target name"
+
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" \
+		"$( incDirName )"
 }
 
 

@@ -93,6 +93,53 @@ _buildFile( )
 # $2 - Target name.
 # $3 - Style name.
 # $4 - Build output root directory.
+#
+# Copies public headers for library targets into the build include dir.
+#
+_syncPublicHeaders( )
+(
+	projectRoot=$1
+	target=$2
+	targetStyleName=$3
+	buildDir=$4
+
+	assert "[ -n \"${projectRoot:-}\" ]" \
+		"_syncPublicHeaders() missing project dir"
+	assert "[ -n \"${target:-}\" ]" "_syncPublicHeaders() missing target"
+	assert "[ -n \"${targetStyleName:-}\" ]" \
+		"_syncPublicHeaders() missing style name"
+	assert "[ -n \"${buildDir:-}\" ]" "_syncPublicHeaders() missing build dir"
+
+	targetDir=$projectRoot/targets/$target
+	srcInc=$targetDir/inc
+	outInc=$( buildTargetIncDirPath "$buildDir" "$targetStyleName" "$target" )
+
+	if [ -d "$srcInc" ]
+	then
+		if command -v rsync >/dev/null 2>&1
+		then
+			[ -d "$outInc" ] || mkdir -p "$outInc"
+			rsync -au --delete -q "$srcInc"/ "$outInc"/
+		else
+			if [ -e "$outInc" ]
+			then
+				rm -rf "$outInc"
+			fi
+			cp -Rp "$srcInc" "$outInc"
+		fi
+	else
+		if [ -e "$outInc" ]
+		then
+			rm -rf "$outInc"
+		fi
+	fi
+)
+
+
+# $1 - Project root directory.
+# $2 - Target name.
+# $3 - Style name.
+# $4 - Build output root directory.
 # $5 - Quoted build settings string.
 #
 # Builds all C sources for the target.
@@ -112,66 +159,73 @@ buildTarget( )
 	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$targetStyleName" "$target" )
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
-	[ -d "$srcRoot" ] || return 0
 
-	srcRoot=${srcRoot%/}
+	if [ -d "$srcRoot" ]
+	then
+		srcRoot=${srcRoot%/}
 
-	find "$srcRoot" -type f -name '*.c' \
-		| while IFS= read -r srcPath || [ -n "$srcPath" ]
-	do
-		[ -n "$srcPath" ] || continue
-
-		relPath=${srcPath#"$srcRoot"/}
-		objRel=${relPath%.c}
-		objPath=$objRoot/$objRel.o
-		depPath=$objRoot/$objRel.dep
-
-		case "$srcPath" in
-			*/*) srcDir=${srcPath%/*} ;;
-			*) srcDir="." ;;
-		esac
-
-		fileFlagsReady=0
-
-		if depFileIsOutdated "$depPath"
-		then
-			_prepareFlags "$projectRoot" "$srcDir" "$targetBuildSettings"
-			generateDepFile "$srcPath" "$depPath" "$workDir" "$fileFlags"
-		fi
-
-		# Object file older than dep file?
-		if isOutdated "$objPath" "$depPath"
-		then
-			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$targetBuildSettings"
-			continue
-		fi
-
-		# Check if any dependency has been updated or is missing
-		set --
-		while IFS= read -r dep || [ -n "$dep" ]
+		find "$srcRoot" -type f -name '*.c' \
+			| while IFS= read -r srcPath || [ -n "$srcPath" ]
 		do
-			[ -n "$dep" ] || continue
-			case "$dep" in
-				/*) depPathResolved=$dep ;;
-				*) depPathResolved=$srcDir/$dep ;;
+			[ -n "$srcPath" ] || continue
+
+			relPath=${srcPath#"$srcRoot"/}
+			objRel=${relPath%.c}
+			objPath=$objRoot/$objRel.o
+			depPath=$objRoot/$objRel.dep
+
+			case "$srcPath" in
+				*/*) srcDir=${srcPath%/*} ;;
+				*) srcDir="." ;;
 			esac
-			set -- "$@" "$depPathResolved"
-		done < "$depPath"
 
-		if [ "$#" -eq 0 ]
-		then
-			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$targetBuildSettings"
-			continue
-		fi
+			fileFlagsReady=0
 
-		if isOutdated "$objPath" "$@"
-		then
-			_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-				"$targetBuildSettings"
-		fi
-	done
+			if depFileIsOutdated "$depPath"
+			then
+				_prepareFlags "$projectRoot" "$srcDir" "$targetBuildSettings"
+				generateDepFile "$srcPath" "$depPath" "$workDir" "$fileFlags"
+			fi
+
+			# Object file older than dep file?
+			if isOutdated "$objPath" "$depPath"
+			then
+				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+					"$targetBuildSettings"
+				continue
+			fi
+
+			# Check if any dependency has been updated or is missing
+			set --
+			while IFS= read -r dep || [ -n "$dep" ]
+			do
+				[ -n "$dep" ] || continue
+				case "$dep" in
+					/*) depPathResolved=$dep ;;
+					*) depPathResolved=$srcDir/$dep ;;
+				esac
+				set -- "$@" "$depPathResolved"
+			done < "$depPath"
+
+			if [ "$#" -eq 0 ]
+			then
+				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+					"$targetBuildSettings"
+				continue
+			fi
+
+			if isOutdated "$objPath" "$@"
+			then
+				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
+					"$targetBuildSettings"
+			fi
+		done
+	fi
+
+	case "$target" in
+		*.lib) _syncPublicHeaders "$projectRoot" "$target" \
+			"$targetStyleName" "$buildDir" ;;
+	esac
 )
 
 
