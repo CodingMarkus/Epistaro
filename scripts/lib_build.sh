@@ -12,7 +12,7 @@ __included_lib_build_sh=1
 . lib_outdated.sh
 . lib_paths.sh
 . lib_quote.sh
-
+. lib_sanitize.sh
 
 # $1 - Project root directory.
 # $2 - Source directory for the file.
@@ -41,6 +41,20 @@ _prepareFlags( )
 		esac
 		flags_dirSettings=$( readCompileFlags "$flags_path" )
 	fi
+	if [ -n "$flags_dirSettings" ]
+	then
+		sanitizeSettings=$( _sanitizeSettingsFromList "$flags_dirSettings" )
+		if [ -n "$sanitizeSettings" ]
+		then
+			while IFS= read -r sanitizeFlag || [ -n "$sanitizeFlag" ]
+			do
+				[ -n "$sanitizeFlag" ] || continue
+				_addTargetSanitizeSetting "$sanitizeFlag"
+			done <<EOF
+$sanitizeSettings
+EOF
+		fi
+	fi
 	flags_dirFlags=$( quoteSettings "$flags_dirSettings" )
 	if [ -n "$flags_dir" ]
 	then
@@ -50,16 +64,7 @@ _prepareFlags( )
 	fi
 
 	# Create final build flags for the file to build
-	fileFlags=$flags_buildSettings
-	if [ -n "$flags_dirFlags" ]
-	then
-		if [ -n "$fileFlags" ]
-		then
-			fileFlags="$fileFlags $flags_dirFlags"
-		else
-			fileFlags=$flags_dirFlags
-		fi
-	fi
+	fileFlags=$( appendQuotedSettings "$flags_buildSettings" "$flags_dirFlags" )
 
 	if [ -z "$fileFlags" ]
 	then
@@ -158,19 +163,21 @@ buildTarget( )
 	srcRoot=$targetDir/src
 	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$targetStyleName" "$target" )
 
+	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
+	targetSanitizeSettings=""
+
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
 	printf '\n====== Building Target %s ======\n\n' "$target"
 	printf 'Using Build Style: %s\n\n' "$targetStyleName"
 
-	if [ -d "$srcRoot" ]
-	then
-		srcRoot=${srcRoot%/}
+		if [ -d "$srcRoot" ]
+		then
+			srcRoot=${srcRoot%/}
 
-		find "$srcRoot" -type f -name '*.c' \
-			| while IFS= read -r srcPath || [ -n "$srcPath" ]
-		do
-			[ -n "$srcPath" ] || continue
+			while IFS= read -r srcPath || [ -n "$srcPath" ]
+			do
+				[ -n "$srcPath" ] || continue
 
 			relPath=${srcPath#"$srcRoot"/}
 			objRel=${relPath%.c}
@@ -225,11 +232,13 @@ buildTarget( )
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
 			fi
-		done
-	fi
+			done <<EOF
+$( find "$srcRoot" -type f -name '*.c' )
+EOF
+		fi
 
 	buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
-		"$targetBuildSettings"
+		"$targetBuildSettings" "$targetSanitizeSettings"
 
 	case "$target" in
 		*.lib)
@@ -287,6 +296,7 @@ _dynamicLibExtension( )
 # $3 - Style name.
 # $4 - Build output root directory.
 # $5 - Quoted build settings string.
+# $6 - Sanitizer settings string containing one entry per line.
 #
 # Links final target outputs based on target name extension.
 #
@@ -297,6 +307,7 @@ buildTargetOutput( )
 	targetStyleName=$3
 	buildDir=$4
 	targetBuildSettings=$5
+	targetSanitizeSettings=$6
 
 	assert "[ -n \"${projectRoot:-}\" ]" \
 		"buildTargetOutput() missing project dir"
@@ -325,6 +336,14 @@ EOF
 	[ $# -gt 0 ] || return 0
 
 	linkFlags=$targetBuildSettings
+	if [ -n "${targetSanitizeSettings:-}" ]
+	then
+		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
+		if [ -n "$sanitizeFlags" ]
+		then
+			linkFlags=$( appendQuotedSettings "$linkFlags" "$sanitizeFlags" )
+		fi
+	fi
 	if [ -z "$linkFlags" ]
 	then
 		linkFlags="--"

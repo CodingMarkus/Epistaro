@@ -51,3 +51,27 @@ quoteSettings( )
 
 	printf '%s' "$output"
 )
+
+
+# $1 - Base quoted settings string.
+# $2 - Additional quoted settings string.
+#
+# Prints combined quoted settings string.
+#
+appendQuotedSettings( )
+(
+	base=$1
+	extra=$2
+
+	if [ -n "$extra" ]
+	then
+		if [ -n "$base" ]
+		then
+			printf '%s %s' "$base" "$extra"
+		else
+			printf '%s' "$extra"
+		fi
+	else
+		printf '%s' "$base"
+	fi
+)
