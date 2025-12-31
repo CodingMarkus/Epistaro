@@ -25,12 +25,22 @@ buildsDirName( )
 	printf '%s\n' "builds"
 }
 
+
 # Prints the name of the object directory.
 #
 objDirName( )
 {
 	printf '%s\n' "obj"
 }
+
+
+# Prints the name of the object source subdirectory.
+#
+objSrcDirName( )
+{
+	printf '%s\n' "src"
+}
+
 
 # Prints the build output root path.
 #
@@ -116,6 +126,26 @@ buildTargetObjDirPath( )
 
 	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" \
 		"$( objDirName )"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the object source directory for a build target.
+#
+buildTargetObjSrcDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"buildTargetObjSrcDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"buildTargetObjSrcDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"buildTargetObjSrcDirPath() missing target name"
+
+	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" )" \
+		"$( objSrcDirName )"
 }
 
 

@@ -109,7 +109,7 @@ buildTarget( )
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
-	objRoot=$( buildTargetObjDirPath "$buildDir" "$targetStyleName" "$target" )
+	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$targetStyleName" "$target" )
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 	[ -d "$srcRoot" ] || return 0
