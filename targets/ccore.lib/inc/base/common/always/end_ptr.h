@@ -7,9 +7,16 @@
 
 // ============================================================================
 
-#undef OutOpt
-#undef OutReq
-
-#undef Opt
-#undef _req
 #undef _opt
+#undef _req
+#undef Opt
+
+#undef OutPtr
+#undef OutPtrOpt
+#undef OptOutPtr
+#undef OptOutPtrOpt
+
+#undef PtrArrayOf
+#undef OptPtrArrayOf
+#undef PtrArrayOfOpt
+#undef OptPtrArrayOfOpt
