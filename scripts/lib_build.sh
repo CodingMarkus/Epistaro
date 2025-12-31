@@ -286,6 +286,7 @@ EOF
 					"$linkFlags" "$prelinkPath"
 			fi
 			;;
+
 		*.bin)
 			binPath=$targetDir/$target
 			if isOutdated "$binPath" "$@"
@@ -294,6 +295,7 @@ EOF
 					"$@"
 			fi
 			;;
+
 		*)
 			printErrorAndExit "Unknown target type: $target"
 			;;

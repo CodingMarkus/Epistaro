@@ -131,12 +131,8 @@ fi
 . lib_build.sh
 
 case "$origDir" in
-	"$projDir"/*|"$projDir")
-		buildDir=$( outRootPath "$projDir" )
-		;;
-	*)
-		buildDir="$origDir"
-		;;
+	"$projDir"/*|"$projDir") buildDir=$( outRootPath "$projDir" );;
+	*) buildDir="$origDir";;
 esac
 
 for target in "$@"

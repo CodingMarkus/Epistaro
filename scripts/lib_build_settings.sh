@@ -28,6 +28,7 @@ expandStyle( )
 	esac
 	case "$stylePath" in
 		/*) stylePathAbs=$stylePath ;;
+
 		*)
 			stylePathAbs=$(
 				CDPATH='' cd -- "$styleDir" 2>/dev/null && pwd -P
@@ -56,6 +57,7 @@ expandStyle( )
 
 		case "$trimmed" in
 			\#*) continue ;;
+
 			\$include[[:space:]]* )
 				includeLine=${trimmed#\$include}
 				includeName=$( printf '%s' "$includeLine" \
@@ -71,9 +73,11 @@ expandStyle( )
 				fi
 				expandStyle "$styleDir/$includeName"
 				;;
+
 			\$*)
 				printErrorAndExit "Unknown directive in $stylePath: $trimmed"
 				;;
+
 			*)
 				printf '%s\n' "$trimmed"
 				;;
@@ -99,6 +103,7 @@ findCompileFlags( )
 
 	case "$projectRoot" in
 		/*) ;;
+
 		*)
 			projectRoot=$(
 				CDPATH='' cd -- "$projectRoot" 2>/dev/null && pwd -P
@@ -108,6 +113,7 @@ findCompileFlags( )
 
 	case "$srcDir" in
 		/*) searchDir=$srcDir ;;
+
 		*)
 			searchDir=$(
 				CDPATH='' cd -- "$srcDir" 2>/dev/null && pwd -P
