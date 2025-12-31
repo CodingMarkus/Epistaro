@@ -60,7 +60,8 @@ expandStyle( )
 			\#*) continue ;;
 
 			\$include[[:space:]]* )
-				includeLine=${trimmed#\$include}
+				includePattern='$include'
+				includeLine=${trimmed#"$includePattern"}
 				includeName=$( printf '%s' "$includeLine" \
 					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//' )
 				if [ -z "$includeName" ]

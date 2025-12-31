@@ -19,7 +19,7 @@ assert( )
 		exit 1
 	fi
 
-	eval "$1" && return 0
+	( set +u; eval "$1" ) && return 0
 
 	if [ -n "${2:-}" ]
 	then
