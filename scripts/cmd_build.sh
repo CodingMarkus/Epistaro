@@ -140,3 +140,5 @@ do
 	buildTarget "$projDir" "$target" "$styleName" "$buildDir" \
 		"$buildSettings"
 done
+
+printf '\n====== All Done ======\n'

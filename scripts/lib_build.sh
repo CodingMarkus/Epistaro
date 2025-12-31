@@ -160,6 +160,9 @@ buildTarget( )
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
+	printf '\n====== Building Target %s ======\n\n' "$target"
+	printf 'Using Build Style: %s\n\n' "$targetStyleName"
+
 	if [ -d "$srcRoot" ]
 	then
 		srcRoot=${srcRoot%/}
@@ -190,6 +193,7 @@ buildTarget( )
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
 			then
+				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
 				continue
@@ -209,6 +213,7 @@ buildTarget( )
 
 			if [ "$#" -eq 0 ]
 			then
+				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
 				continue
@@ -216,16 +221,25 @@ buildTarget( )
 
 			if isOutdated "$objPath" "$@"
 			then
+				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
 			fi
 		done
 	fi
 
+	buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
+		"$targetBuildSettings"
+
 	case "$target" in
-		*.lib) _syncPublicHeaders "$projectRoot" "$target" \
-			"$targetStyleName" "$buildDir" ;;
+		*.lib)
+			printf 'Copying Public Headers...\n'
+			_syncPublicHeaders "$projectRoot" "$target" \
+				"$targetStyleName" "$buildDir"
+			;;
 	esac
+
+	printf 'Done.\n'
 )
 
 
@@ -324,18 +338,21 @@ EOF
 
 			if isOutdated "$prelinkPath" "$@"
 			then
+				printf 'Pre-Linking %s...\n' "${prelinkPath##*/}"
 				prelinkObjects "$prelinkPath" "$projectRoot" \
 					"$linkFlags" "$@"
 			fi
 
 			if isOutdated "$staticPath" "$prelinkPath"
 			then
+				printf 'Creating archive %s...\n' "${staticPath##*/}"
 				createStaticLibraryFromObjects "$staticPath" \
 					"$projectRoot" "$prelinkPath"
 			fi
 
 			if isOutdated "$dynamicPath" "$prelinkPath"
 			then
+				printf 'Linking %s...\n' "${dynamicPath##*/}"
 				linkDynamicLibrary "$dynamicPath" "$projectRoot" \
 					"$linkFlags" "$prelinkPath"
 			fi
@@ -345,6 +362,7 @@ EOF
 			binPath=$targetDir/$target
 			if isOutdated "$binPath" "$@"
 			then
+				printf 'Linking %s...\n' "${binPath##*/}"
 				linkBinary "$binPath" "$projectRoot" "$linkFlags" \
 					"$@"
 			fi
