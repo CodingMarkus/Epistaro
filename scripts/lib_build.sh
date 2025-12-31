@@ -198,3 +198,104 @@ createStaticLibrary( )
 	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
 	createStaticLibraryFromObjects "$outPath" "$workDir" "$prelinkPath"
 )
+
+
+_dynamicLibExtension( )
+{
+	if command -v uname >/dev/null 2>&1
+	then
+		case "$( uname -s 2>/dev/null )" in
+			Darwin) printf '%s\n' ".dylib" ;;
+			*) printf '%s\n' ".so" ;;
+		esac
+	else
+		printf '%s\n' ".so"
+	fi
+}
+
+
+# $1 - Project root directory.
+# $2 - Target name.
+# $3 - Style name.
+# $4 - Build output root directory.
+# $5 - Quoted build settings string.
+#
+# Links final target outputs based on target name extension.
+#
+buildTargetOutput( )
+(
+	projectRoot=$1
+	target=$2
+	targetStyleName=$3
+	buildDir=$4
+	targetBuildSettings=$5
+
+	assert "[ -n \"${projectRoot:-}\" ]" \
+		"buildTargetOutput() missing project dir"
+	assert "[ -n \"${target:-}\" ]" "buildTargetOutput() missing target"
+	assert "[ -n \"${targetStyleName:-}\" ]" \
+		"buildTargetOutput() missing style name"
+	assert "[ -n \"${buildDir:-}\" ]" \
+		"buildTargetOutput() missing build dir"
+
+	targetDir=$( buildTargetDirPath "$buildDir" "$targetStyleName" "$target" )
+	objDir=$( buildTargetObjDirPath "$buildDir" "$targetStyleName" "$target" )
+	objSrcRoot=$( buildTargetObjSrcDirPath "$buildDir" \
+		"$targetStyleName" "$target" )
+
+	[ -d "$objSrcRoot" ] || return 0
+
+	set --
+	while IFS= read -r objPath || [ -n "$objPath" ]
+	do
+		[ -n "$objPath" ] || continue
+		set -- "$@" "$objPath"
+	done <<EOF
+$( find "$objSrcRoot" -type f -name '*.o' -print )
+EOF
+
+	[ $# -gt 0 ] || return 0
+
+	linkFlags=$targetBuildSettings
+	if [ -z "$linkFlags" ]
+	then
+		linkFlags="--"
+	fi
+
+	case "$target" in
+		*.lib)
+			prelinkPath=$objDir/$target
+			staticPath=$targetDir/$target
+			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
+
+			if isOutdated "$prelinkPath" "$@"
+			then
+				prelinkObjects "$prelinkPath" "$projectRoot" \
+					"$linkFlags" "$@"
+			fi
+
+			if isOutdated "$staticPath" "$prelinkPath"
+			then
+				createStaticLibraryFromObjects "$staticPath" \
+					"$projectRoot" "$prelinkPath"
+			fi
+
+			if isOutdated "$dynamicPath" "$prelinkPath"
+			then
+				linkDynamicLibrary "$dynamicPath" "$projectRoot" \
+					"$linkFlags" "$prelinkPath"
+			fi
+			;;
+		*.bin)
+			binPath=$targetDir/$target
+			if isOutdated "$binPath" "$@"
+			then
+				linkBinary "$binPath" "$projectRoot" "$linkFlags" \
+					"$@"
+			fi
+			;;
+		*)
+			printErrorAndExit "Unknown target type: $target"
+			;;
+	esac
+)
