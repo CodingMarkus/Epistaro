@@ -8,6 +8,7 @@ projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
 
 cd "$scriptDir"
 
+
 printHelp( )
 {
 	helpText="
