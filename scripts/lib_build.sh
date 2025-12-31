@@ -388,7 +388,7 @@ EOF
 
 	[ $# -gt 0 ] || return 0
 
-	linkFlags=$targetBuildSettings
+	linkFlags=""
 	if [ -n "${targetSanitizeSettings:-}" ]
 	then
 		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
