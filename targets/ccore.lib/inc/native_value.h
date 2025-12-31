@@ -192,7 +192,7 @@ NativeValue * unfreeze_NativeValue( NativeValue * value );
 
 	@returns Whether `valuePtr` was actually mutated or not.
 */
-bool set_NativeValue( NativeValue ** valuePtr,  NativeValue * newValue );
+bool set_NativeValue( Out(NativeValue *) valuePtr, NativeValue * newValue );
 
 
 /**
@@ -202,7 +202,7 @@ bool set_NativeValue( NativeValue ** valuePtr,  NativeValue * newValue );
 	@see set_NativeValue()
 */
 bool setOpt_NativeValue(
-	Opt(NativeValue *) * valuePtr,  Opt(NativeValue *) newValue
+	OutOpt(NativeValue *) valuePtr, Opt(NativeValue *) newValue
 );
 
 
@@ -220,7 +220,7 @@ bool setOpt_NativeValue(
 
 	@returns Whether `valuePtr` was actually mutated or not.
 */
-bool unfreezeInPlace_NativeValue( NativeValue ** valuePtr );
+bool unfreezeInPlace_NativeValue( Out(NativeValue *) valuePtr );
 
 
 /**
@@ -229,7 +229,7 @@ bool unfreezeInPlace_NativeValue( NativeValue ** valuePtr );
 
 	@see unfreezeInPlace_NativeValue()
 */
-bool unfreezeInPlaceOpt_NativeValue( Opt(NativeValue *) * valuePtr );
+bool unfreezeInPlaceOpt_NativeValue( OutOpt(NativeValue *) valuePtr );
 
 
 

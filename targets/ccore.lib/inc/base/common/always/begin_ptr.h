@@ -9,5 +9,5 @@
 #define _req  _Nonnull
 #define Opt( type ) type _opt
 
-#define OutReq( type ) type _req * _req
+#define Out( type ) type _req * _req
 #define OutOpt( type ) type _opt * _req

@@ -334,7 +334,7 @@ NativeValue * unfreeze_NativeValue( NativeValue * value )
 
 
 public
-bool set_NativeValue( NativeValue ** valuePtr, NativeValue * newValue )
+bool set_NativeValue( Out(NativeValue *) valuePtr, NativeValue * newValue )
 {
 	assertIsValue(newValue);
 	def oldValue = *valuePtr;
@@ -349,7 +349,7 @@ bool set_NativeValue( NativeValue ** valuePtr, NativeValue * newValue )
 
 public
 bool setOpt_NativeValue(
-	Opt(NativeValue *) * valuePtr, Opt(NativeValue *) newValue )
+	OutOpt(NativeValue *) valuePtr, Opt(NativeValue *) newValue )
 {
 	if (newValue) assertIsValue((NativeValue *)newValue);
 	def oldValue = *valuePtr;
@@ -365,7 +365,7 @@ bool setOpt_NativeValue(
 
 
 public
-bool unfreezeInPlace_NativeValue( NativeValue ** valuePtr )
+bool unfreezeInPlace_NativeValue( Out(NativeValue *) valuePtr )
 {
 	def value = *valuePtr;
 	def footer = assertIsValueAndGetFooter(value);
@@ -388,7 +388,7 @@ bool unfreezeInPlace_NativeValue( NativeValue ** valuePtr )
 
 
 public
-bool unfreezeInPlaceOpt_NativeValue( Opt(NativeValue *) * optValuePtr )
+bool unfreezeInPlaceOpt_NativeValue( OutOpt(NativeValue *) optValuePtr )
 {
 	if (!*optValuePtr) return false;
 	def value = (NativeValue *)*optValuePtr;
