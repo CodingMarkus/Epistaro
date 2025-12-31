@@ -212,6 +212,7 @@ buildTarget( )
 		then
 			srcRoot=${srcRoot%/}
 
+			firstCompile=1
 			while IFS= read -r srcPath || [ -n "$srcPath" ]
 			do
 				[ -n "$srcPath" ] || continue
@@ -237,6 +238,11 @@ buildTarget( )
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
 			then
+				if [ "$firstCompile" -eq 0 ]
+				then
+					printf '\n'
+				fi
+				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
@@ -257,6 +263,11 @@ buildTarget( )
 
 			if [ "$#" -eq 0 ]
 			then
+				if [ "$firstCompile" -eq 0 ]
+				then
+					printf '\n'
+				fi
+				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
@@ -265,6 +276,11 @@ buildTarget( )
 
 			if isOutdated "$objPath" "$@"
 			then
+				if [ "$firstCompile" -eq 0 ]
+				then
+					printf '\n'
+				fi
+				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
 					"$targetBuildSettings"
