@@ -36,6 +36,8 @@ expandStyle( )
 			stylePathAbs=$stylePathAbs/$( basename -- "$stylePath" )
 			;;
 	esac
+	styleDirAbs=${stylePathAbs%/*}
+	[ -n "$styleDirAbs" ] || styleDirAbs=/
 
 	includeStack=${__style_include_stack:-}
 	case ":$includeStack:" in
@@ -66,12 +68,15 @@ expandStyle( )
 				then
 					printErrorAndExit "\$include missing name in $stylePath"
 				fi
-				includePath="$styleDir/$includeName"
+				case "$includeName" in
+					/*) includePath=$includeName ;;
+					*) includePath="$styleDirAbs/$includeName" ;;
+				esac
 				if [ ! -e "$includePath" ]
 				then
 					printErrorAndExit "\$include style not found: $includeName"
 				fi
-				expandStyle "$styleDir/$includeName"
+				expandStyle "$includePath"
 				;;
 
 			\$*)
