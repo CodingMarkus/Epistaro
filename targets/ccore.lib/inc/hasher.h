@@ -4,27 +4,45 @@
 begin_header
 // ============================================================================
 
-typedef struct NativeValue  NativeValue;
+typedef void  Hasher;
 
-typedef struct Hasher  Hasher;
+typedef struct NativeValue  NativeValue;
 
 typedef int32  HashValue_Hasher;
 
 // ----------------------------------------------------------------------------
 
-#define addPrimitive_Hasher( prim ) addByteValue_Hasher(prim, sizeof(prim))
+/**
+	@fn addPrimitive_Hasher( prim )
 
-void addNativeValue( Opt(NativeValue *) value );
+	Add primitive value to hasher.
+ */
+#define addPrimitive_Hasher( h, p ) addBytes(h, p, sizeof(p))
 
-void addBytes_Hasher( Opt(const void *) bytes, intS size );
 
-HashValue_Hasher finalize_Hasher( Hasher * hasher );
+/** Abstract hasher interface */
+typedef struct  {
+	/** How much memory that hasher requires on heap or stack. */
+	intS (*_req getRequiredSize)( void );
 
-// ----------------------------------------------------------------------------
+	/** Initialize heap or stack memory. */
+	Hasher *_req (*_req initStorage)( void * hasherStorage );
 
-intS getRequiredSize_Hasher( );
+	/** Get fhe final hash value. */
+	HashValue_Hasher (*_req finalize)( Hasher * hasher );
 
-Hasher * init_Hasher( void * hasherStorage );
+	/** Add more bytes to the hasher. */
+	void (*_req addBytes)(
+		Hasher * hasher, Opt(const void *) bytes, intS size
+	);
+
+} HasherInterface;
+
+
+/**
+	Get the default hasher interface used by `hash_NativeValue()`.
+*/
+const HasherInterface * getDefaultHasherInterface_Hasher( void );
 
 // ============================================================================
 end_header

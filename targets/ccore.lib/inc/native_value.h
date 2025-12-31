@@ -17,7 +17,8 @@ typedef struct NativeValue  NativeValue;
 	possible.
 */
 typedef void (HashFunc_NativeValue)(
-	const NativeValue * value, Hasher * hasher
+	const NativeValue * value,
+	Hasher * hasher, const HasherInterface hasherIntf
 );
 
 
@@ -128,6 +129,9 @@ const char * createDescription_NativeValue( Opt(NativeValue *) value );
 	Returns a hash value that represents the value's current state.
 	Two objects that are equal according to `EqualFunc_NativeValue` must
 	produce the same hash value. Different objects may still collide.
+
+	Generates a suitable `Hasher` on the stack and passes it to
+	`HashFunc_NativeValue`.
 */
 HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) value );
 
@@ -138,7 +142,8 @@ HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) value );
 	produce the same hash stream. Different objects may still collide.
 */
 void hashWithHasher_NativeValue(
-	Opt(const NativeValue *) value, Hasher * hasher
+	Opt(const NativeValue *) value,
+	Hasher * hasher, const HasherInterface * hashIntf
 );
 
 

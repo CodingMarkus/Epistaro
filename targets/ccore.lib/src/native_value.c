@@ -211,20 +211,25 @@ HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) optValue )
 {
 	return_unless(0, value, optValue);
 	assertIsValue(value);
-	int8e hasherStorage[getRequiredSize_Hasher()];
-	def hasher = init_Hasher(hasherStorage);
-	hashWithHasher_NativeValue(value, hasher);
-	return finalize_Hasher(hasher);
+	def hashIntf = getDefaultHasherInterface_Hasher();
+
+	int8e hasherStorage[hashIntf->getRequiredSize()];
+	def hasher = hashIntf->initStorage(hasherStorage);
+	hashWithHasher_NativeValue(value, hasher, hashIntf);
+	return hashIntf->finalize(hasher);
 }
 
 
 public
 void hashWithHasher_NativeValue(
-	Opt(const NativeValue *) optValue, Hasher * hasher )
+	Opt(const NativeValue *) optValue,
+	Hasher * hasher,
+	const HasherInterface * hashIntf )
 {
 	return_unless(no_value, value, optValue);
+	assert(hashIntf);
 	def footer = assertIsValueAndGetFooter(value);
-	footer->typeDesc->hashFunc(value, hasher);
+	footer->typeDesc->hashFunc(value, hasher, *hashIntf);
 }
 
 
