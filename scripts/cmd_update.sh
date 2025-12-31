@@ -2,14 +2,12 @@
 
 set -eu
 
-origDir=$( pwd -P )
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
 
 cd "$scriptDir"
 
-. lib_error.sh
-. lib_build_settings.sh
+. lib_clangd.sh
 
 
 printHelp( )
@@ -17,7 +15,12 @@ printHelp( )
 	helpText="
   update
 
-      Update project configuration and generated files.
+      Update all project configuration and generated files.
+
+
+  update config|cfg
+
+      Update build configuration files (like .clangd).
 
 
   update -h[elp]
@@ -35,48 +38,17 @@ printHelpAndExit( )
 }
 
 
-updateClangd( )
-(
-	clangdPath=$1
-	stylePath=$2
+updateConfig( )
+{
+	defaultStylePath=$projDir/styles/_defaults/_default.cfg
+	updateClangd "$projDir/.clangd" "$defaultStylePath"
+}
 
-	[ -n "${clangdPath:-}" ] \
-		|| printErrorAndExit "updateClangd() missing .clangd path"
-	[ -n "${stylePath:-}" ] \
-		|| printErrorAndExit "updateClangd() missing style path"
 
-	[ -f "$clangdPath" ] || printErrorAndExit ".clangd not found: $clangdPath"
-	[ -f "$stylePath" ] || printErrorAndExit "Style not found: $stylePath"
-
-	markerLine=$( awk '/MARK:/ { print; exit }' "$clangdPath" )
-	[ -n "$markerLine" ] || printErrorAndExit "Marker not found in: $clangdPath"
-
-	indent=$( printf '%s' "$markerLine" | sed 's/[^[:space:]].*$//' )
-	tmpPath=$clangdPath.tmp.$$
-	trap 'rm -f "$tmpPath"' EXIT INT TERM
-
-	awk '/MARK:/ { print; exit } { print }' "$clangdPath" > "$tmpPath"
-
-	printf '%s\n' "${indent}#" >> "$tmpPath"
-	printf '%s\n' "${indent}# Do not remove marker above!" >> "$tmpPath"
-	printf '%s\n' "${indent}# Settings below are managed by update script." \
-		>> "$tmpPath"
-	printf '\n' >> "$tmpPath"
-
-	settings=$( expandStyle "$stylePath" )
-	if [ -n "$settings" ]
-	then
-		printf '%s\n' "$settings" \
-		| while IFS= read -r line || [ -n "$line" ]
-		do
-			[ -n "$line" ] || continue
-			printf '%s- %s\n' "$indent" "$line"
-		done >> "$tmpPath"
-	fi
-
-	mv "$tmpPath" "$clangdPath"
-	trap - EXIT INT TERM
-)
+updateAll( )
+{
+	updateConfig
+}
 
 
 case "${1:-}" in
@@ -86,12 +58,20 @@ case "${1:-}" in
 		exit 0
 		;;
 
+	"")
+		updateAll
+		exit 0
+		;;
+
+	config|cfg)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		updateConfig
+		exit 0
+		;;
+
 	-*)
 		printHelpAndExit
 		;;
 esac
 
-defaultStylePath=$projDir/styles/_defaults/_default.cfg
-updateClangd "$projDir/.clangd" "$defaultStylePath"
-
-printf '\n====== All Done ======\n'
+printHelpAndExit
