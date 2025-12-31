@@ -8,6 +8,7 @@ __included_lib_build_settings_sh=1
 
 . lib_assert.sh
 . lib_error.sh
+. lib_fs.sh
 . lib_quote.sh
 
 
@@ -30,10 +31,8 @@ expandStyle( )
 		/*) stylePathAbs=$stylePath ;;
 
 		*)
-			stylePathAbs=$(
-				CDPATH='' cd -- "$styleDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Style dir not found: $styleDir"
-			stylePathAbs=$stylePathAbs/$( basename -- "$stylePath" )
+			stylePathAbs=$( abs_path "$stylePath" ) \
+				|| printErrorAndExit "Style dir not found: $styleDir"
 			;;
 	esac
 	styleDirAbs=${stylePathAbs%/*}
@@ -110,9 +109,7 @@ findCompileFlags( )
 		/*) ;;
 
 		*)
-			projectRoot=$(
-				CDPATH='' cd -- "$projectRoot" 2>/dev/null && pwd -P
-			) || projectRoot=/
+			projectRoot=$( abs_dir "$projectRoot" ) || projectRoot=/
 			;;
 	esac
 
@@ -120,9 +117,7 @@ findCompileFlags( )
 		/*) searchDir=$srcDir ;;
 
 		*)
-			searchDir=$(
-				CDPATH='' cd -- "$srcDir" 2>/dev/null && pwd -P
-			) || return 0
+			searchDir=$( abs_dir "$srcDir" ) || return 0
 			;;
 	esac
 

@@ -32,7 +32,7 @@ isOutdated( )
 		[ -e "$other" ] || return 0
 	done
 
-	newer=$( find "$@" -newer "$target" )
+	newer=$( find "$@" -newer "$target" -print -quit )
 	[ -z "$newer" ] && return 1
 	return 0
 )

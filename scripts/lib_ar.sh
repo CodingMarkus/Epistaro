@@ -8,7 +8,8 @@ __included_lib_ar_sh=1
 
 . lib_assert.sh
 . lib_error.sh
-. lib_quote.sh
+. lib_fs.sh
+. lib_objects.sh
 
 
 # $1 - Output static library path.
@@ -38,39 +39,13 @@ createStaticLibraryFromObjects( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	[ -d "$outDir" ] || mkdir -p "$outDir"
+	ensure_dir "$outDir"
 
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
-	case "$workDirAbs" in
-		*/) workDirAbs=${workDirAbs%/} ;;
-	esac
-
-	objArgs=""
-	for objPath in "$@"
-	do
-		[ -n "$objPath" ] || continue
-		case "$objPath" in
-			/*) objAbs=$objPath ;;
-			*) objAbs=$workDirAbs/$objPath ;;
-		esac
-		[ -f "$objAbs" ] \
-			|| printErrorAndExit "Object file not found: $objAbs"
-		quotedObj=$( quote "$objAbs" )
-		if [ -z "$objArgs" ]
-		then
-			objArgs=$quotedObj
-		else
-			objArgs="$objArgs $quotedObj"
-		fi
-	done
+	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
 	eval "set -- $objArgs"
 	(

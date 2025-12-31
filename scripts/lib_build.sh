@@ -32,19 +32,46 @@ _prepareFlags( )
 	# Find any compile_flags.txt and read it
 	flags_path=$( findCompileFlags "$flags_srcDir" "$flags_projectRoot" )
 	flags_dir=""
-	flags_dirSettings=""
-	if [ -n "$flags_path" ]
+	flags_dirFlags=""
+	sanitizeSettings=""
+
+	if [ "${__cached_flags_path:-}" = "$flags_path" ]
 	then
-		case "$flags_path" in
-			*/*) flags_dir=${flags_path%/*} ;;
-			*) flags_dir="." ;;
-		esac
-		flags_dirSettings=$( readCompileFlags "$flags_path" )
-	fi
-	if [ -n "$flags_dirSettings" ]
-	then
+		flags_dir=${__cached_flags_dir:-}
+		flags_dirFlags=${__cached_flags_dirFlags:-}
+		sanitizeSettings=${__cached_sanitizeSettings:-}
+	else
+		flags_dirSettings=""
+		if [ -n "$flags_path" ]
+		then
+			case "$flags_path" in
+				*/*) flags_dir=${flags_path%/*} ;;
+				*) flags_dir="." ;;
+			esac
+			flags_dirSettings=$( readCompileFlags "$flags_path" )
+		fi
 		sanitizeSettings=$( _sanitizeSettingsFromList "$flags_dirSettings" )
-		if [ -n "$sanitizeSettings" ]
+		flags_dirFlags=$( quoteSettings "$flags_dirSettings" )
+		__cached_flags_path=$flags_path
+		__cached_flags_dir=$flags_dir
+		__cached_flags_dirFlags=$flags_dirFlags
+		__cached_sanitizeSettings=$sanitizeSettings
+	fi
+
+	if [ -n "$sanitizeSettings" ]
+	then
+		applySanitize=1
+		if [ -n "$flags_path" ]
+		then
+			case "
+${targetSanitizePaths:-}
+" in
+				*"
+$flags_path
+"*) applySanitize= ;;
+			esac
+		fi
+		if [ -n "$applySanitize" ]
 		then
 			while IFS= read -r sanitizeFlag || [ -n "$sanitizeFlag" ]
 			do
@@ -53,9 +80,18 @@ _prepareFlags( )
 			done <<EOF
 $sanitizeSettings
 EOF
+			if [ -n "$flags_path" ]
+			then
+				if [ -n "${targetSanitizePaths:-}" ]
+				then
+					targetSanitizePaths="$targetSanitizePaths
+$flags_path"
+				else
+					targetSanitizePaths=$flags_path
+				fi
+			fi
 		fi
 	fi
-	flags_dirFlags=$( quoteSettings "$flags_dirSettings" )
 	if [ -n "$flags_dir" ]
 	then
 		workDir=$flags_dir
@@ -165,6 +201,7 @@ buildTarget( )
 
 	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
 	targetSanitizeSettings=""
+	targetSanitizePaths=""
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 

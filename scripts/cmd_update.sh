@@ -3,9 +3,8 @@
 set -eu
 
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
-
-cd "$scriptDir"
+. "$scriptDir/lib_cmd.sh"
+initCmdPaths "$scriptDir"
 
 . lib_clangd.sh
 

@@ -8,7 +8,8 @@ __included_lib_clang_sh=1
 
 . lib_assert.sh
 . lib_error.sh
-. lib_quote.sh
+. lib_fs.sh
+. lib_objects.sh
 
 
 # $1 - C source file path.
@@ -42,23 +43,10 @@ generateDepFile( )
 		*) srcDir="."; srcBase="$srcPath" ;;
 	esac
 
-	case "$srcDir" in
-		/*) srcDirAbs=$srcDir ;;
-		*)
-			srcDirAbs=$(
-				CDPATH='' cd -- "$srcDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Source dir not found: $srcDir"
-			;;
-	esac
-
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	srcDirAbs=$( abs_dir "$srcDir" ) \
+		|| printErrorAndExit "Source dir not found: $srcDir"
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
 
 	case "$srcPath" in
 		/*) srcPathAbs=$srcPath ;;
@@ -76,14 +64,8 @@ generateDepFile( )
 		/*) depPathAbs=$depPath ;;
 		*) depPathAbs=$( pwd -P )/$depPath ;;
 	esac
-
-	case "$srcDirAbs" in
-		*/) srcDirAbs=${srcDirAbs%/} ;;
-	esac
-
-	case "$workDirAbs" in
-		*/) workDirAbs=${workDirAbs%/} ;;
-	esac
+	srcDirAbs=$( strip_trailing_slash "$srcDirAbs" )
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
 	tmpPath=$depPathAbs.tmp.$$
 	trap 'rm -f "$tmpPath"' EXIT INT TERM
@@ -205,23 +187,11 @@ buildFile( )
 		*) srcDir="."; srcBase="$srcPath" ;;
 	esac
 
-	case "$srcDir" in
-		/*) srcDirAbs=$srcDir ;;
-		*)
-			srcDirAbs=$(
-				CDPATH='' cd -- "$srcDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Source dir not found: $srcDir"
-			;;
-	esac
-
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	srcDirAbs=$( abs_dir "$srcDir" ) \
+		|| printErrorAndExit "Source dir not found: $srcDir"
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
 	case "$srcPath" in
 		/*) srcPathAbs=$srcPath ;;
@@ -277,39 +247,13 @@ prelinkObjects( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	[ -d "$outDir" ] || mkdir -p "$outDir"
+	ensure_dir "$outDir"
 
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
-	case "$workDirAbs" in
-		*/) workDirAbs=${workDirAbs%/} ;;
-	esac
-
-	objArgs=""
-	for objPath in "$@"
-	do
-		[ -n "$objPath" ] || continue
-		case "$objPath" in
-			/*) objAbs=$objPath ;;
-			*) objAbs=$workDirAbs/$objPath ;;
-		esac
-		[ -f "$objAbs" ] \
-			|| printErrorAndExit "Object file not found: $objAbs"
-		quotedObj=$( quote "$objAbs" )
-		if [ -z "$objArgs" ]
-		then
-			objArgs=$quotedObj
-		else
-			objArgs="$objArgs $quotedObj"
-		fi
-	done
+	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
 	eval "set -- $flags $objArgs"
 	(
@@ -346,39 +290,13 @@ linkDynamicLibrary( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	[ -d "$outDir" ] || mkdir -p "$outDir"
+	ensure_dir "$outDir"
 
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
-	case "$workDirAbs" in
-		*/) workDirAbs=${workDirAbs%/} ;;
-	esac
-
-	objArgs=""
-	for objPath in "$@"
-	do
-		[ -n "$objPath" ] || continue
-		case "$objPath" in
-			/*) objAbs=$objPath ;;
-			*) objAbs=$workDirAbs/$objPath ;;
-		esac
-		[ -f "$objAbs" ] \
-			|| printErrorAndExit "Object file not found: $objAbs"
-		quotedObj=$( quote "$objAbs" )
-		if [ -z "$objArgs" ]
-		then
-			objArgs=$quotedObj
-		else
-			objArgs="$objArgs $quotedObj"
-		fi
-	done
+	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
 	eval "set -- $flags $objArgs"
 	(
@@ -415,39 +333,13 @@ linkBinary( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	[ -d "$outDir" ] || mkdir -p "$outDir"
+	ensure_dir "$outDir"
 
-	case "$workDir" in
-		/*) workDirAbs=$workDir ;;
-		*)
-			workDirAbs=$(
-				CDPATH='' cd -- "$workDir" 2>/dev/null && pwd -P
-			) || printErrorAndExit "Work dir not found: $workDir"
-			;;
-	esac
+	workDirAbs=$( abs_dir "$workDir" ) \
+		|| printErrorAndExit "Work dir not found: $workDir"
+	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
 
-	case "$workDirAbs" in
-		*/) workDirAbs=${workDirAbs%/} ;;
-	esac
-
-	objArgs=""
-	for objPath in "$@"
-	do
-		[ -n "$objPath" ] || continue
-		case "$objPath" in
-			/*) objAbs=$objPath ;;
-			*) objAbs=$workDirAbs/$objPath ;;
-		esac
-		[ -f "$objAbs" ] \
-			|| printErrorAndExit "Object file not found: $objAbs"
-		quotedObj=$( quote "$objAbs" )
-		if [ -z "$objArgs" ]
-		then
-			objArgs=$quotedObj
-		else
-			objArgs="$objArgs $quotedObj"
-		fi
-	done
+	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
 	eval "set -- $flags $objArgs"
 	(
