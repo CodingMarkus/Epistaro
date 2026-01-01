@@ -10,8 +10,8 @@ __included_lib_list_sh=1
 
 
 # $1 - Project root directory.
-# ($2) - Optional mode: plain.
 #
+# ($2) - Optional mode: plain.
 # Lists available targets (one per line) and exits.
 #
 listTargetsAndExit( )
@@ -62,8 +62,8 @@ listTargetsAndExit( )
 
 
 # $1 - Project root directory.
-# ($2) - Optional mode: plain.
 #
+# ($2) - Optional mode: plain.
 # Lists available styles (one per line) and exits.
 #
 listStylesAndExit( )
@@ -94,9 +94,9 @@ listStylesAndExit( )
 
 
 # $1 - Project root directory.
+#
 # ($2) - Optional target name (resolved).
 # ($3) - Optional mode: plain.
-#
 # Lists available tests and exits.
 #
 listTestsAndExit( )

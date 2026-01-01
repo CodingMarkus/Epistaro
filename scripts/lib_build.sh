@@ -129,7 +129,14 @@ _buildFile( )
 	buildFile "$build_srcPath" "$build_objPath" "$workDir" "$fileFlags"
 }
 
+# $1 - Project root directory.
+# $2 - Source file path.
+# $3 - Object file output path.
+# $4 - Source directory for the file.
+# $5 - Quoted build settings string.
+#
 # Runs a build and captures clang diagnostics to control compile spacing.
+#
 _buildFileWithOutput( )
 {
 	build_projectRoot=$1
@@ -370,6 +377,8 @@ createStaticLibrary( )
 )
 
 
+# Prints the dynamic library extension for the current platform.
+#
 _dynamicLibExtension( )
 {
 	if command -v uname >/dev/null 2>&1

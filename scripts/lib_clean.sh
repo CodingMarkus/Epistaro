@@ -10,9 +10,9 @@ __included_lib_clean_sh=1
 
 
 # $1 - Project root directory.
+#
 # ($2) - Optional style name.
 # ($3) - Optional target name.
-#
 # Cleans build output for all builds, or a style/target subset.
 #
 cleanBuilds( )

@@ -14,6 +14,10 @@ __included_lib_test_sh=1
 . lib_outdated.sh
 
 
+# $1 - Argument to test.
+#
+# Returns success if the argument is a style flag.
+#
 isStyleFlag( )
 {
 	case "${1:-}" in
@@ -23,6 +27,10 @@ isStyleFlag( )
 }
 
 
+# $1 - Suite directory path.
+#
+# Prints test paths within the suite, relative to the tests root.
+#
 _collectTestsInSuite( )
 {
 	suiteDir=$1
@@ -76,6 +84,12 @@ EOF
 }
 
 
+# $1 - Project root directory.
+# $2 - Target name.
+#
+# ($3) - Optional test selection path.
+# Prints selected test paths relative to the target tests root.
+#
 collectTestDirs( )
 {
 	projectRoot=$1
@@ -142,6 +156,14 @@ collectTestDirs( )
 }
 
 
+# $1 - Project root directory.
+# $2 - Tests root directory.
+# $3 - Test path relative to the tests root.
+# $4 - Object output root directory.
+# $5 - Quoted build settings string.
+#
+# Builds objects for a test and updates sanitizer settings.
+#
 buildTestObjects( )
 {
 	projectRoot=$1
@@ -256,6 +278,11 @@ EOF
 }
 
 
+# $1 - Object output root directory.
+# $2 - Test path relative to the tests root.
+#
+# Prints object files for a test, if any.
+#
 collectTestObjects( )
 {
 	objRoot=$1
@@ -271,6 +298,13 @@ collectTestObjects( )
 }
 
 
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# ($4) - Optional flag to exclude main.o.
+# Prints target object files.
+#
 collectTargetObjects( )
 {
 	buildDir=$1
@@ -290,6 +324,11 @@ collectTargetObjects( )
 }
 
 
+# $1 - Tests target directory path.
+# $2 - Test path relative to the tests root.
+#
+# Prints the path to the test binary.
+#
 testBinaryPath( )
 {
 	testsTargetDir=$1
@@ -306,6 +345,11 @@ testBinaryPath( )
 }
 
 
+# $1 - Test binary path.
+#
+# ($2) - Optional dynamic library directory.
+# Runs a test binary with optional library path injection.
+#
 runTestBinary( )
 {
 	binPath=$1
@@ -331,6 +375,12 @@ runTestBinary( )
 }
 
 
+# $1 - Test directory path.
+# $2 - Test binary path.
+# $3 - Test label for error reporting.
+#
+# Runs integration test scripts for a test directory.
+#
 runIntegrationScripts( )
 {
 	testDir=$1

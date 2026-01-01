@@ -10,6 +10,7 @@ __included_lib_build_settings_sh=1
 . lib_error.sh
 . lib_fs.sh
 . lib_quote.sh
+. lib_style.sh
 
 
 # $1 - Build style file path.
@@ -59,33 +60,91 @@ expandStyle( )
 		case "$trimmed" in
 			\#*) continue ;;
 
-			\$include[[:space:]]* )
-				includePattern='$include'
-				includeLine=${trimmed#"$includePattern"}
-				includeName=$( printf '%s' "$includeLine" \
-					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//' )
-				if [ -z "$includeName" ]
-				then
-					printErrorAndExit "\$include missing name in $stylePath"
-				fi
-				case "$includeName" in
-					/*) includePath=$includeName ;;
-					*) includePath="$styleDirAbs/$includeName" ;;
-				esac
-				if [ ! -e "$includePath" ]
-				then
-					printErrorAndExit "\$include style not found: $includeName"
-				fi
-				expandStyle "$includePath"
+			\$set[[:space:]]* )
+				setLine=${trimmed#'$set'}
+				split=$( _style_split_var_and_rest "$setLine" )
+				oldIFS=$IFS
+				IFS='
+'
+				set -- $split
+				IFS=$oldIFS
+				varName=${1-}
+				rest=${2-}
+				[ -n "$varName" ] || \
+					printErrorAndExit "\$set missing name in $stylePath"
+				value=$( _style_parse_value "$rest" "$stylePath" )
+				_style_set_var "$varName" "$value" "$stylePath"
 				;;
-			\$include\?[[:space:]]* )
-				includePattern='$include?'
-				includeLine=${trimmed#"$includePattern"}
-				includeName=$( printf '%s' "$includeLine" \
-					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//' )
+			\$unset[[:space:]]* )
+				unsetLine=${trimmed#'$unset'}
+				split=$( _style_split_var_and_rest "$unsetLine" )
+				oldIFS=$IFS
+				IFS='
+'
+				set -- $split
+				IFS=$oldIFS
+				varName=${1-}
+				rest=${2-}
+				[ -n "$varName" ] || \
+					printErrorAndExit "\$unset missing name in $stylePath"
+				rest=$( _style_trim "$rest" )
+				[ -z "$rest" ] || \
+					printErrorAndExit "Unexpected text in $stylePath: $trimmed"
+				_style_unset_var "$varName" "$stylePath"
+				;;
+			\$include\?[[:space:]]*|\
+			\$include\?\(*|\
+			\$include[[:space:]]*|\
+			\$include\(* )
+				includeOptional=0
+				case "$trimmed" in
+					\$include\?*)
+						includeOptional=1
+						includeLine=${trimmed#'$include?'}
+						;;
+					*)
+						includeLine=${trimmed#'$include'}
+						;;
+				esac
+				includeDirective='$include'
+				if [ "$includeOptional" -eq 1 ]
+				then
+					includeDirective='$include?'
+				fi
+				includeLine=$( _style_trim_left "$includeLine" )
+				includeOk=1
+				case "$includeLine" in
+					\(* )
+						condBlock=${includeLine#\(}
+						case "$condBlock" in
+							*\)* )
+								cond=${condBlock%%\)*}
+								after=${condBlock#"$cond"}
+								after=${after#\)}
+								includeLine=$( _style_trim_left "$after" )
+								;;
+							*)
+								printErrorAndExit \
+									"Missing ')' in include condition in $stylePath"
+								;;
+						esac
+						if _style_eval_condition "$cond" "$stylePath"
+						then
+							includeOk=1
+						else
+							includeOk=0
+						fi
+						;;
+				esac
+				includeName=$( _style_trim "$includeLine" )
 				if [ -z "$includeName" ]
 				then
-					printErrorAndExit "\$include? missing name in $stylePath"
+					printErrorAndExit \
+						"$includeDirective missing name in $stylePath"
+				fi
+				if [ "$includeOk" -eq 0 ]
+				then
+					continue
 				fi
 				case "$includeName" in
 					/*) includePath=$includeName ;;
@@ -94,6 +153,14 @@ expandStyle( )
 				if [ -e "$includePath" ]
 				then
 					expandStyle "$includePath"
+				else
+					if [ "$includeOptional" -eq 1 ]
+					then
+						:
+					else
+						printErrorAndExit \
+							"\$include style not found: $includeName"
+					fi
 				fi
 				;;
 
@@ -110,6 +177,7 @@ expandStyle( )
 
 
 # $1 - Source directory to check for compile_flags.txt.
+# $2 - Project root directory.
 #
 # Prints the path to the nearest compile_flags.txt, searching parent
 # directories up to the project root.
@@ -199,6 +267,9 @@ hardcodedBuildSettings( )
 	printf '%s\n' "-flto=thin"
 }
 
+
+# Returns success if the terminal supports color diagnostics.
+#
 _supportsColorDiagnostics( )
 {
 	[ -t 2 ] || return 1
@@ -212,6 +283,8 @@ _supportsColorDiagnostics( )
 }
 
 
+# Prints color diagnostic flags when supported.
+#
 colorBuildSettings( )
 {
 	if _supportsColorDiagnostics
@@ -238,8 +311,8 @@ buildSettingsForStyle( )
 
 
 # $1 - Build style file path.
-# ($2) - Extra settings string containing one entry per line.
 #
+# ($2) - Extra settings string containing one entry per line.
 # Prints the quoted build settings string for the style plus active
 # terminal-driven settings and any extra settings.
 #

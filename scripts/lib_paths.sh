@@ -66,6 +66,8 @@ incDirName( )
 }
 
 
+# $1 - Project root directory.
+#
 # Prints the build output root path.
 #
 outRootPath( )
@@ -172,7 +174,6 @@ testsTargetObjDirPath( )
 # $1 - Build output root directory.
 # $2 - Style name.
 # $3 - Target name.
-#
 # $1 - Build output root directory.
 # $2 - Style name.
 # $3 - Target name.
@@ -194,9 +195,9 @@ testsTargetBinDirPath( )
 
 
 # $1 - Build output root directory.
+#
 # ($2) - Optional style name.
 # ($3) - Optional target name.
-#
 # Prints the build target directory.
 #
 buildTargetDirPath( )

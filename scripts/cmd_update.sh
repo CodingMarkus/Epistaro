@@ -9,6 +9,8 @@ initCmdPaths "$scriptDir"
 . lib_clangd.sh
 
 
+# Prints command usage information.
+#
 printHelp( )
 {
 	helpText="
@@ -24,6 +26,8 @@ printHelp( )
 }
 
 
+# Prints command usage to stderr and exits with failure.
+#
 printHelpAndExit( )
 {
 	printHelp >&2
@@ -31,6 +35,8 @@ printHelpAndExit( )
 }
 
 
+# Updates build configuration files for the project.
+#
 updateConfig( )
 {
 	defaultStylePath=$projDir/styles/_defaults/_default.cfg
@@ -38,6 +44,8 @@ updateConfig( )
 }
 
 
+# Updates all generated configuration files.
+#
 updateAll( )
 {
 	updateConfig

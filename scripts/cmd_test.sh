@@ -10,6 +10,8 @@ initCmdPaths "$scriptDir"
 . lib_test.sh
 
 
+# Prints command usage information.
+#
 printHelp( )
 {
 	helpText="
@@ -24,6 +26,8 @@ printHelp( )
 }
 
 
+# Prints command usage to stderr and exits with failure.
+#
 printHelpAndExit( )
 {
 	printHelp >&2

@@ -6,8 +6,8 @@ set -eu
 __included_lib_assert_sh=1
 
 # $1 - condition to be asserted.
-# ($2) - Optional error message to print
 #
+# ($2) - Optional error message to print
 # Does nothing if assertion is met.
 # Ends script with error if assertion fails.
 #

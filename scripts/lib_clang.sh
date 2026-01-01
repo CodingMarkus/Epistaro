@@ -206,6 +206,8 @@ buildFile( )
 )
 
 
+# Prints the dynamic library linker flag for the current platform.
+#
 _dynamicLibFlag( )
 {
 	if command -v uname >/dev/null 2>&1

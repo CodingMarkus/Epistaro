@@ -7,6 +7,8 @@ scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 initCmdPaths "$scriptDir"
 
 
+# Prints command usage information.
+#
 printHelp( )
 {
 	helpText="
@@ -20,6 +22,8 @@ printHelp( )
 }
 
 
+# Prints command usage to stderr and exits with failure.
+#
 printHelpAndExit( )
 {
 	printHelp >&2
