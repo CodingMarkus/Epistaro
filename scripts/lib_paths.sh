@@ -26,6 +26,14 @@ buildsDirName( )
 }
 
 
+# Prints the name of the tests directory.
+#
+testsDirName( )
+{
+	printf '%s\n' "tests"
+}
+
+
 # Prints the name of the object directory.
 #
 objDirName( )
@@ -82,6 +90,54 @@ buildsRootPath( )
 	assert "[ -n \"${1:-}\" ]" "buildsRootPath() missing project dir"
 
 	buildsRootPathFromBuildDir "$( outRootPath "$1" )"
+}
+
+
+# $1 - Build output root directory.
+#
+# Prints the tests root path for a build output root.
+#
+testsRootPathFromBuildDir( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"testsRootPathFromBuildDir() missing build dir"
+
+	printf '%s/%s\n' "$1" "$( testsDirName )"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the test target directory.
+#
+testsTargetDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" "testsTargetDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "testsTargetDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "testsTargetDirPath() missing target name"
+
+	printf '%s/%s/%s\n' "$( testsRootPathFromBuildDir "$1" )" "$2" "$3"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the test source/object directory for a test target.
+#
+testsTargetSrcDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"testsTargetSrcDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"testsTargetSrcDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"testsTargetSrcDirPath() missing target name"
+
+	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "src"
 }
 
 

@@ -8,6 +8,7 @@ initCmdPaths "$scriptDir"
 
 
 . lib_list.sh
+. lib_paths.sh
 
 
 printHelp( )
@@ -20,6 +21,10 @@ printHelp( )
   list s[tyles] [plain]
 
       List available styles.
+
+  list te[sts] <target> [plain]
+
+      List available tests for a target.
 "
 	printf '%s' "$helpText"
 }
@@ -64,6 +69,24 @@ case "${1:-}" in
 			plain)
 				[ "$#" -eq 2 ] || printHelpAndExit
 				listStylesAndExit "$projDir" plain
+				;;
+			*)
+				printHelpAndExit
+				;;
+		esac
+		;;
+
+	te|tests)
+		[ "$#" -ge 2 ] || printHelpAndExit
+		target=$( resolveTargetName "$projDir" "$2" )
+		case "${3:-}" in
+			"")
+				[ "$#" -eq 2 ] || printHelpAndExit
+				listTestsAndExit "$projDir" "$target"
+				;;
+			plain)
+				[ "$#" -eq 3 ] || printHelpAndExit
+				listTestsAndExit "$projDir" "$target" plain
 				;;
 			*)
 				printHelpAndExit

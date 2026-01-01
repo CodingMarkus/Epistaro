@@ -91,3 +91,55 @@ listStylesAndExit( )
 	printf '%s\n' "$styles" | awk '{ printf "   - %s\n", $0 }'
 	exit 0
 }
+
+
+# $1 - Project root directory.
+# $2 - Target name (resolved).
+# ($3) - Optional mode: plain.
+#
+# Lists available tests for a target (one per line) and exits.
+#
+listTestsAndExit( )
+{
+	assert "[ -n \"${1:-}\" ]" "listTestsAndExit() missing project dir"
+	assert "[ -n \"${2:-}\" ]" "listTestsAndExit() missing target"
+
+	projectRoot=$1
+	target=$2
+	mode=${3:-}
+
+	testsRoot=$projectRoot/targets/$target/tests
+	[ -d "$testsRoot" ] || exit 0
+
+	testDirs=$( find "$testsRoot" -type d \
+		\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
+	[ -n "$testDirs" ] || exit 0
+
+	if [ "$mode" = "plain" ]
+	then
+		printf '%s\n' "$testDirs" \
+			| sed "s#^$testsRoot/##" \
+			| awk '{ path=$0; sub(/\.(ut|it)$/, "", path); print path }'
+		exit 0
+	fi
+
+	printf '\nAvailable tests for "%s":\n\n' "$target"
+	printf '%s\n' "$testDirs" \
+		| sed "s#^$testsRoot/##" \
+		| awk '
+			{
+				orig=$0
+				base=$0
+				ext=""
+				if (sub(/\.(ut|it)$/, "", base)) {
+					ext=substr(orig, length(base)+2)
+				}
+				if (ext != "") {
+					printf "   - %s [%s]\n", base, ext
+				} else {
+					printf "   - %s\n", base
+				}
+			}
+		'
+	exit 0
+}
