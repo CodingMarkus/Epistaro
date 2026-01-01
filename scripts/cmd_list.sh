@@ -6,20 +6,19 @@ scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 . "$scriptDir/lib_cmd.sh"
 initCmdPaths "$scriptDir"
 
-. lib_clangd.sh
+. lib_list.sh
 
 
 printHelp( )
 {
 	helpText="
-  update
+  list t[argets]
 
-      Update all project configuration and generated files.
+      List available targets.
 
+  list s[tyles]
 
-  update config|cfg
-
-      Update build configuration files (like .clangd).
+      List available styles.
 "
 	printf '%s' "$helpText"
 }
@@ -32,19 +31,6 @@ printHelpAndExit( )
 }
 
 
-updateConfig( )
-{
-	defaultStylePath=$projDir/styles/_defaults/_default.cfg
-	updateClangd "$projDir/.clangd" "$defaultStylePath"
-}
-
-
-updateAll( )
-{
-	updateConfig
-}
-
-
 case "${1:-}" in
 	--help)
 		[ "$#" -eq 1 ] || printHelpAndExit
@@ -52,20 +38,24 @@ case "${1:-}" in
 		exit 0
 		;;
 
-	"")
-		updateAll
-		exit 0
+	t|target|targets)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		listTargetsAndExit "$projDir"
 		;;
 
-	config|cfg)
+	s|style|styles)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		updateConfig
-		exit 0
+		listStylesAndExit "$projDir"
 		;;
 
 	-*)
 		printHelpAndExit
 		;;
+
+	"")
+		printHelpAndExit
+		;;
+
 esac
 
 printHelpAndExit

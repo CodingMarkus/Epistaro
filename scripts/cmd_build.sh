@@ -13,27 +13,8 @@ printHelp( )
   build [<style> [<target> ...]]
 
       Build target(s) using style.
-      If no target is provided, all targets are build.
-      If no style is provided, all targets are build deployment style.
-
-  build -c[lean] [<style> [<target>]]
-
-      Clean all builds, or only builds for a style and optional target.
-
-
-  build -t[argets]
-
-      List available targets.
-
-
-  build -s[tyles]
-
-      List available styles.
-
-
-  build -h[elp]
-
-      Show this help screen.
+      If no target is provided, all targets are built.
+      If no style is provided, all targets are built deployment style.
 "
 	printf '%s' "$helpText"
 }
@@ -45,31 +26,13 @@ printHelpAndExit( )
 	exit 1
 }
 
-. lib_clean.sh
 . lib_error.sh
-. lib_list.sh
 . lib_paths.sh
 
 case "${1:-}" in
-	-help|-h)
+	--help)
 		[ "$#" -eq 1 ] || printHelpAndExit
 		printHelp
-		exit 0
-		;;
-
-	-targets|-t)
-		[ "$#" -eq 1 ] || printHelpAndExit
-		listTargetsAndExit "$projDir"
-		;;
-
-	-styles|-s)
-		[ "$#" -eq 1 ] || printHelpAndExit
-		listStylesAndExit "$projDir"
-		;;
-
-	-clean|-c)
-		shift
-		cleanBuilds "$projDir" "$@" || printHelpAndExit
 		exit 0
 		;;
 
