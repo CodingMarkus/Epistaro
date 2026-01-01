@@ -71,6 +71,7 @@ fi
 . lib_build_settings.sh
 
 buildSettings=$( resolvedBuildSettings "$styleFile" )
+syncStyleSetVars "$styleFile"
 
 if [ "$#" -eq 0 ]
 then

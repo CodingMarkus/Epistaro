@@ -86,6 +86,7 @@ then
 fi
 
 buildSettings=$( resolvedBuildSettings "$styleFile" )
+syncStyleSetVars "$styleFile"
 
 selections=""
 if [ "$#" -eq 0 ]

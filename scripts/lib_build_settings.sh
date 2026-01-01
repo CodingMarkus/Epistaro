@@ -18,11 +18,26 @@ __included_lib_build_settings_sh=1
 # Prints expanded build styles
 #
 expandStyle( )
-(
+{
+	styleDepth=${__style_parse_depth:-0}
+	styleDepth=$((styleDepth + 1))
+	__style_parse_depth=$styleDepth
+
+	eval "__style_saved_stylePath_$styleDepth=\${stylePath-}"
+	eval "__style_saved_styleDir_$styleDepth=\${styleDir-}"
+	eval "__style_saved_stylePathAbs_$styleDepth=\${stylePathAbs-}"
+	eval "__style_saved_styleDirAbs_$styleDepth=\${styleDirAbs-}"
+	eval "__style_saved_includeStack_$styleDepth=\${__style_include_stack-}"
+
 	stylePath=$1
 
 	assert "[ -n \"${stylePath:-}\" ]" "expandStyle() missing style path"
 	assert "[ -e \"$stylePath\" ]" "style file not found: $stylePath"
+
+	if [ "$styleDepth" -eq 1 ]
+	then
+		__style_caps_vars=""
+	fi
 
 	case "$stylePath" in
 		*/*) styleDir=${stylePath%/*} ;;
@@ -169,11 +184,38 @@ expandStyle( )
 				;;
 
 			*)
-				printf '%s\n' "$trimmed"
+				if [ "${__style_emit_settings:-1}" != "0" ]
+				then
+					printf '%s\n' "$trimmed"
+				fi
 				;;
 		esac
 	done < "$stylePath"
-)
+
+	if [ "$styleDepth" -eq 1 ] && [ -n "${__style_emit_exports:-}" ]
+	then
+		_style_export_caps_vars "$stylePath"
+	fi
+
+	eval "stylePath=\${__style_saved_stylePath_$styleDepth-}"
+	eval "styleDir=\${__style_saved_styleDir_$styleDepth-}"
+	eval "stylePathAbs=\${__style_saved_stylePathAbs_$styleDepth-}"
+	eval "styleDirAbs=\${__style_saved_styleDirAbs_$styleDepth-}"
+	eval "__style_include_stack=\${__style_saved_includeStack_$styleDepth-}"
+	eval "unset __style_saved_stylePath_$styleDepth \
+		__style_saved_styleDir_$styleDepth \
+		__style_saved_stylePathAbs_$styleDepth \
+		__style_saved_styleDirAbs_$styleDepth \
+		__style_saved_includeStack_$styleDepth"
+
+	styleDepth=$((styleDepth - 1))
+	if [ "$styleDepth" -gt 0 ]
+	then
+		__style_parse_depth=$styleDepth
+	else
+		unset __style_parse_depth
+	fi
+}
 
 
 # $1 - Source directory to check for compile_flags.txt.
@@ -308,6 +350,47 @@ buildSettingsForStyle( )
 
 	quoteSettings "$styleSettings"
 )
+
+
+# $1 - Build style file path.
+#
+# Prints export/unset commands for all-caps style variables.
+#
+styleExportsForStyle( )
+(
+	stylePath=$1
+
+	assert "[ -n \"${stylePath:-}\" ]" "styleExportsForStyle() missing path"
+
+	__style_emit_settings=0
+	__style_emit_exports=1
+	__style_caps_vars=""
+
+	expandStyle "$stylePath"
+)
+
+
+# $1 - Build style file path.
+#
+# Updates exported __style_set_* vars for all-caps style variables.
+#
+syncStyleSetVars( )
+{
+	stylePath=$1
+
+	assert "[ -n \"${stylePath:-}\" ]" "syncStyleSetVars() missing path"
+
+	exportLines=$( styleExportsForStyle "$stylePath" )
+	[ -n "$exportLines" ] || return 0
+
+	while IFS= read -r exportLine || [ -n "$exportLine" ]
+	do
+		[ -n "$exportLine" ] || continue
+		eval "$exportLine"
+	done <<EOF
+$exportLines
+EOF
+}
 
 
 # $1 - Build style file path.

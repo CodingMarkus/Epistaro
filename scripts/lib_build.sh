@@ -109,6 +109,30 @@ $flags_path"
 }
 
 
+# Prints linker flags for deploy post-processing.
+#
+_deployPostprocessFlags( )
+{
+	if command -v uname >/dev/null 2>&1
+	then
+		case "$( uname -s 2>/dev/null )" in
+			Darwin)
+				printf '%s\n' "-Wl,-dead_strip"
+				printf '%s\n' "-Wl,-S"
+				printf '%s\n' "-Wl,-x"
+				;;
+			*)
+				printf '%s\n' "-Wl,--gc-sections"
+				printf '%s\n' "-Wl,--strip-debug"
+				;;
+		esac
+	else
+		printf '%s\n' "-Wl,--gc-sections"
+		printf '%s\n' "-Wl,--strip-debug"
+	fi
+}
+
+
 # $1 - Project root directory.
 # $2 - Source file path.
 # $3 - Object file output path.
@@ -437,19 +461,35 @@ EOF
 
 	[ $# -gt 0 ] || return 0
 
-	linkFlags=""
+	baseLinkFlags=""
 	majorSpacingDone=0
 	if [ -n "${targetSanitizeSettings:-}" ]
 	then
 		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
 		if [ -n "$sanitizeFlags" ]
 		then
-			linkFlags=$( appendQuotedSettings "$linkFlags" "$sanitizeFlags" )
+			baseLinkFlags=$( appendQuotedSettings "$baseLinkFlags" \
+				"$sanitizeFlags" )
 		fi
 	fi
-	if [ -z "$linkFlags" ]
+	finalLinkFlags=$baseLinkFlags
+	if [ -n "${__style_set_DEPLOY_PROCESSING+x}" ]
 	then
-		linkFlags="--"
+		postFlags=$( _deployPostprocessFlags )
+		if [ -n "$postFlags" ]
+		then
+			postFlagsQuoted=$( quoteSettings "$postFlags" )
+			finalLinkFlags=$( appendQuotedSettings "$finalLinkFlags" \
+				"$postFlagsQuoted" )
+		fi
+	fi
+	if [ -z "$baseLinkFlags" ]
+	then
+		baseLinkFlags="--"
+	fi
+	if [ -z "$finalLinkFlags" ]
+	then
+		finalLinkFlags="--"
 	fi
 
 	case "$target" in
@@ -468,7 +508,7 @@ EOF
 				fi
 				printf 'Pre-Linking %s...\n' "${prelinkPath##*/}"
 				prelinkObjects "$prelinkPath" "$projectRoot" \
-					"$linkFlags" "$@"
+					"$baseLinkFlags" "$@"
 				printf '\n'
 			fi
 
@@ -496,7 +536,7 @@ EOF
 				fi
 				printf 'Linking %s...\n' "${dynamicPath##*/}"
 				linkDynamicLibrary "$dynamicPath" "$projectRoot" \
-					"$linkFlags" "$prelinkPath"
+					"$finalLinkFlags" "$prelinkPath"
 				printf '\n'
 			fi
 			;;
@@ -512,7 +552,7 @@ EOF
 					majorSpacingDone=1
 				fi
 				printf 'Linking %s...\n' "${binPath##*/}"
-				linkBinary "$binPath" "$projectRoot" "$linkFlags" \
+				linkBinary "$binPath" "$projectRoot" "$finalLinkFlags" \
 					"$@"
 				printf '\n'
 			fi
