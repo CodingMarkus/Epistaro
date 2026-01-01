@@ -8,4 +8,4 @@ Lightweight mail server (SMTP/IMAP) for macOS and Linux. Written in clang C, des
 
 ## Development
 
-See [doc/dev/Dev.md](doc/dev/Dev.md)
+See [docs/dev/Development.md](docs/dev/Development.md)
