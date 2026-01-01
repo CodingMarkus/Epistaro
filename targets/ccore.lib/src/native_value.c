@@ -2,6 +2,10 @@
 
 #include "base/type.h"
 #include "base/fletcher32.h"
+#include "base/hashes/xxh3.h"
+#include "base/hashes/xxh32.h"
+#include "base/common/optional/begin_targets.h"
+#include "base/common/optional/end_targets.h"
 
 #include <stdalign.h>
 #include <stdatomic.h>
@@ -211,7 +215,12 @@ HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) optValue )
 {
 	return_unless(0, value, optValue);
 	assertIsValue(value);
-	def hashIntf = getDefaultHasherInterface_Hasher();
+	const HasherInterface * hashIntf;
+#if CPU_IS_64_BIT
+	hashIntf = geHasherInterface_XXH3();
+#else
+	hashIntf = getHasherInterface_XXH32();
+#endif
 
 	int8e hasherStorage[hashIntf->getRequiredSize()];
 	def hasher = hashIntf->initStorage(hasherStorage);
