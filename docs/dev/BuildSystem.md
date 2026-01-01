@@ -49,9 +49,9 @@ Build output lives under the build root:
 
 - Library public headers are synced to `builds/<style>/<target>/inc/`.
 
-- `tests/<style>/<target>/` contains test binaries.
+- `tests/<style>/<target>/bin/` contains test binaries.
 
-- `tests/<style>/<target>/src/` contains test objects and `.dep` files.
+- `tests/<style>/<target>/obj/` contains test objects and `.dep` files.
 
 When invoked from inside the project, the build root is `.out/`. When
 invoked from elsewhere, the build root is the current working directory.

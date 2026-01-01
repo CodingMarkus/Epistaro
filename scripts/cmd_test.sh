@@ -268,8 +268,8 @@ $target"
 		continue
 	fi
 
-	testObjRoot=$( testsTargetSrcDirPath "$buildDir" "$styleName" "$target" )
-	testOutDir=$( testsTargetDirPath "$buildDir" "$styleName" "$target" )
+	testObjRoot=$( testsTargetObjDirPath "$buildDir" "$styleName" "$target" )
+	testOutDir=$( testsTargetBinDirPath "$buildDir" "$styleName" "$target" )
 	ensure_dir "$testObjRoot"
 	ensure_dir "$testOutDir"
 

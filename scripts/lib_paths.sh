@@ -34,6 +34,14 @@ testsDirName( )
 }
 
 
+# Prints the name of the bin directory.
+#
+binDirName( )
+{
+	printf '%s\n' "bin"
+}
+
+
 # Prints the name of the object directory.
 #
 objDirName( )
@@ -137,7 +145,51 @@ testsTargetSrcDirPath( )
 	assert "[ -n \"${3:-}\" ]" \
 		"testsTargetSrcDirPath() missing target name"
 
-	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "src"
+	testsTargetObjDirPath "$1" "$2" "$3"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the test object directory for a test target.
+#
+testsTargetObjDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"testsTargetObjDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"testsTargetObjDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"testsTargetObjDirPath() missing target name"
+
+	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" \
+		"$( objDirName )"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
+# Prints the test binary directory for a test target.
+#
+testsTargetBinDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" \
+		"testsTargetBinDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" \
+		"testsTargetBinDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" \
+		"testsTargetBinDirPath() missing target name"
+
+	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" \
+		"$( binDirName )"
 }
 
 
