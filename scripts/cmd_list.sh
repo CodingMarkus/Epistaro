@@ -14,17 +14,17 @@ initCmdPaths "$scriptDir"
 printHelp( )
 {
 	helpText="
-  list t[argets] [plain]
+  list [-plain] t[argets]
 
       List available targets.
 
-  list s[tyles] [plain]
+  list [-plain] s[tyles]
 
       List available styles.
 
-  list te[sts] <target> [plain]
+  list [-plain] te[sts] [<target>]
 
-      List available tests for a target.
+      List available tests for a target, or all targets.
 "
 	printf '%s' "$helpText"
 }
@@ -43,50 +43,40 @@ case "${1:-}" in
 		printHelp
 		exit 0
 		;;
+	-plain)
+		shift
+		plainMode=plain
+		;;
+	*)
+		plainMode=
+		;;
+esac
+
+case "${1:-}" in
+	--help)
+		[ "$#" -eq 1 ] || printHelpAndExit
+		printHelp
+		exit 0
+		;;
 
 	t|target|targets)
-		case "${2:-}" in
-			"")
-				[ "$#" -eq 1 ] || printHelpAndExit
-				listTargetsAndExit "$projDir"
-				;;
-			plain)
-				[ "$#" -eq 2 ] || printHelpAndExit
-				listTargetsAndExit "$projDir" plain
-				;;
-			*)
-				printHelpAndExit
-				;;
-		esac
+		[ "$#" -eq 1 ] || printHelpAndExit
+		listTargetsAndExit "$projDir" "$plainMode"
 		;;
 
 	s|style|styles)
-		case "${2:-}" in
-			"")
-				[ "$#" -eq 1 ] || printHelpAndExit
-				listStylesAndExit "$projDir"
-				;;
-			plain)
-				[ "$#" -eq 2 ] || printHelpAndExit
-				listStylesAndExit "$projDir" plain
-				;;
-			*)
-				printHelpAndExit
-				;;
-		esac
+		[ "$#" -eq 1 ] || printHelpAndExit
+		listStylesAndExit "$projDir" "$plainMode"
 		;;
 
 	te|tests)
-		[ "$#" -ge 2 ] || printHelpAndExit
-		target=$( resolveTargetName "$projDir" "$2" )
-		case "${3:-}" in
-			"")
-				[ "$#" -eq 2 ] || printHelpAndExit
-				listTestsAndExit "$projDir" "$target"
+		case "$#" in
+			1)
+				listTestsAndExit "$projDir" "" "$plainMode"
 				;;
-			plain)
-				[ "$#" -eq 3 ] || printHelpAndExit
-				listTestsAndExit "$projDir" "$target" plain
+			2)
+				target=$( resolveTargetName "$projDir" "$2" )
+				listTestsAndExit "$projDir" "$target" "$plainMode"
 				;;
 			*)
 				printHelpAndExit

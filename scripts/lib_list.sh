@@ -94,52 +94,102 @@ listStylesAndExit( )
 
 
 # $1 - Project root directory.
-# $2 - Target name (resolved).
+# ($2) - Optional target name (resolved).
 # ($3) - Optional mode: plain.
 #
-# Lists available tests for a target (one per line) and exits.
+# Lists available tests and exits.
 #
 listTestsAndExit( )
 {
 	assert "[ -n \"${1:-}\" ]" "listTestsAndExit() missing project dir"
-	assert "[ -n \"${2:-}\" ]" "listTestsAndExit() missing target"
 
 	projectRoot=$1
-	target=$2
+	target=${2:-}
 	mode=${3:-}
 
-	testsRoot=$projectRoot/targets/$target/tests
-	[ -d "$testsRoot" ] || exit 0
-
-	testDirs=$( find "$testsRoot" -type d \
-		\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
-	[ -n "$testDirs" ] || exit 0
-
-	if [ "$mode" = "plain" ]
+	if [ "$target" = "plain" ] && [ -z "$mode" ]
 	then
+		mode=plain
+		target=
+	fi
+
+	if [ -n "$target" ]
+	then
+		testsRoot=$projectRoot/targets/$target/tests
+		[ -d "$testsRoot" ] || exit 0
+
+		testDirs=$( find "$testsRoot" -type d \
+			\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
+		[ -n "$testDirs" ] || exit 0
+
+		if [ "$mode" = "plain" ]
+		then
+			printf '%s\n' "$testDirs" \
+				| sed "s#^$testsRoot/##" \
+				| awk -v prefix="$target/" \
+					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
+			exit 0
+		fi
+
+		printf '\nAvailable tests for "%s":\n\n' "$target"
 		printf '%s\n' "$testDirs" \
 			| sed "s#^$testsRoot/##" \
-			| awk '{ path=$0; sub(/\.(ut|it)$/, "", path); print path }'
+			| awk '
+				{
+					orig=$0
+					base=$0
+					ext=""
+					if (sub(/\.(ut|it)$/, "", base)) {
+						ext=substr(orig, length(base)+2)
+					}
+					if (ext != "") {
+						printf "   - %s [%s]\n", base, ext
+					} else {
+						printf "   - %s\n", base
+					}
+				}
+			'
 		exit 0
 	fi
 
-	printf '\nAvailable tests for "%s":\n\n' "$target"
-	printf '%s\n' "$testDirs" \
-		| sed "s#^$testsRoot/##" \
-		| awk '
-			{
-				orig=$0
-				base=$0
-				ext=""
-				if (sub(/\.(ut|it)$/, "", base)) {
-					ext=substr(orig, length(base)+2)
+	for targetDir in "$projectRoot"/targets/*
+	do
+		[ -d "$targetDir" ] || continue
+		target=$( basename -- "$targetDir" )
+		testsRoot=$targetDir/tests
+		[ -d "$testsRoot" ] || continue
+
+		testDirs=$( find "$testsRoot" -type d \
+			\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
+		[ -n "$testDirs" ] || continue
+
+		if [ "$mode" = "plain" ]
+		then
+			printf '%s\n' "$testDirs" \
+				| sed "s#^$testsRoot/##" \
+				| awk -v prefix="$target/" \
+					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
+			continue
+		fi
+
+		printf '\nAvailable tests for "%s":\n\n' "$target"
+		printf '%s\n' "$testDirs" \
+			| sed "s#^$testsRoot/##" \
+			| awk '
+				{
+					orig=$0
+					base=$0
+					ext=""
+					if (sub(/\.(ut|it)$/, "", base)) {
+						ext=substr(orig, length(base)+2)
+					}
+					if (ext != "") {
+						printf "   - %s [%s]\n", base, ext
+					} else {
+						printf "   - %s\n", base
+					}
 				}
-				if (ext != "") {
-					printf "   - %s [%s]\n", base, ext
-				} else {
-					printf "   - %s\n", base
-				}
-			}
-		'
+			'
+	done
 	exit 0
 }
