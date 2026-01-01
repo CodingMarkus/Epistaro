@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 
 . lib_error.sh
@@ -22,7 +22,7 @@ else
 	shift
 fi
 
-cmdPath=$( findCmdScript "$scriptDir" "$cmdName" ) || \
+cmdPath=$( findCmdScript "$__scriptDir" "$cmdName" ) || \
 	printErrorAndExit "Command not found: $cmdName"
 
 appendNote=0

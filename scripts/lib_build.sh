@@ -11,6 +11,7 @@ __included_lib_build_sh=1
 . lib_clang.sh
 . lib_outdated.sh
 . lib_paths.sh
+. lib_platform.sh
 . lib_quote.sh
 . lib_sanitize.sh
 
@@ -18,7 +19,7 @@ __included_lib_build_sh=1
 # $2 - Source directory for the file.
 # $3 - Quoted build settings string.
 #
-# Sets workDir and fileFlags for the file build step.
+# Sets __workDir and __fileFlags for the file build step.
 #
 _prepareFlags( )
 {
@@ -26,8 +27,8 @@ _prepareFlags( )
 	flags_srcDir=$2
 	flags_buildSettings=$3
 
-	[ "${fileFlagsReady:-0}" -eq 0 ] || return 0
-	fileFlagsReady=1
+	[ "${__fileFlagsReady:-0}" -eq 0 ] || return 0
+	__fileFlagsReady=1
 
 	# Find any compile_flags.txt and read it
 	flags_path=$( findCompileFlags "$flags_srcDir" "$flags_projectRoot" )
@@ -64,7 +65,7 @@ _prepareFlags( )
 		if [ -n "$flags_path" ]
 		then
 			case "
-${targetSanitizePaths:-}
+${__targetSanitizePaths:-}
 " in
 				*"
 $flags_path
@@ -82,29 +83,29 @@ $sanitizeSettings
 EOF
 			if [ -n "$flags_path" ]
 			then
-				if [ -n "${targetSanitizePaths:-}" ]
+				if [ -n "${__targetSanitizePaths:-}" ]
 				then
-					targetSanitizePaths="$targetSanitizePaths
+					__targetSanitizePaths="$__targetSanitizePaths
 $flags_path"
 				else
-					targetSanitizePaths=$flags_path
+					__targetSanitizePaths=$flags_path
 				fi
 			fi
 		fi
 	fi
 	if [ -n "$flags_dir" ]
 	then
-		workDir=$flags_dir
+		__workDir=$flags_dir
 	else
-		workDir=$flags_srcDir
+		__workDir=$flags_srcDir
 	fi
 
 	# Create final build flags for the file to build
-	fileFlags=$( appendQuotedSettings "$flags_buildSettings" "$flags_dirFlags" )
+	__fileFlags=$( appendQuotedSettings "$flags_buildSettings" "$flags_dirFlags" )
 
-	if [ -z "$fileFlags" ]
+	if [ -z "$__fileFlags" ]
 	then
-		fileFlags="--"
+		__fileFlags="--"
 	fi
 }
 
@@ -113,19 +114,11 @@ $flags_path"
 #
 _deployPostprocessFlags( )
 {
-	if command -v uname >/dev/null 2>&1
+	if platform_target_is_apple
 	then
-		case "$( uname -s 2>/dev/null )" in
-			Darwin)
-				printf '%s\n' "-Wl,-dead_strip"
-				printf '%s\n' "-Wl,-S"
-				printf '%s\n' "-Wl,-x"
-				;;
-			*)
-				printf '%s\n' "-Wl,--gc-sections"
-				printf '%s\n' "-Wl,--strip-debug"
-				;;
-		esac
+		printf '%s\n' "-Wl,-dead_strip"
+		printf '%s\n' "-Wl,-S"
+		printf '%s\n' "-Wl,-x"
 	else
 		printf '%s\n' "-Wl,--gc-sections"
 		printf '%s\n' "-Wl,--strip-debug"
@@ -150,7 +143,7 @@ _buildFile( )
 	build_settings=$5
 
 	_prepareFlags "$build_projectRoot" "$build_srcDir" "$build_settings"
-	buildFile "$build_srcPath" "$build_objPath" "$workDir" "$fileFlags"
+	buildFile "$build_srcPath" "$build_objPath" "$__workDir" "$__fileFlags"
 }
 
 # $1 - Project root directory.
@@ -183,9 +176,9 @@ _buildFileWithOutput( )
 	if [ -s "$tmpPath" ]
 	then
 		cat "$tmpPath" >&2
-		buildFileHadOutput=1
+		__buildFileHadOutput=1
 	else
-		buildFileHadOutput=0
+		__buildFileHadOutput=0
 	fi
 	rm -f "$tmpPath"
 
@@ -265,9 +258,9 @@ buildTarget( )
 	srcRoot=$targetDir/src
 	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$targetStyleName" "$target" )
 
-	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
-	targetSanitizeSettings=""
-	targetSanitizePaths=""
+	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
+	__targetSanitizeSettings=""
+	__targetSanitizePaths=""
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
@@ -294,12 +287,12 @@ buildTarget( )
 				*) srcDir="." ;;
 			esac
 
-			fileFlagsReady=0
+			__fileFlagsReady=0
 
 			if depFileIsOutdated "$depPath"
 			then
 				_prepareFlags "$projectRoot" "$srcDir" "$targetBuildSettings"
-				generateDepFile "$srcPath" "$depPath" "$workDir" "$fileFlags"
+				generateDepFile "$srcPath" "$depPath" "$__workDir" "$__fileFlags"
 			fi
 
 			# Object file older than dep file?
@@ -312,7 +305,7 @@ buildTarget( )
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
 					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$buildFileHadOutput
+				compileSpacing=$__buildFileHadOutput
 				compiledAny=1
 				continue
 			fi
@@ -338,7 +331,7 @@ buildTarget( )
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
 					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$buildFileHadOutput
+				compileSpacing=$__buildFileHadOutput
 				compiledAny=1
 				continue
 			fi
@@ -352,7 +345,7 @@ buildTarget( )
 				printf 'Compiling %s...\n' "$relPath"
 				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
 					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$buildFileHadOutput
+				compileSpacing=$__buildFileHadOutput
 				compiledAny=1
 			fi
 			done <<EOF
@@ -361,7 +354,7 @@ EOF
 		fi
 
 	buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
-		"$targetBuildSettings" "$targetSanitizeSettings"
+		"$targetBuildSettings" "$__targetSanitizeSettings"
 
 	case "$target" in
 		*.lib)
@@ -386,18 +379,18 @@ EOF
 createStaticLibrary( )
 (
 	outPath=$1
-	workDir=$2
+	__workDir=$2
 	flags=$3
 	shift 3
 
 	assert "[ -n \"${outPath:-}\" ]" "createStaticLibrary() missing output path"
-	assert "[ -n \"${workDir:-}\" ]" "createStaticLibrary() missing work dir"
+	assert "[ -n \"${__workDir:-}\" ]" "createStaticLibrary() missing work dir"
 	assert "[ -n \"${flags:-}\" ]" "createStaticLibrary() missing flags"
 	assert "[ $# -gt 0 ]" "createStaticLibrary() missing object files"
 
 	prelinkPath=$outPath.prelink.o
-	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
-	createStaticLibraryFromObjects "$outPath" "$workDir" "$prelinkPath"
+	prelinkObjects "$prelinkPath" "$__workDir" "$flags" "$@"
+	createStaticLibraryFromObjects "$outPath" "$__workDir" "$prelinkPath"
 )
 
 
@@ -405,12 +398,12 @@ createStaticLibrary( )
 #
 _dynamicLibExtension( )
 {
-	if command -v uname >/dev/null 2>&1
+	if platform_target_is_apple
 	then
-		case "$( uname -s 2>/dev/null )" in
-			Darwin) printf '%s\n' ".dylib" ;;
-			*) printf '%s\n' ".so" ;;
-		esac
+		printf '%s\n' ".dylib"
+	elif platform_target_is_windows
+	then
+		printf '%s\n' ".dll"
 	else
 		printf '%s\n' ".so"
 	fi
@@ -433,7 +426,7 @@ buildTargetOutput( )
 	targetStyleName=$3
 	buildDir=$4
 	targetBuildSettings=$5
-	targetSanitizeSettings=$6
+	__targetSanitizeSettings=$6
 
 	assert "[ -n \"${projectRoot:-}\" ]" \
 		"buildTargetOutput() missing project dir"
@@ -463,9 +456,9 @@ EOF
 
 	baseLinkFlags=""
 	majorSpacingDone=0
-	if [ -n "${targetSanitizeSettings:-}" ]
+	if [ -n "${__targetSanitizeSettings:-}" ]
 	then
-		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
+		sanitizeFlags=$( quoteSettings "$__targetSanitizeSettings" )
 		if [ -n "$sanitizeFlags" ]
 		then
 			baseLinkFlags=$( appendQuotedSettings "$baseLinkFlags" \

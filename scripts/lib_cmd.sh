@@ -8,23 +8,23 @@ __included_lib_cmd_sh=1
 
 # $1 - Script directory path.
 #
-# Initializes origDir, scriptDir, and projDir, then cd's into scriptDir.
+# Initializes __origDir, __scriptDir, and __projDir, then cd's into __scriptDir.
 #
 initCmdPaths( )
 {
 	# shellcheck disable=SC2034
-	origDir=$( pwd -P )
-	scriptDir=${1:-}
+	__origDir=$( pwd -P )
+	__scriptDir=${1:-}
 
-	[ -n "$scriptDir" ] || {
+	[ -n "$__scriptDir" ] || {
 		printf '%s\n' "Error: initCmdPaths() missing script dir" >&2
 		exit 1
 	}
 
 	# shellcheck disable=SC2034
-	projDir=$( CDPATH='' cd -- "$scriptDir/.." && pwd -P )
+	__projDir=$( CDPATH='' cd -- "$__scriptDir/.." && pwd -P )
 
-	cd "$scriptDir"
+	cd "$__scriptDir"
 }
 
 

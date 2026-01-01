@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 
 . lib_clean.sh
@@ -45,5 +45,5 @@ case "${1:-}" in
 
 esac
 
-cleanBuilds "$projDir" "$@" || printHelpAndExit
+cleanBuilds "$__projDir" "$@" || printHelpAndExit
 exit 0

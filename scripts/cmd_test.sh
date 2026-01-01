@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 
 . lib_test.sh
@@ -75,9 +75,9 @@ done
 styleFile=$styleName
 case "$styleFile" in
 	/*) ;;
-	*/*.cfg|*/*) styleFile="$projDir/$styleFile" ;;
-	*.cfg) styleFile="$projDir/styles/$styleFile" ;;
-	*) styleFile="$projDir/styles/$styleName.cfg" ;;
+	*/*.cfg|*/*) styleFile="$__projDir/$styleFile" ;;
+	*.cfg) styleFile="$__projDir/styles/$styleFile" ;;
+	*) styleFile="$__projDir/styles/$styleName.cfg" ;;
 esac
 
 if [ ! -f "$styleFile" ]
@@ -85,13 +85,15 @@ then
 	printErrorAndExit "Style not found: $styleFile"
 fi
 
+platform_require_supported_target
+
 buildSettings=$( resolvedBuildSettings "$styleFile" )
 syncStyleSetVars "$styleFile"
 
 selections=""
 if [ "$#" -eq 0 ]
 then
-	for targetDir in "$projDir"/targets/*
+	for targetDir in "$__projDir"/targets/*
 	do
 		[ -d "$targetDir" ] || continue
 		target=$( basename -- "$targetDir" )
@@ -123,7 +125,7 @@ else
 				;;
 		esac
 
-		target=$( resolveTargetName "$projDir" "$targetPart" )
+		target=$( resolveTargetName "$__projDir" "$targetPart" )
 
 		if [ -n "$selections" ]
 		then
@@ -151,7 +153,7 @@ do
 	fi
 
 	: > "$tmpPath"
-	collectTestDirs "$projDir" "$target" "$selection" > "$tmpPath"
+	collectTestDirs "$__projDir" "$target" "$selection" > "$tmpPath"
 
 	if [ ! -s "$tmpPath" ]
 	then
@@ -189,9 +191,9 @@ then
 	exit 0
 fi
 
-case "$origDir" in
-	"$projDir"/*|"$projDir") buildDir=$( outRootPath "$projDir" ) ;;
-	*) buildDir="$origDir" ;;
+case "$__origDir" in
+	"$__projDir"/*|"$__projDir") buildDir=$( outRootPath "$__projDir" ) ;;
+	*) buildDir="$__origDir" ;;
 esac
 
 builtTargets=""
@@ -226,7 +228,7 @@ $builtTargets
 $target
 "*) ;;
 		*)
-			buildTarget "$projDir" "$target" "$styleName" "$buildDir" \
+			buildTarget "$__projDir" "$target" "$styleName" "$buildDir" \
 				"$buildSettings"
 			builtTargets="$builtTargets
 $target"
@@ -246,7 +248,7 @@ $target"
 			;;
 	esac
 
-	testsRoot=$projDir/targets/$target/tests
+	testsRoot=$__projDir/targets/$target/tests
 	testDir=$testsRoot/$testRel
 	[ -d "$testDir" ] \
 		|| printErrorAndExit "Test not found: $target/$testRel"
@@ -278,7 +280,7 @@ $target"
 	ensure_dir "$testObjRoot"
 	ensure_dir "$testOutDir"
 
-	if ! buildTestObjects "$projDir" "$testsRoot" "$testRel" \
+	if ! buildTestObjects "$__projDir" "$testsRoot" "$testRel" \
 		"$testObjRoot" "$buildSettings"
 	then
 		if [ "$?" -eq 2 ]
@@ -336,7 +338,7 @@ $testObjs
 EOF
 
 		printf 'Linking %s...\n' "${testBinPath##*/}"
-		linkBinary "$testBinPath" "$projDir" "$linkFlags" "$@"
+		linkBinary "$testBinPath" "$__projDir" "$linkFlags" "$@"
 		printf 'Running %s...\n' "${testBinPath##*/}"
 		runTestBinary "$testBinPath"
 		printf '\n'
@@ -361,7 +363,7 @@ EOF
 		set -- "$@" "$dynamicPath"
 
 		printf 'Linking %s...\n' "${testBinPath##*/}"
-		linkBinary "$testBinPath" "$projDir" "$linkFlags" "$@"
+		linkBinary "$testBinPath" "$__projDir" "$linkFlags" "$@"
 		printf 'Running %s...\n' "${testBinPath##*/}"
 		runTestBinary "$testBinPath" "$targetDir"
 		printf '\n'

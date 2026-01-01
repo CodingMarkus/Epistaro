@@ -80,7 +80,7 @@ _addTargetSanitizeSetting( )
 	[ -n "$sanitizeFlag" ] || return 0
 
 	case "
-${buildSanitizeSettings:-}
+${__buildSanitizeSettings:-}
 " in
 		*"
 $sanitizeFlag
@@ -88,18 +88,18 @@ $sanitizeFlag
 	esac
 
 	case "
-${targetSanitizeSettings:-}
+${__targetSanitizeSettings:-}
 " in
 		*"
 $sanitizeFlag
 "*) return 0 ;;
 	esac
 
-	if [ -n "${targetSanitizeSettings:-}" ]
+	if [ -n "${__targetSanitizeSettings:-}" ]
 	then
-		targetSanitizeSettings="$targetSanitizeSettings
+		__targetSanitizeSettings="$__targetSanitizeSettings
 $sanitizeFlag"
 	else
-		targetSanitizeSettings=$sanitizeFlag
+		__targetSanitizeSettings=$sanitizeFlag
 	fi
 }

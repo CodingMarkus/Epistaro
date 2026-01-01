@@ -182,13 +182,13 @@ buildTestObjects( )
 		return 2
 	fi
 
-	oldBuildSanitize=${buildSanitizeSettings:-}
-	oldTargetSanitize=${targetSanitizeSettings:-}
-	oldTargetSanitizePaths=${targetSanitizePaths:-}
+	oldBuildSanitize=${__buildSanitizeSettings:-}
+	oldTargetSanitize=${__targetSanitizeSettings:-}
+	oldTargetSanitizePaths=${__targetSanitizePaths:-}
 
-	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$buildSettings" )
-	targetSanitizeSettings=""
-	targetSanitizePaths=""
+	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$buildSettings" )
+	__targetSanitizeSettings=""
+	__targetSanitizePaths=""
 
 	compileSpacing=0
 	compiledAny=0
@@ -206,13 +206,13 @@ buildTestObjects( )
 			*) srcDir="." ;;
 		esac
 
-		fileFlagsReady=0
+		__fileFlagsReady=0
 
 		if depFileIsOutdated "$depPath"
 		then
 			_prepareFlags "$projectRoot" "$srcDir" "$buildSettings"
-			generateDepFile "$srcPath" "$depPath" "$workDir" \
-				"$fileFlags"
+			generateDepFile "$srcPath" "$depPath" "$__workDir" \
+				"$__fileFlags"
 		fi
 
 		if isOutdated "$objPath" "$depPath"
@@ -224,7 +224,7 @@ buildTestObjects( )
 			printf 'Compiling %s...\n' "$relPath"
 			_buildFileWithOutput "$projectRoot" "$srcPath" \
 				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$buildFileHadOutput
+			compileSpacing=$__buildFileHadOutput
 			compiledAny=1
 			continue
 		fi
@@ -249,7 +249,7 @@ buildTestObjects( )
 			printf 'Compiling %s...\n' "$relPath"
 			_buildFileWithOutput "$projectRoot" "$srcPath" \
 				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$buildFileHadOutput
+			compileSpacing=$__buildFileHadOutput
 			compiledAny=1
 			continue
 		fi
@@ -263,18 +263,18 @@ buildTestObjects( )
 			printf 'Compiling %s...\n' "$relPath"
 			_buildFileWithOutput "$projectRoot" "$srcPath" \
 				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$buildFileHadOutput
+			compileSpacing=$__buildFileHadOutput
 			compiledAny=1
 		fi
 	done <<EOF
 $srcList
 EOF
 
-	testSanitizeSettings=$targetSanitizeSettings
+	testSanitizeSettings=$__targetSanitizeSettings
 
-	buildSanitizeSettings=$oldBuildSanitize
-	targetSanitizeSettings=$oldTargetSanitize
-	targetSanitizePaths=$oldTargetSanitizePaths
+	__buildSanitizeSettings=$oldBuildSanitize
+	__targetSanitizeSettings=$oldTargetSanitize
+	__targetSanitizePaths=$oldTargetSanitizePaths
 }
 
 

@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 
 . lib_list.sh
@@ -65,22 +65,22 @@ case "${1:-}" in
 
 	t|target|targets)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		listTargetsAndExit "$projDir" "$plainMode"
+		listTargetsAndExit "$__projDir" "$plainMode"
 		;;
 
 	s|style|styles)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		listStylesAndExit "$projDir" "$plainMode"
+		listStylesAndExit "$__projDir" "$plainMode"
 		;;
 
 	te|tests)
 		case "$#" in
 			1)
-				listTestsAndExit "$projDir" "" "$plainMode"
+				listTestsAndExit "$__projDir" "" "$plainMode"
 				;;
 			2)
-				target=$( resolveTargetName "$projDir" "$2" )
-				listTestsAndExit "$projDir" "$target" "$plainMode"
+				target=$( resolveTargetName "$__projDir" "$2" )
+				listTestsAndExit "$__projDir" "$target" "$plainMode"
 				;;
 			*)
 				printHelpAndExit

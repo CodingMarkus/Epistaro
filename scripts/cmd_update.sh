@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 . lib_clangd.sh
 
@@ -39,8 +39,8 @@ printHelpAndExit( )
 #
 updateConfig( )
 {
-	defaultStylePath=$projDir/styles/_defaults/_default.cfg
-	updateClangd "$projDir/.clangd" "$defaultStylePath"
+	defaultStylePath=$__projDir/styles/_defaults/_default.cfg
+	updateClangd "$__projDir/.clangd" "$defaultStylePath"
 }
 
 

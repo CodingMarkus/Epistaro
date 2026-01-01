@@ -10,6 +10,7 @@ __included_lib_clang_sh=1
 . lib_error.sh
 . lib_fs.sh
 . lib_objects.sh
+. lib_platform.sh
 
 
 # $1 - C source file path.
@@ -210,12 +211,9 @@ buildFile( )
 #
 _dynamicLibFlag( )
 {
-	if command -v uname >/dev/null 2>&1
+	if platform_target_is_apple
 	then
-		case "$( uname -s 2>/dev/null )" in
-			Darwin) printf '%s\n' "-dynamiclib" ;;
-			*) printf '%s\n' "-shared" ;;
-		esac
+		printf '%s\n' "-dynamiclib"
 	else
 		printf '%s\n' "-shared"
 	fi

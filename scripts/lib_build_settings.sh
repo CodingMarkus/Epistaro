@@ -9,6 +9,7 @@ __included_lib_build_settings_sh=1
 . lib_assert.sh
 . lib_error.sh
 . lib_fs.sh
+. lib_platform.sh
 . lib_quote.sh
 . lib_style.sh
 

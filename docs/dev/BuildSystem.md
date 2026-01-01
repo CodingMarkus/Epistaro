@@ -43,7 +43,7 @@ Build output lives under the build root:
 - `builds/<style>/<target>/` contains final outputs.
 
 - `.lib` targets produce a static archive (`.a`) and a dynamic library
-  (`.dylib` on macOS, `.so` elsewhere).
+  (`.dylib` on Apple platforms, `.dll` on Windows, `.so` elsewhere).
 
 - `.bin` targets produce an executable named after the target.
 

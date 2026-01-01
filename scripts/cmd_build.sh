@@ -2,9 +2,9 @@
 
 set -eu
 
-scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
-. "$scriptDir/lib_cmd.sh"
-initCmdPaths "$scriptDir"
+__scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
+. "$__scriptDir/lib_cmd.sh"
+initCmdPaths "$__scriptDir"
 
 
 # Prints command usage information.
@@ -58,9 +58,9 @@ fi
 styleFile=$styleName
 case "$styleFile" in
 	/*) ;;
-	*/*.cfg|*/*) styleFile="$projDir/$styleFile" ;;
-	*.cfg) styleFile="$projDir/styles/$styleFile" ;;
-	*) styleFile="$projDir/styles/$styleName.cfg" ;;
+	*/*.cfg|*/*) styleFile="$__projDir/$styleFile" ;;
+	*.cfg) styleFile="$__projDir/styles/$styleFile" ;;
+	*) styleFile="$__projDir/styles/$styleName.cfg" ;;
 esac
 
 if [ ! -f "$styleFile" ]
@@ -70,13 +70,15 @@ fi
 
 . lib_build_settings.sh
 
+platform_require_supported_target
+
 buildSettings=$( resolvedBuildSettings "$styleFile" )
 syncStyleSetVars "$styleFile"
 
 if [ "$#" -eq 0 ]
 then
 	set --
-	for targetDir in "$projDir"/targets/*
+	for targetDir in "$__projDir"/targets/*
 	do
 		[ -d "$targetDir" ] || continue
 		set -- "$@" "$( basename -- "$targetDir" )"
@@ -90,21 +92,21 @@ else
 	set --
 	for target in $origTargets
 	do
-		resolvedTarget=$( resolveTargetName "$projDir" "$target" )
+		resolvedTarget=$( resolveTargetName "$__projDir" "$target" )
 		set -- "$@" "$resolvedTarget"
 	done
 fi
 
 . lib_build.sh
 
-case "$origDir" in
-	"$projDir"/*|"$projDir") buildDir=$( outRootPath "$projDir" );;
-	*) buildDir="$origDir";;
+case "$__origDir" in
+	"$__projDir"/*|"$__projDir") buildDir=$( outRootPath "$__projDir" );;
+	*) buildDir="$__origDir";;
 esac
 
 for target in "$@"
 do
-	buildTarget "$projDir" "$target" "$styleName" "$buildDir" \
+	buildTarget "$__projDir" "$target" "$styleName" "$buildDir" \
 		"$buildSettings"
 done
 
