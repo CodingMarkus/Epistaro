@@ -81,13 +81,13 @@ then
 		printErrorAndExit "No targets found"
 	fi
 else
-	for target in "$@"
+	origTargets="$@"
+	set --
+	for target in $origTargets
 	do
-		if [ ! -d "$projDir/targets/$target" ]
-		then
-			printErrorAndExit "Target not found: $target"
-	fi
-done
+		resolvedTarget=$( resolveTargetName "$projDir" "$target" )
+		set -- "$@" "$resolvedTarget"
+	done
 fi
 
 . lib_build.sh

@@ -30,7 +30,7 @@ cleanBuilds( )
 		cleanTarget=${1:-}
 		if [ -n "$cleanTarget" ]
 		then
-			ensureValidTargetName "$cleanTarget"
+			cleanTarget=$( resolveTargetName "$projectRoot" "$cleanTarget" )
 			shift
 		fi
 	fi

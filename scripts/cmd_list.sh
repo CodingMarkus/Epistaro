@@ -13,11 +13,11 @@ initCmdPaths "$scriptDir"
 printHelp( )
 {
 	helpText="
-  list t[argets]
+  list t[argets] [plain]
 
       List available targets.
 
-  list s[tyles]
+  list s[tyles] [plain]
 
       List available styles.
 "
@@ -40,13 +40,35 @@ case "${1:-}" in
 		;;
 
 	t|target|targets)
-		[ "$#" -eq 1 ] || printHelpAndExit
-		listTargetsAndExit "$projDir"
+		case "${2:-}" in
+			"")
+				[ "$#" -eq 1 ] || printHelpAndExit
+				listTargetsAndExit "$projDir"
+				;;
+			plain)
+				[ "$#" -eq 2 ] || printHelpAndExit
+				listTargetsAndExit "$projDir" plain
+				;;
+			*)
+				printHelpAndExit
+				;;
+		esac
 		;;
 
 	s|style|styles)
-		[ "$#" -eq 1 ] || printHelpAndExit
-		listStylesAndExit "$projDir"
+		case "${2:-}" in
+			"")
+				[ "$#" -eq 1 ] || printHelpAndExit
+				listStylesAndExit "$projDir"
+				;;
+			plain)
+				[ "$#" -eq 2 ] || printHelpAndExit
+				listStylesAndExit "$projDir" plain
+				;;
+			*)
+				printHelpAndExit
+				;;
+		esac
 		;;
 
 	-*)

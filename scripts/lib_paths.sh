@@ -203,3 +203,45 @@ ensureValidTargetName( )
 		*/*) printErrorAndExit "Target name must not contain '/': $1" ;;
 	esac
 }
+
+
+# $1 - Project root directory.
+# $2 - Target name, with or without extension.
+#
+# Resolves a target directory name, accepting missing .lib/.bin extension.
+#
+resolveTargetName( )
+{
+	assert "[ -n \"${1:-}\" ]" "resolveTargetName() missing project dir"
+	assert "[ -n \"${2:-}\" ]" "resolveTargetName() missing target name"
+
+	projectRoot=$1
+	targetName=$2
+
+	ensureValidTargetName "$targetName"
+
+	if [ -d "$projectRoot/targets/$targetName" ]
+	then
+		printf '%s\n' "$targetName"
+		return 0
+	fi
+
+	resolvedTarget=
+	for candidate in "$projectRoot/targets/$targetName".*
+	do
+		[ -d "$candidate" ] || continue
+		if [ -n "$resolvedTarget" ]
+		then
+			printErrorAndExit "Target name is ambiguous: $targetName"
+		fi
+		resolvedTarget=${candidate##*/}
+	done
+
+	if [ -n "$resolvedTarget" ]
+	then
+		printf '%s\n' "$resolvedTarget"
+		return 0
+	fi
+
+	printErrorAndExit "Target not found: $targetName"
+}
