@@ -129,6 +129,41 @@ _buildFile( )
 	buildFile "$build_srcPath" "$build_objPath" "$workDir" "$fileFlags"
 }
 
+# Runs a build and captures clang diagnostics to control compile spacing.
+_buildFileWithOutput( )
+{
+	build_projectRoot=$1
+	build_srcPath=$2
+	build_objPath=$3
+	build_srcDir=$4
+	build_settings=$5
+
+	tmpPath=$( mktemp "${TMPDIR:-/tmp}/build.XXXXXX" ) \
+		|| printErrorAndExit "mktemp failed"
+
+	if _buildFile "$build_projectRoot" "$build_srcPath" "$build_objPath" \
+		"$build_srcDir" "$build_settings" 2>"$tmpPath"
+	then
+		build_status=0
+	else
+		build_status=$?
+	fi
+
+	if [ -s "$tmpPath" ]
+	then
+		cat "$tmpPath" >&2
+		buildFileHadOutput=1
+	else
+		buildFileHadOutput=0
+	fi
+	rm -f "$tmpPath"
+
+	if [ "$build_status" -ne 0 ]
+	then
+		return "$build_status"
+	fi
+}
+
 
 # $1 - Project root directory.
 # $2 - Target name.
@@ -212,7 +247,8 @@ buildTarget( )
 		then
 			srcRoot=${srcRoot%/}
 
-			firstCompile=1
+			compileSpacing=0
+			compiledAny=0
 			while IFS= read -r srcPath || [ -n "$srcPath" ]
 			do
 				[ -n "$srcPath" ] || continue
@@ -238,14 +274,15 @@ buildTarget( )
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
 			then
-				if [ "$firstCompile" -eq 0 ]
+				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
-				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-					"$targetBuildSettings"
+				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
+					"$srcDir" "$targetBuildSettings"
+				compileSpacing=$buildFileHadOutput
+				compiledAny=1
 				continue
 			fi
 
@@ -263,27 +300,29 @@ buildTarget( )
 
 			if [ "$#" -eq 0 ]
 			then
-				if [ "$firstCompile" -eq 0 ]
+				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
-				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-					"$targetBuildSettings"
+				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
+					"$srcDir" "$targetBuildSettings"
+				compileSpacing=$buildFileHadOutput
+				compiledAny=1
 				continue
 			fi
 
 			if isOutdated "$objPath" "$@"
 			then
-				if [ "$firstCompile" -eq 0 ]
+				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
-				firstCompile=0
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFile "$projectRoot" "$srcPath" "$objPath" "$srcDir" \
-					"$targetBuildSettings"
+				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
+					"$srcDir" "$targetBuildSettings"
+				compileSpacing=$buildFileHadOutput
+				compiledAny=1
 			fi
 			done <<EOF
 $( find "$srcRoot" -type f -name '*.c' )
@@ -298,6 +337,7 @@ EOF
 			printf 'Copying Public Headers...\n'
 			_syncPublicHeaders "$projectRoot" "$target" \
 				"$targetStyleName" "$buildDir"
+			printf '\n'
 			;;
 	esac
 
@@ -389,6 +429,7 @@ EOF
 	[ $# -gt 0 ] || return 0
 
 	linkFlags=""
+	majorSpacingDone=0
 	if [ -n "${targetSanitizeSettings:-}" ]
 	then
 		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
@@ -405,28 +446,49 @@ EOF
 	case "$target" in
 		*.lib)
 			prelinkPath=$objDir/${target%.*}.o
-			staticPath=$targetDir/$target
+			staticPath=$targetDir/${target%.*}.a
 			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
 
 			if isOutdated "$prelinkPath" "$@"
 			then
+				if [ "${compiledAny:-0}" -eq 1 ] \
+					&& [ "$majorSpacingDone" -eq 0 ]
+				then
+					printf '\n'
+					majorSpacingDone=1
+				fi
 				printf 'Pre-Linking %s...\n' "${prelinkPath##*/}"
 				prelinkObjects "$prelinkPath" "$projectRoot" \
 					"$linkFlags" "$@"
+				printf '\n'
 			fi
 
 			if isOutdated "$staticPath" "$prelinkPath"
 			then
+				if [ "${compiledAny:-0}" -eq 1 ] \
+					&& [ "$majorSpacingDone" -eq 0 ]
+				then
+					printf '\n'
+					majorSpacingDone=1
+				fi
 				printf 'Creating archive %s...\n' "${staticPath##*/}"
 				createStaticLibraryFromObjects "$staticPath" \
 					"$projectRoot" "$prelinkPath"
+				printf '\n'
 			fi
 
 			if isOutdated "$dynamicPath" "$prelinkPath"
 			then
+				if [ "${compiledAny:-0}" -eq 1 ] \
+					&& [ "$majorSpacingDone" -eq 0 ]
+				then
+					printf '\n'
+					majorSpacingDone=1
+				fi
 				printf 'Linking %s...\n' "${dynamicPath##*/}"
 				linkDynamicLibrary "$dynamicPath" "$projectRoot" \
 					"$linkFlags" "$prelinkPath"
+				printf '\n'
 			fi
 			;;
 
@@ -434,9 +496,16 @@ EOF
 			binPath=$targetDir/$target
 			if isOutdated "$binPath" "$@"
 			then
+				if [ "${compiledAny:-0}" -eq 1 ] \
+					&& [ "$majorSpacingDone" -eq 0 ]
+				then
+					printf '\n'
+					majorSpacingDone=1
+				fi
 				printf 'Linking %s...\n' "${binPath##*/}"
 				linkBinary "$binPath" "$projectRoot" "$linkFlags" \
 					"$@"
+				printf '\n'
 			fi
 			;;
 
