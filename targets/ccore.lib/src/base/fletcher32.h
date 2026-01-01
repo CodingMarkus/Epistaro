@@ -5,8 +5,8 @@ begin_header
 // ============================================================================
 
 struct Fletcher32State {
-	uint_fast32_t s1;
-	uint_fast32_t s2;
+	int32 s1;
+	int32 s2;
 };
 
 // ----------------------------------------------------------------------------
@@ -16,7 +16,7 @@ struct Fletcher32State Fletcher32Update(
 );
 
 
-uint32_t Fletcher32Finalize( const struct Fletcher32State state );
+int32e Fletcher32Finalize( const struct Fletcher32State state );
 
 // ============================================================================
 end_header

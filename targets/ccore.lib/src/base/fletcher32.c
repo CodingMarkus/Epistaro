@@ -43,9 +43,9 @@ struct Fletcher32State Fletcher32Update(
 }
 
 
-uint32_t Fletcher32Finalize( const struct Fletcher32State state )
+int32e Fletcher32Finalize( const struct Fletcher32State state )
 {
-	return (uint32_t)((state.s2 << 16) | (state.s1 & 0xFFFFu));
+	return (int32e)((state.s2 << 16) | (state.s1 & 0xFFFFu));
 }
 
 // ============================================================================
