@@ -78,6 +78,24 @@ expandStyle( )
 				fi
 				expandStyle "$includePath"
 				;;
+			\$include\?[[:space:]]* )
+				includePattern='$include?'
+				includeLine=${trimmed#"$includePattern"}
+				includeName=$( printf '%s' "$includeLine" \
+					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//' )
+				if [ -z "$includeName" ]
+				then
+					printErrorAndExit "\$include? missing name in $stylePath"
+				fi
+				case "$includeName" in
+					/*) includePath=$includeName ;;
+					*) includePath="$styleDirAbs/$includeName" ;;
+				esac
+				if [ -e "$includePath" ]
+				then
+					expandStyle "$includePath"
+				fi
+				;;
 
 			\$*)
 				printErrorAndExit "Unknown directive in $stylePath: $trimmed"
