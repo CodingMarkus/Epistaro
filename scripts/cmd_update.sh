@@ -16,8 +16,7 @@ printHelp( )
 
       Update all project configuration and generated files.
 
-
-  update config|cfg
+  update c[onfig]
 
       Update build configuration files (like .clangd).
 "
@@ -57,7 +56,7 @@ case "${1:-}" in
 		exit 0
 		;;
 
-	config|cfg)
+	c|config)
 		[ "$#" -eq 1 ] || printHelpAndExit
 		updateConfig
 		exit 0

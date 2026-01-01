@@ -2,13 +2,13 @@
 
 set -eu
 
-origDir=$( pwd -P )
 scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 . "$scriptDir/lib_cmd.sh"
+initCmdPaths "$scriptDir"
 
-cd "$scriptDir"
+
 . lib_error.sh
-cd "$origDir"
+
 
 cmdName=${1:-}
 if [ -z "$cmdName" ]

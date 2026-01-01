@@ -6,6 +6,7 @@ scriptDir=$( CDPATH='' cd -- "$( dirname -- "$0" )" && pwd -P )
 . "$scriptDir/lib_cmd.sh"
 initCmdPaths "$scriptDir"
 
+
 . lib_error.sh
 
 
@@ -40,11 +41,17 @@ case "${1:-}" in
 		;;
 
 	"")
+		first=1
 		for cmdPath in "$scriptDir"/cmd_*.sh
 		do
 			[ -e "$cmdPath" ] || continue
 			cmdBase=$( basename -- "$cmdPath" )
 			[ "$cmdBase" = "cmd_proj.sh" ] && continue
+			if [ "$first" -eq 0 ]
+			then
+				printf '\n'
+			fi
+			first=0
 			sh "$cmdPath" --help || exit 1
 		done
 		exit 0
