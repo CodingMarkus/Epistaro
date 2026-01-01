@@ -1,2 +1,5 @@
 # Ignore in-tree output directory
 .out
+
+# Ignore those annoying macOS meta data files
+.DS_Store
