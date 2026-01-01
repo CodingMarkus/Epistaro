@@ -66,7 +66,7 @@ fi
 
 . lib_build_settings.sh
 
-buildSettings=$( buildSettingsForStyle "$styleFile" )
+buildSettings=$( resolvedBuildSettings "$styleFile" )
 
 if [ "$#" -eq 0 ]
 then

@@ -81,7 +81,7 @@ then
 	printErrorAndExit "Style not found: $styleFile"
 fi
 
-buildSettings=$( buildSettingsForStyle "$styleFile" )
+buildSettings=$( resolvedBuildSettings "$styleFile" )
 
 selections=""
 if [ "$#" -eq 0 ]

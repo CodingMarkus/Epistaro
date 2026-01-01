@@ -181,6 +181,27 @@ hardcodedBuildSettings( )
 	printf '%s\n' "-flto=thin"
 }
 
+_supportsColorDiagnostics( )
+{
+	[ -t 2 ] || return 1
+	command -v tput >/dev/null 2>&1 || return 1
+
+	colors=$( tput colors 2>/dev/null || printf '' )
+	case "$colors" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	[ "$colors" -gt 0 ] || return 1
+}
+
+
+colorBuildSettings( )
+{
+	if _supportsColorDiagnostics
+	then
+		printf '%s\n' "-fcolor-diagnostics"
+	fi
+}
+
 
 # $1 - Build style file path.
 #
@@ -193,17 +214,44 @@ buildSettingsForStyle( )
 	assert "[ -n \"${stylePath:-}\" ]" "buildSettingsForStyle() missing path"
 
 	styleSettings=$( expandStyle "$stylePath" )
-	hardcodedSettings=$( hardcodedBuildSettings )
-	if [ -n "$hardcodedSettings" ]
-	then
-		if [ -n "$styleSettings" ]
-		then
-			styleSettings="$styleSettings
-$hardcodedSettings"
-		else
-			styleSettings=$hardcodedSettings
-		fi
-	fi
 
 	quoteSettings "$styleSettings"
+)
+
+
+# $1 - Build style file path.
+# ($2) - Extra settings string containing one entry per line.
+#
+# Prints the quoted build settings string for the style plus active
+# terminal-driven settings and any extra settings.
+#
+resolvedBuildSettings( )
+(
+	stylePath=$1
+	extraSettings=${2:-}
+
+	assert "[ -n \"${stylePath:-}\" ]" "resolvedBuildSettings() missing path"
+
+	styleSettings=$( buildSettingsForStyle "$stylePath" )
+	hardcodedSettings=$( hardcodedBuildSettings )
+	colorSettings=$( colorBuildSettings )
+	extraQuoted=$( quoteSettings "$extraSettings" )
+
+	if [ -n "$hardcodedSettings" ]
+	then
+		hardcodedQuoted=$( quoteSettings "$hardcodedSettings" )
+		styleSettings=$( appendQuotedSettings "$styleSettings" \
+			"$hardcodedQuoted" )
+	fi
+	if [ -n "$colorSettings" ]
+	then
+		colorQuoted=$( quoteSettings "$colorSettings" )
+		styleSettings=$( appendQuotedSettings "$styleSettings" "$colorQuoted" )
+	fi
+	if [ -n "$extraQuoted" ]
+	then
+		styleSettings=$( appendQuotedSettings "$styleSettings" "$extraQuoted" )
+	fi
+
+	printf '%s' "$styleSettings"
 )
