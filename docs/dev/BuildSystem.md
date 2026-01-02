@@ -20,7 +20,7 @@ The build system is driven by the `./proj` wrapper, which dispatches to command 
 
 3. Styles
 ---------
-Styles are resolved by name from `styles/<style>.cfg` by default, but you can also pass `styles/<style>.cfg` directly or an absolute path. The default style is `deploy` for `build` and `test` for `test`.
+Styles are resolved by name from `styles/<style>.cfg` by default, but you can also pass `styles/<style>.cfg` directly or an absolute path. The default style is `deploy` for `build`, `run` for `run`, and `test` for `test`.
 
 
 4. Outputs
@@ -49,6 +49,9 @@ When invoked from inside the project, the build root is `.out/`. When invoked fr
 -----------
 `./proj build [<style> [<target> ...]]`
     Build all targets or the provided list using the given style. If no style is provided, `deploy` is used.
+
+`./proj run [-s[tyle] <style>] <target> [<arg> ...]`
+    Build a binary target using the given style (default `run`) and execute it. Arguments following the target are passed to the binary. Only `.bin` targets are supported.
 
 `./proj test [-s[tyle] <style>] [<target>[/suite[/...][/test]] ...]`
     Build targets (test style by default), then build and run tests. If no target is provided, all targets are tested.

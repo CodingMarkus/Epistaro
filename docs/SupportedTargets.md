@@ -37,7 +37,7 @@ Development hosts:
 - linux
 - macos
 - *bsd
-- windows (POSIX environments such as Cygwin or MSYS/MinGW)
+- windows (POSIX environment required such as Cygwin or MSYS/MinGW)
 
 Compiler requirements:
 
