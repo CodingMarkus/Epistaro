@@ -158,13 +158,19 @@ _styleParseValue( )
 		\"* )
 			split=$( _styleSplitQuoted "$valueLine" ) || \
 				printErrorAndExit "Unterminated quoted value in $stylePath"
-			oldIFS=$IFS
-			IFS='
-'
-			set -- $split
-			IFS=$oldIFS
-			rawValue=${1-}
-			leftover=${2-}
+			case "$split" in
+				*"
+"*)
+					rawValue=${split%%"
+"*}
+					leftover=${split#*"
+"}
+					;;
+				*)
+					rawValue=$split
+					leftover=
+					;;
+			esac
 			leftover=$( _styleTrim "$leftover" )
 			if [ -n "$leftover" ]
 			then

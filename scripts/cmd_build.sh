@@ -117,7 +117,7 @@ then
 		printErrorAndExit "No targets found"
 	fi
 else
-	origTargets="$@"
+	origTargets="$*"
 	set --
 	for target in $origTargets
 	do

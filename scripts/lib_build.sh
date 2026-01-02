@@ -355,8 +355,8 @@ $( find "$srcRoot" -type f -name '*.c' )
 EOF
 		fi
 
-	buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
-		"$targetBuildSettings" "$__targetSanitizeSettings"
+buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
+	"$targetBuildSettings" "$__targetSanitizeSettings" "$compiledAny"
 
 	case "$target" in
 		*.lib)
@@ -418,6 +418,7 @@ _dynamicLibExtension( )
 # $4 - Build output root directory.
 # $5 - Quoted build settings string.
 # $6 - Sanitizer settings string containing one entry per line.
+# $7 - 1 if any source was compiled in buildTarget(), otherwise 0.
 #
 # Links final target outputs based on target name extension.
 #
@@ -429,6 +430,7 @@ buildTargetOutput( )
 	buildDir=$4
 	targetBuildSettings=$5
 	__targetSanitizeSettings=$6
+	compiledAny=${7:-0}
 
 	assert "[ -n \"${projectRoot:-}\" ]" \
 		"buildTargetOutput() missing project dir"

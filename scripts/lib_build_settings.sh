@@ -68,6 +68,8 @@ expandStyle( )
 		__style_include_stack=$_exp_path_abs
 	fi
 
+	_exp_path_for_messages=$_exp_path
+
 	while IFS= read -r _exp_line || [ -n "$_exp_line" ]
 	do
 		_exp_trim=$( printf '%s' "$_exp_line" | sed 's/^[[:space:]]*//' )
@@ -77,36 +79,52 @@ expandStyle( )
 			\#*) continue ;;
 
 			\$set[[:space:]]* )
-				_exp_set_line=${_exp_trim#'$set'}
+				_exp_set_line=${_exp_trim#"\$set"}
 				_exp_split=$( _styleSplitVarAndRest "$_exp_set_line" )
-				_exp_oldifs=$IFS
-				IFS='
-'
-				set -- $_exp_split
-				IFS=$_exp_oldifs
-				_exp_name=${1-}
-				_exp_rest=${2-}
+				case "$_exp_split" in
+					*"
+"*)
+						_exp_name=${_exp_split%%"
+"*}
+						_exp_rest=${_exp_split#*"
+"}
+						;;
+					*)
+						_exp_name=$_exp_split
+						_exp_rest=
+						;;
+				esac
 				[ -n "$_exp_name" ] || \
-					printErrorAndExit "\$set missing name in $_exp_path"
-				_exp_value=$( _styleParseValue "$_exp_rest" "$_exp_path" )
-				_styleSetVar "$_exp_name" "$_exp_value" "$_exp_path"
+					printErrorAndExit "\$set missing name in $_exp_path_for_messages"
+				_exp_value=$( _styleParseValue "$_exp_rest" \
+					"$_exp_path_for_messages" )
+				_styleSetVar "$_exp_name" "$_exp_value" \
+					"$_exp_path_for_messages"
 				;;
 			\$unset[[:space:]]* )
-				_exp_unset_line=${_exp_trim#'$unset'}
+				_exp_unset_line=${_exp_trim#"\$unset"}
 				_exp_split=$( _styleSplitVarAndRest "$_exp_unset_line" )
-				_exp_oldifs=$IFS
-				IFS='
-'
-				set -- $_exp_split
-				IFS=$_exp_oldifs
-				_exp_name=${1-}
-				_exp_rest=${2-}
+				case "$_exp_split" in
+					*"
+"*)
+						_exp_name=${_exp_split%%"
+"*}
+						_exp_rest=${_exp_split#*"
+"}
+						;;
+					*)
+						_exp_name=$_exp_split
+						_exp_rest=
+						;;
+				esac
 				[ -n "$_exp_name" ] || \
-					printErrorAndExit "\$unset missing name in $_exp_path"
+					printErrorAndExit \
+						"\$unset missing name in $_exp_path_for_messages"
 				_exp_rest=$( _styleTrim "$_exp_rest" )
 				[ -z "$_exp_rest" ] || \
-					printErrorAndExit "Unexpected text in $_exp_path: $_exp_trim"
-				_styleUnsetVar "$_exp_name" "$_exp_path"
+					printErrorAndExit \
+						"Unexpected text in $_exp_path_for_messages: $_exp_trim"
+				_styleUnsetVar "$_exp_name" "$_exp_path_for_messages"
 				;;
 			\$include\?[[:space:]]*|\
 			\$include\?\(*|\
@@ -116,16 +134,16 @@ expandStyle( )
 				case "$_exp_trim" in
 					\$include\?*)
 						_exp_inc_opt=1
-						_exp_inc_line=${_exp_trim#'$include?'}
+						_exp_inc_line=${_exp_trim#"\$include?"}
 						;;
 					*)
-						_exp_inc_line=${_exp_trim#'$include'}
+						_exp_inc_line=${_exp_trim#"\$include"}
 						;;
 				esac
-				_exp_inc_dir='$include'
+				_exp_inc_dir="\$include"
 				if [ "$_exp_inc_opt" -eq 1 ]
 				then
-					_exp_inc_dir='$include?'
+					_exp_inc_dir="\$include?"
 				fi
 				_exp_inc_line=$( _styleTrimLeft "$_exp_inc_line" )
 				_exp_inc_ok=1
@@ -141,10 +159,11 @@ expandStyle( )
 								;;
 							*)
 								printErrorAndExit \
-									"Missing ')' in include condition in $_exp_path"
+									"Missing ')' in include condition in $_exp_path_for_messages"
 								;;
 						esac
-						if _styleEvalCondition "$_exp_cond" "$_exp_path"
+						if _styleEvalCondition "$_exp_cond" \
+							"$_exp_path_for_messages"
 						then
 							_exp_inc_ok=1
 						else
@@ -153,11 +172,11 @@ expandStyle( )
 						;;
 				esac
 				_exp_inc_name=$( _styleTrim "$_exp_inc_line" )
-				if [ -z "$_exp_inc_name" ]
-				then
-					printErrorAndExit \
-						"$_exp_inc_dir missing name in $_exp_path"
-				fi
+					if [ -z "$_exp_inc_name" ]
+					then
+						printErrorAndExit \
+							"$_exp_inc_dir missing name in $_exp_path_for_messages"
+					fi
 				if [ "$_exp_inc_ok" -eq 0 ]
 				then
 					continue
@@ -174,14 +193,15 @@ expandStyle( )
 					then
 						:
 					else
-						printErrorAndExit \
-							"\$include style not found: $_exp_inc_name"
+							printErrorAndExit \
+								"\$include style not found: $_exp_inc_name"
 					fi
 				fi
 				;;
 
 			\$*)
-				printErrorAndExit "Unknown directive in $_exp_path: $_exp_trim"
+				printErrorAndExit \
+					"Unknown directive in $_exp_path_for_messages: $_exp_trim"
 				;;
 
 			*)
