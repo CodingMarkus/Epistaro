@@ -47,7 +47,7 @@ When invoked from inside the project, the build root is `.out/`. When invoked fr
 
 5. Commands
 -----------
-`./proj build [<style> [<target> ...]]`
+`./proj build [-s[tyle] <style>] [<target> ...]`
     Build all targets or the provided list using the given style. If no style is provided, `deploy` is used.
 
 `./proj run [-s[tyle] <style>] <target> [<arg> ...]`

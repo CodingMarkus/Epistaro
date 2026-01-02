@@ -12,7 +12,7 @@ initCmdPaths "$__scriptDir"
 printHelp( )
 {
 	_ph_text="
-  build [<style> [<target> ...]]
+  build [-s[tyle] <style>] [<target> ...]
 
       Build target(s) using style.
       If no target is provided, all targets are built.
@@ -33,27 +33,56 @@ printHelpAndExit( )
 . lib_error.sh
 . lib_paths.sh
 
+
+# $1 - Argument to test.
+#
+# Returns success if the argument is a style flag.
+#
+isStyleFlag( )
+{
+	case "${1:-}" in
+		-s|-st|-sty|-styl|-style) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 case "${1:-}" in
 	--help)
 		[ "$#" -eq 1 ] || printHelpAndExit
 		printHelp
 		exit 0
 		;;
-
-	-*)
-		printHelpAndExit
-		;;
 esac
 
 
-styleName=${1:-}
-if [ -z "$styleName" ]
-then
-	styleName=deploy
-else
-	ensureValidStyleName "$styleName"
-	shift
-fi
+styleName=deploy
+
+while [ "$#" -gt 0 ]
+do
+	case "$1" in
+		--help)
+			printHelp
+			exit 0
+			;;
+
+		-*)
+			if isStyleFlag "$1"
+			then
+				shift
+				[ "$#" -gt 0 ] || printHelpAndExit
+				styleName=$1
+				ensureValidStyleName "$styleName"
+				shift
+				continue
+			fi
+			printHelpAndExit
+			;;
+
+		*)
+			break
+			;;
+	esac
+done
 
 styleFile=$styleName
 case "$styleFile" in
