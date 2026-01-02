@@ -3,10 +3,9 @@ SUPPORTED TARGETS
 
 TARGET names use the format:
 
-  TARGET=<os>[-<CPU>]
+  TARGET=<os>-<cpu>
 
-CPU is reserved for future use. If TARGET is not set, the build uses the
-current host OS.
+If TARGET is not set, the build uses the current host OS and CPU when it can detect them.
 
 Supported OS values:
 
@@ -21,6 +20,17 @@ Supported OS values:
 - netbsd
 - openbsd
 - emscripten
+
+Supported CPU values:
+
+| Target name | Meaning / minimum contract                                                           |
+| ----------- | ------------------------------------------------------------------------------------ |
+| `arm64`     | AArch64 (ARMv8+ 64-bit). FP/ASIMD (NEON) is part of the baseline.                    |
+| `arm32vfp3` | 32-bit ARM, intended as ARMv7-A baseline with hardware VFPv3 (no VFPv4 requirement). |
+| `ia32sse2`  | 32-bit x86 with at least SSE2; use SSE FP math (avoid x87 assumptions).              |
+| `x64`       | x86-64 in 64-bit mode (AMD64 / x86-64). SSE2 is baseline.                            |
+| `wasm32`    | WebAssembly 32-bit output target.                                                    |
+| `asmjs`     | asm.js output (Emscripten-style JS subset) target.                                   |
 
 Development hosts:
 

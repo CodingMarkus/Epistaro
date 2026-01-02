@@ -32,9 +32,29 @@ platformDetectHostOs( )
 }
 
 
+# Prints the host CPU name mapped to supported TARGET values.
+#
+platformDetectHostCpu( )
+{
+	if command -v uname >/dev/null 2>&1
+	then
+		uname_m=$( uname -m 2>/dev/null | tr '[:upper:]' '[:lower:]' )
+		case "$uname_m" in
+			aarch64|arm64) printf '%s\n' "arm64" ;;
+			armv7*) printf '%s\n' "arm32vfp3" ;;
+			i386|i486|i586|i686) printf '%s\n' "ia32sse2" ;;
+			x86_64|amd64) printf '%s\n' "x64" ;;
+			wasm32) printf '%s\n' "wasm32" ;;
+			asmjs) printf '%s\n' "asmjs" ;;
+		esac
+	fi
+	return 0
+}
+
+
 # Initializes __style_set__TARGET* variables for style expansion.
 #
-# TARGET format: <os>[-<CPU>]. CPU parsing is reserved for future use.
+# TARGET format: <os>-<cpu>.
 #
 platformInitTargetVars( )
 {
@@ -45,7 +65,19 @@ platformInitTargetVars( )
 	then
 		__style_set__TARGET=$TARGET
 	else
-		__style_set__TARGET=$( platformDetectHostOs )
+		__style_set__TARGET_OS=$( platformDetectHostOs )
+		__style_set__TARGET_CPU=$( platformDetectHostCpu )
+		if [ -n "${__style_set__TARGET_OS:-}" ]
+		then
+			if [ -n "${__style_set__TARGET_CPU:-}" ]
+			then
+				__style_set__TARGET=${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
+			else
+				__style_set__TARGET=$__style_set__TARGET_OS
+			fi
+		else
+			__style_set__TARGET=""
+		fi
 	fi
 
 	case "${__style_set__TARGET:-}" in
@@ -53,6 +85,8 @@ platformInitTargetVars( )
 			__style_set__TARGET_OS=${__style_set__TARGET%%-*}
 			__style_set__TARGET_CPU=${__style_set__TARGET#*-}
 			__style_set__TARGET_OS=$( printf '%s' "$__style_set__TARGET_OS" | \
+				tr '[:upper:]' '[:lower:]' )
+			__style_set__TARGET_CPU=$( printf '%s' "$__style_set__TARGET_CPU" | \
 				tr '[:upper:]' '[:lower:]' )
 			__style_set__TARGET=${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
 			;;
@@ -95,6 +129,18 @@ platformTargetIsWindows( )
 }
 
 
+# Returns success if the target CPU is supported or unspecified.
+#
+platformTargetCpuIsSupported( )
+{
+	platformInitTargetVars
+	case "${__style_set__TARGET_CPU:-}" in
+		arm64|arm32vfp3|ia32sse2|x64|wasm32|asmjs) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+
 # Returns success if the target OS is supported.
 #
 platformTargetIsSupported( )
@@ -103,33 +149,50 @@ platformTargetIsSupported( )
 	case "${__style_set__TARGET_OS:-}" in
 		linux|macos|windows|ios|tvos|ipados|watchos|\
 		freebsd|netbsd|openbsd|emscripten)
-			return 0
 			;;
 		*) return 1 ;;
 	esac
+	platformTargetCpuIsSupported
 }
 
 
-# Fails if the target OS is not recognized.
+# Fails if the target OS or CPU is not recognized.
 #
 platformRequireSupportedTarget( )
 {
 	platformInitTargetVars
-	if platformTargetIsSupported
-	then
-		return 0
-	fi
-
 	if [ -z "${__style_set__TARGET_OS:-}" ]
 	then
 		printErrorAndExit \
 			"Target OS not detected. Set TARGET to a supported OS."
 	fi
 
-	printErrorAndExit \
-		"Unsupported target OS: ${__style_set__TARGET_OS}. Supported OSes: \
+	if [ -z "${__style_set__TARGET_CPU:-}" ]
+	then
+		printErrorAndExit \
+			"Target CPU not detected. Set TARGET to a supported os-cpu pair."
+	fi
+
+	case "${__style_set__TARGET_OS:-}" in
+		linux|macos|windows|ios|tvos|ipados|watchos|\
+		freebsd|netbsd|openbsd|emscripten)
+			;;
+		*)
+			printErrorAndExit \
+				"Unsupported target OS: ${__style_set__TARGET_OS}. Supported OSes: \
 linux, macos, windows, ios, tvos, ipados, watchos, freebsd, netbsd, openbsd, \
 emscripten."
+			;;
+	esac
+
+	if ! platformTargetCpuIsSupported
+	then
+		printErrorAndExit \
+			"Unsupported target CPU: ${__style_set__TARGET_CPU}. Supported CPUs: \
+arm64, arm32vfp3, ia32sse2, x64, wasm32, asmjs."
+	fi
+
+	return 0
 }
 
 

@@ -15,14 +15,23 @@ C CODING STYLE GUIDE — CHEAT SHEET
 3. Line Breaking
 ----------------
 - Max 80 characters (line break counts).
+
 - Indent continuation lines when breaking an expression.
+
 - Do not indent again when breaking the same expression multiple times unless breaking a sub-expression.
+
 - Break before operators (+, -, *, /, %, &&, ||, &, |, ^, <<, >>).
+
 - Break after assignment (=).
+
 - Break before comparison operators (==, !=, <, >).
+
 - Break before reference operators (. and ->).
+
 - Break directly after (, [, {.
+
 - Place closing ), ], } on their own unindented line, unless that line starts a new {-block.
+
 
 4. Preprocessor Macros
 ----------------------
@@ -107,3 +116,5 @@ C CODING STYLE GUIDE — CHEAT SHEET
 12. Consistency and Readably Always Win
 ---------------------------------------
 - Keep similar adjacent blocks visually consistent, even if that slightly breaks the rules.
+
+
