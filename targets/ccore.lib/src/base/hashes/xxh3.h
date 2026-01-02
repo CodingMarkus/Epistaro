@@ -6,6 +6,8 @@
 begin_header
 // ============================================================================
 
+#if !defined(XXHASH_H_5627135585666179)
+
 #ifndef XXH_ERRORCODE_DEFINED
 #define XXH_ERRORCODE_DEFINED
 
@@ -154,6 +156,8 @@ int XXH128_cmp( const void * h128_1, const void * h128_2 );
 typedef struct {
 	unsigned char digest[sizeof(XXH128_hash_t)];
 } XXH128_canonical_t;
+
+#endif /* !XXHASH_H_5627135585666179 */
 
 void XXH128_canonicalFromHash( XXH128_canonical_t * dst, XXH128_hash_t hash );
 

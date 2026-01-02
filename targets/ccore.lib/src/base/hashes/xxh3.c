@@ -1,4 +1,3 @@
-#define XXH_PUBLIC_API static
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #define XXH_NAMESPACE XXH3REF_
@@ -56,9 +55,9 @@ begin_impl
 // ============================================================================
 
 static
-XXH3REF_XXH128_hash_t toInternal_XXH128( XXH128_hash_t hash )
+XXH128_hash_t toInternal_XXH128( XXH128_hash_t hash )
 {
-	return (XXH3REF_XXH128_hash_t){
+	return (XXH128_hash_t){
 		.low64 = hash.low64,
 		.high64 = hash.high64,
 	};
@@ -66,7 +65,7 @@ XXH3REF_XXH128_hash_t toInternal_XXH128( XXH128_hash_t hash )
 
 
 static
-XXH128_hash_t fromInternal_XXH128( XXH3REF_XXH128_hash_t hash )
+XXH128_hash_t fromInternal_XXH128( XXH128_hash_t hash )
 {
 	return (XXH128_hash_t){
 		.low64 = hash.low64,
@@ -142,7 +141,7 @@ XXH3_state_t * XXH3_createState( void )
 XXH_errorcode XXH3_freeState( XXH3_state_t * statePtr )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_freeState(
-		(XXH3REF_XXH3_state_t *)statePtr
+		(XXH3_state_t *)statePtr
 	);
 }
 
@@ -151,8 +150,8 @@ void XXH3_copyState(
 	XXH3_state_t * dst_state, const XXH3_state_t * src_state )
 {
 	XXH3REF_XXH3_copyState(
-		(XXH3REF_XXH3_state_t *)dst_state,
-		(const XXH3REF_XXH3_state_t *)src_state
+		(XXH3_state_t *)dst_state,
+		(const XXH3_state_t *)src_state
 	);
 }
 
@@ -160,7 +159,7 @@ void XXH3_copyState(
 XXH_errorcode XXH3_64bits_reset( XXH3_state_t * statePtr )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_64bits_reset(
-		(XXH3REF_XXH3_state_t *)statePtr
+		(XXH3_state_t *)statePtr
 	);
 }
 
@@ -169,7 +168,7 @@ XXH_errorcode XXH3_64bits_reset_withSeed(
 	XXH3_state_t * statePtr, XXH64_hash_t seed )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_64bits_reset_withSeed(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		seed
 	);
 }
@@ -181,7 +180,7 @@ XXH_errorcode XXH3_64bits_reset_withSecret(
 	size_t secretSize )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_64bits_reset_withSecret(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		secret,
 		secretSize
 	);
@@ -195,7 +194,7 @@ XXH_errorcode XXH3_64bits_reset_withSecretandSeed(
 	XXH64_hash_t seed )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_64bits_reset_withSecretandSeed(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		secret,
 		secretSize,
 		seed
@@ -207,7 +206,7 @@ XXH_errorcode XXH3_64bits_update(
 	XXH3_state_t * statePtr, const void * input, size_t length )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_64bits_update(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		input,
 		length
 	);
@@ -217,7 +216,7 @@ XXH_errorcode XXH3_64bits_update(
 XXH64_hash_t XXH3_64bits_digest( const XXH3_state_t * statePtr )
 {
 	return XXH3REF_XXH3_64bits_digest(
-		(const XXH3REF_XXH3_state_t *)statePtr
+		(const XXH3_state_t *)statePtr
 	);
 }
 
@@ -271,7 +270,7 @@ XXH128_hash_t XXH3_128bits_withSecretandSeed(
 XXH_errorcode XXH3_128bits_reset( XXH3_state_t * statePtr )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_128bits_reset(
-		(XXH3REF_XXH3_state_t *)statePtr
+		(XXH3_state_t *)statePtr
 	);
 }
 
@@ -280,7 +279,7 @@ XXH_errorcode XXH3_128bits_reset_withSeed(
 	XXH3_state_t * statePtr, XXH64_hash_t seed )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_128bits_reset_withSeed(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		seed
 	);
 }
@@ -292,7 +291,7 @@ XXH_errorcode XXH3_128bits_reset_withSecret(
 	size_t secretSize )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_128bits_reset_withSecret(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		secret,
 		secretSize
 	);
@@ -306,7 +305,7 @@ XXH_errorcode XXH3_128bits_reset_withSecretandSeed(
 	XXH64_hash_t seed )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_128bits_reset_withSecretandSeed(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		secret,
 		secretSize,
 		seed
@@ -318,7 +317,7 @@ XXH_errorcode XXH3_128bits_update(
 	XXH3_state_t * statePtr, const void * input, size_t length )
 {
 	return (XXH_errorcode)XXH3REF_XXH3_128bits_update(
-		(XXH3REF_XXH3_state_t *)statePtr,
+		(XXH3_state_t *)statePtr,
 		input,
 		length
 	);
@@ -329,7 +328,7 @@ XXH128_hash_t XXH3_128bits_digest( const XXH3_state_t * statePtr )
 {
 	return fromInternal_XXH128(
 		XXH3REF_XXH3_128bits_digest(
-			(const XXH3REF_XXH3_state_t *)statePtr
+			(const XXH3_state_t *)statePtr
 		)
 	);
 }
@@ -352,9 +351,9 @@ int XXH128_cmp( const void * h128_1, const void * h128_2 )
 
 void XXH128_canonicalFromHash( XXH128_canonical_t * dst, XXH128_hash_t hash )
 {
-	XXH3REF_XXH128_hash_t internal = toInternal_XXH128(hash);
+	XXH128_hash_t internal = toInternal_XXH128(hash);
 	XXH3REF_XXH128_canonicalFromHash(
-		(XXH3REF_XXH128_canonical_t *)dst,
+		(XXH128_canonical_t *)dst,
 		internal
 	);
 }
@@ -364,14 +363,14 @@ XXH128_hash_t XXH128_hashFromCanonical( const XXH128_canonical_t * src )
 {
 	return fromInternal_XXH128(
 		XXH3REF_XXH128_hashFromCanonical(
-			(const XXH3REF_XXH128_canonical_t *)src
+			(const XXH128_canonical_t *)src
 		)
 	);
 }
 
 
 struct XXH3Hasher {
-	XXH3REF_XXH3_state_t * state;
+	XXH3_state_t * state;
 };
 
 
@@ -389,12 +388,12 @@ static
 intS getRequiredSize_XXH3Hasher( void )
 {
 	const size_t hasherAlignment = _Alignof(struct XXH3Hasher);
-	const size_t stateAlignment = _Alignof(XXH3REF_XXH3_state_t);
+	const size_t stateAlignment = _Alignof(XXH3_state_t);
 	return (intS)(
 		hasherAlignment - 1u
 		+ sizeof(struct XXH3Hasher)
 		+ stateAlignment - 1u
-		+ sizeof(XXH3REF_XXH3_state_t)
+		+ sizeof(XXH3_state_t)
 	);
 }
 
@@ -409,9 +408,9 @@ Hasher * init_XXH3Hasher( void * hasherStorage )
 	*hasher = (struct XXH3Hasher){ 0 };
 	def stateStorage = (unsigned char *)hasher
 		+ sizeof(struct XXH3Hasher);
-	hasher->state = (XXH3REF_XXH3_state_t *)alignPtr_XXH3(
+	hasher->state = (XXH3_state_t *)alignPtr_XXH3(
 		stateStorage,
-		_Alignof(XXH3REF_XXH3_state_t)
+		_Alignof(XXH3_state_t)
 	);
 	(void)XXH3REF_XXH3_64bits_reset(hasher->state);
 	return (Hasher *)hasher;

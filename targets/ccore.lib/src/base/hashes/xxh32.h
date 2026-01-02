@@ -52,7 +52,7 @@ XXH_errorcode XXH32_update(
 
 XXH32_hash_t XXH32_digest( const XXH32_state_t * statePtr );
 
-XXH_errorcode XXH32_copyState(
+void XXH32_copyState(
 	XXH32_state_t * dst_state, const XXH32_state_t * src_state
 );
 

@@ -263,6 +263,7 @@ buildTarget( )
 	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
 	__targetSanitizeSettings=""
 	__targetSanitizePaths=""
+	compiledAny=0
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
@@ -274,7 +275,6 @@ buildTarget( )
 			srcRoot=${srcRoot%/}
 
 			compileSpacing=0
-			compiledAny=0
 			while IFS= read -r srcPath || [ -n "$srcPath" ]
 			do
 				[ -n "$srcPath" ] || continue
