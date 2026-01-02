@@ -53,8 +53,8 @@ When invoked from inside the project, the build root is `.out/`. When invoked fr
 `./proj run [-s[tyle] <style>] <target> [<arg> ...]`
     Build a binary target using the given style (default `run`) and execute it. Arguments following the target are passed to the binary. Only `.bin` targets are supported.
 
-`./proj test [-s[tyle] <style>] [<target>[/suite[/...][/test]] ...]`
-    Build targets (test style by default), then build and run tests. If no target is provided, all targets are tested.
+`./proj test [[-s[tyle] <style>] ...] [<target>[/suite[/...][/test]] ...]`
+    Build targets (test style by default), then build and run tests. Repeat `-s` to test multiple styles; all styles build first, then tests run style-by-style. If no target is provided, all targets are tested.
 
 `./proj clean [<style> [<target>]]`
     Remove build output for all builds or a style/target subset. This always cleans `.out/` under the project root.
