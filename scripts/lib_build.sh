@@ -23,85 +23,87 @@ __included_lib_build_sh=1
 #
 _prepareFlags( )
 {
-	flags_projectRoot=$1
-	flags_srcDir=$2
-	flags_buildSettings=$3
+	_flags_projectRoot=$1
+	_flags_srcDir=$2
+	_flags_buildSettings=$3
 
 	[ "${__fileFlagsReady:-0}" -eq 0 ] || return 0
 	__fileFlagsReady=1
 
 	# Find any compile_flags.txt and read it
-	flags_path=$( findCompileFlags "$flags_srcDir" "$flags_projectRoot" )
-	flags_dir=""
-	flags_dirFlags=""
-	sanitizeSettings=""
+	_flags_path=$( findCompileFlags "$_flags_srcDir" "$_flags_projectRoot" )
+	_flags_dir=""
+	_flags_dirFlags=""
+	_flags_sanitizeSettings=""
 
-	if [ "${__cached_flags_path:-}" = "$flags_path" ]
+	if [ "${__cached_flags_path:-}" = "$_flags_path" ]
 	then
-		flags_dir=${__cached_flags_dir:-}
-		flags_dirFlags=${__cached_flags_dirFlags:-}
-		sanitizeSettings=${__cached_sanitizeSettings:-}
+		_flags_dir=${__cached_flags_dir:-}
+		_flags_dirFlags=${__cached_flags_dirFlags:-}
+		_flags_sanitizeSettings=${__cached_sanitizeSettings:-}
 	else
-		flags_dirSettings=""
-		if [ -n "$flags_path" ]
+		_flags_dirSettings=""
+		if [ -n "$_flags_path" ]
 		then
-			case "$flags_path" in
-				*/*) flags_dir=${flags_path%/*} ;;
-				*) flags_dir="." ;;
+			case "$_flags_path" in
+				*/*) _flags_dir=${_flags_path%/*} ;;
+				*) _flags_dir="." ;;
 			esac
-			flags_dirSettings=$( readCompileFlags "$flags_path" )
+			_flags_dirSettings=$( readCompileFlags "$_flags_path" )
 		fi
-		sanitizeSettings=$( _sanitizeSettingsFromList "$flags_dirSettings" )
-		flags_dirFlags=$( quoteSettings "$flags_dirSettings" )
-		__cached_flags_path=$flags_path
-		__cached_flags_dir=$flags_dir
-		__cached_flags_dirFlags=$flags_dirFlags
-		__cached_sanitizeSettings=$sanitizeSettings
+		_flags_sanitizeSettings=$( _sanitizeSettingsFromList "$_flags_dirSettings" )
+		_flags_dirFlags=$( quoteSettings "$_flags_dirSettings" )
+		__cached_flags_path=$_flags_path
+		__cached_flags_dir=$_flags_dir
+		__cached_flags_dirFlags=$_flags_dirFlags
+		__cached_sanitizeSettings=$_flags_sanitizeSettings
 	fi
 
-	if [ -n "$sanitizeSettings" ]
+	if [ -n "$_flags_sanitizeSettings" ]
 	then
-		applySanitize=1
-		if [ -n "$flags_path" ]
+		_flags_applySanitize=1
+		if [ -n "$_flags_path" ]
 		then
 			case "
 ${__targetSanitizePaths:-}
 " in
 				*"
-$flags_path
-"*) applySanitize= ;;
+$_flags_path
+"*) _flags_applySanitize= ;;
 			esac
 		fi
-		if [ -n "$applySanitize" ]
+		if [ -n "$_flags_applySanitize" ]
 		then
-			while IFS= read -r sanitizeFlag || [ -n "$sanitizeFlag" ]
+			while IFS= read -r _flags_sanitizeFlag || \
+				[ -n "$_flags_sanitizeFlag" ]
 			do
-				[ -n "$sanitizeFlag" ] || continue
-				_addTargetSanitizeSetting "$sanitizeFlag"
+				[ -n "$_flags_sanitizeFlag" ] || continue
+				_addTargetSanitizeSetting "$_flags_sanitizeFlag"
 			done <<EOF
-$sanitizeSettings
+$_flags_sanitizeSettings
 EOF
-			if [ -n "$flags_path" ]
+			if [ -n "$_flags_path" ]
 			then
 				if [ -n "${__targetSanitizePaths:-}" ]
 				then
 					__targetSanitizePaths="$__targetSanitizePaths
-$flags_path"
+$_flags_path"
 				else
-					__targetSanitizePaths=$flags_path
+					__targetSanitizePaths=$_flags_path
 				fi
 			fi
 		fi
 	fi
-	if [ -n "$flags_dir" ]
+	if [ -n "$_flags_dir" ]
 	then
-		__workDir=$flags_dir
+		__workDir=$_flags_dir
 	else
-		__workDir=$flags_srcDir
+		__workDir=$_flags_srcDir
 	fi
 
 	# Create final build flags for the file to build
-	__fileFlags=$( appendQuotedSettings "$flags_buildSettings" "$flags_dirFlags" )
+	__fileFlags=$( appendQuotedSettings "$_flags_buildSettings" \
+		"$_flags_dirFlags" )
 
 	if [ -z "$__fileFlags" ]
 	then
@@ -114,7 +116,7 @@ $flags_path"
 #
 _deployPostprocessFlags( )
 {
-	if platform_target_is_apple
+	if platformTargetIsApple
 	then
 		printf '%s\n' "-Wl,-dead_strip"
 		printf '%s\n' "-Wl,-S"
@@ -136,14 +138,14 @@ _deployPostprocessFlags( )
 #
 _buildFile( )
 {
-	build_projectRoot=$1
-	build_srcPath=$2
-	build_objPath=$3
-	build_srcDir=$4
-	build_settings=$5
+	_build_projectRoot=$1
+	_build_srcPath=$2
+	_build_objPath=$3
+	_build_srcDir=$4
+	_build_settings=$5
 
-	_prepareFlags "$build_projectRoot" "$build_srcDir" "$build_settings"
-	buildFile "$build_srcPath" "$build_objPath" "$__workDir" "$__fileFlags"
+	_prepareFlags "$_build_projectRoot" "$_build_srcDir" "$_build_settings"
+	buildFile "$_build_srcPath" "$_build_objPath" "$__workDir" "$__fileFlags"
 }
 
 # $1 - Project root directory.
@@ -156,35 +158,35 @@ _buildFile( )
 #
 _buildFileWithOutput( )
 {
-	build_projectRoot=$1
-	build_srcPath=$2
-	build_objPath=$3
-	build_srcDir=$4
-	build_settings=$5
+	_build_projectRoot=$1
+	_build_srcPath=$2
+	_build_objPath=$3
+	_build_srcDir=$4
+	_build_settings=$5
 
-	tmpPath=$( mktemp "${TMPDIR:-/tmp}/build.XXXXXX" ) \
+	_build_tmpPath=$( mktemp "${TMPDIR:-/tmp}/build.XXXXXX" ) \
 		|| printErrorAndExit "mktemp failed"
 
-	if _buildFile "$build_projectRoot" "$build_srcPath" "$build_objPath" \
-		"$build_srcDir" "$build_settings" 2>"$tmpPath"
+	if _buildFile "$_build_projectRoot" "$_build_srcPath" "$_build_objPath" \
+		"$_build_srcDir" "$_build_settings" 2>"$_build_tmpPath"
 	then
-		build_status=0
+		_build_status=0
 	else
-		build_status=$?
+		_build_status=$?
 	fi
 
-	if [ -s "$tmpPath" ]
+	if [ -s "$_build_tmpPath" ]
 	then
-		cat "$tmpPath" >&2
+		cat "$_build_tmpPath" >&2
 		__buildFileHadOutput=1
 	else
 		__buildFileHadOutput=0
 	fi
-	rm -f "$tmpPath"
+	rm -f "$_build_tmpPath"
 
-	if [ "$build_status" -ne 0 ]
+	if [ "$_build_status" -ne 0 ]
 	then
-		return "$build_status"
+		return "$_build_status"
 	fi
 }
 
@@ -398,10 +400,10 @@ createStaticLibrary( )
 #
 _dynamicLibExtension( )
 {
-	if platform_target_is_apple
+	if platformTargetIsApple
 	then
 		printf '%s\n' ".dylib"
-	elif platform_target_is_windows
+	elif platformTargetIsWindows
 	then
 		printf '%s\n' ".dll"
 	else

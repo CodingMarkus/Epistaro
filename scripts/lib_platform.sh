@@ -11,7 +11,7 @@ __included_lib_platform_sh=1
 
 # Prints the host OS name mapped to supported TARGET values.
 #
-platform_detect_host_os( )
+platformDetectHostOs( )
 {
 	if command -v uname >/dev/null 2>&1
 	then
@@ -35,7 +35,7 @@ platform_detect_host_os( )
 #
 # TARGET format: <OS>[-<CPU>]. CPU parsing is reserved for future use.
 #
-platform_init_target_vars( )
+platformInitTargetVars( )
 {
 	[ -n "${__platform_target_vars_ready:-}" ] && return 0
 	__platform_target_vars_ready=1
@@ -44,7 +44,7 @@ platform_init_target_vars( )
 	then
 		__style_set__TARGET=$TARGET
 	else
-		__style_set__TARGET=$( platform_detect_host_os )
+		__style_set__TARGET=$( platformDetectHostOs )
 	fi
 
 	case "${__style_set__TARGET:-}" in
@@ -66,9 +66,9 @@ platform_init_target_vars( )
 
 # Returns success if the target OS is an Apple platform.
 #
-platform_target_is_apple( )
+platformTargetIsApple( )
 {
-	platform_init_target_vars
+	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
 		macOS|iOS|tvOS|iPadOS|watchOS) return 0 ;;
 		*) return 1 ;;
@@ -78,9 +78,9 @@ platform_target_is_apple( )
 
 # Returns success if the target OS is Windows.
 #
-platform_target_is_windows( )
+platformTargetIsWindows( )
 {
-	platform_init_target_vars
+	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
 		Windows) return 0 ;;
 		*) return 1 ;;
@@ -90,9 +90,9 @@ platform_target_is_windows( )
 
 # Returns success if the target OS is supported.
 #
-platform_target_is_supported( )
+platformTargetIsSupported( )
 {
-	platform_init_target_vars
+	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
 		Linux|macOS|Windows|iOS|tvOS|iPadOS|watchOS|\
 		FreeBSD|NetBSD|OpenBSD|Emscripten)
@@ -105,10 +105,10 @@ platform_target_is_supported( )
 
 # Fails if the target OS is not recognized.
 #
-platform_require_supported_target( )
+platformRequireSupportedTarget( )
 {
-	platform_init_target_vars
-	if platform_target_is_supported
+	platformInitTargetVars
+	if platformTargetIsSupported
 	then
 		return 0
 	fi
@@ -126,4 +126,4 @@ Emscripten."
 }
 
 
-platform_init_target_vars
+platformInitTargetVars

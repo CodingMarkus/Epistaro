@@ -14,13 +14,13 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   help [<command>]
 
       Print help for command.
       Print help for all commands if no command is specified.
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 

@@ -14,12 +14,12 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   clean [<style> [<target>]]
 
       Clean all builds, or only builds for a style and optional target.
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 

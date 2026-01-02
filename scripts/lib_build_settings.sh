@@ -20,199 +20,199 @@ __included_lib_build_settings_sh=1
 #
 expandStyle( )
 {
-	styleDepth=${__style_parse_depth:-0}
-	styleDepth=$((styleDepth + 1))
-	__style_parse_depth=$styleDepth
+	_exp_depth=${__style_parse_depth:-0}
+	_exp_depth=$((_exp_depth + 1))
+	__style_parse_depth=$_exp_depth
 
-	eval "__style_saved_stylePath_$styleDepth=\${stylePath-}"
-	eval "__style_saved_styleDir_$styleDepth=\${styleDir-}"
-	eval "__style_saved_stylePathAbs_$styleDepth=\${stylePathAbs-}"
-	eval "__style_saved_styleDirAbs_$styleDepth=\${styleDirAbs-}"
-	eval "__style_saved_includeStack_$styleDepth=\${__style_include_stack-}"
+	eval "__style_saved_stylePath_$_exp_depth=\${_exp_path-}"
+	eval "__style_saved_styleDir_$_exp_depth=\${_exp_dir-}"
+	eval "__style_saved_stylePathAbs_$_exp_depth=\${_exp_path_abs-}"
+	eval "__style_saved_styleDirAbs_$_exp_depth=\${_exp_dir_abs-}"
+	eval "__style_saved_includeStack_$_exp_depth=\${__style_include_stack-}"
 
-	stylePath=$1
+	_exp_path=$1
 
-	assert "[ -n \"${stylePath:-}\" ]" "expandStyle() missing style path"
-	assert "[ -e \"$stylePath\" ]" "style file not found: $stylePath"
+	assert "[ -n \"${_exp_path:-}\" ]" "expandStyle() missing style path"
+	assert "[ -e \"$_exp_path\" ]" "style file not found: $_exp_path"
 
-	if [ "$styleDepth" -eq 1 ]
+	if [ "$_exp_depth" -eq 1 ]
 	then
 		__style_caps_vars=""
 	fi
 
-	case "$stylePath" in
-		*/*) styleDir=${stylePath%/*} ;;
-		*) styleDir="." ;;
+	case "$_exp_path" in
+		*/*) _exp_dir=${_exp_path%/*} ;;
+		*) _exp_dir="." ;;
 	esac
-	case "$stylePath" in
-		/*) stylePathAbs=$stylePath ;;
+	case "$_exp_path" in
+		/*) _exp_path_abs=$_exp_path ;;
 
 		*)
-			stylePathAbs=$( abs_path "$stylePath" ) \
-				|| printErrorAndExit "Style dir not found: $styleDir"
+			_exp_path_abs=$( absPath "$_exp_path" ) \
+				|| printErrorAndExit "Style dir not found: $_exp_dir"
 			;;
 	esac
-	styleDirAbs=${stylePathAbs%/*}
-	[ -n "$styleDirAbs" ] || styleDirAbs=/
+	_exp_dir_abs=${_exp_path_abs%/*}
+	[ -n "$_exp_dir_abs" ] || _exp_dir_abs=/
 
-	includeStack=${__style_include_stack:-}
-	case ":$includeStack:" in
-		*":$stylePathAbs:"*)
-			printErrorAndExit "Style include cycle detected: $stylePathAbs"
+	_exp_stack=${__style_include_stack:-}
+	case ":$_exp_stack:" in
+		*":$_exp_path_abs:"*)
+			printErrorAndExit "Style include cycle detected: $_exp_path_abs"
 			;;
 	esac
-	if [ -n "$includeStack" ]
+	if [ -n "$_exp_stack" ]
 	then
-		__style_include_stack="$includeStack:$stylePathAbs"
+		__style_include_stack="$_exp_stack:$_exp_path_abs"
 	else
-		__style_include_stack=$stylePathAbs
+		__style_include_stack=$_exp_path_abs
 	fi
 
-	while IFS= read -r line || [ -n "$line" ]
+	while IFS= read -r _exp_line || [ -n "$_exp_line" ]
 	do
-		trimmed=$( printf '%s' "$line" | sed 's/^[[:space:]]*//' )
-		[ -z "$trimmed" ] && continue
+		_exp_trim=$( printf '%s' "$_exp_line" | sed 's/^[[:space:]]*//' )
+		[ -z "$_exp_trim" ] && continue
 
-		case "$trimmed" in
+		case "$_exp_trim" in
 			\#*) continue ;;
 
 			\$set[[:space:]]* )
-				setLine=${trimmed#'$set'}
-				split=$( _style_split_var_and_rest "$setLine" )
-				oldIFS=$IFS
+				_exp_set_line=${_exp_trim#'$set'}
+				_exp_split=$( _styleSplitVarAndRest "$_exp_set_line" )
+				_exp_oldifs=$IFS
 				IFS='
 '
-				set -- $split
-				IFS=$oldIFS
-				varName=${1-}
-				rest=${2-}
-				[ -n "$varName" ] || \
-					printErrorAndExit "\$set missing name in $stylePath"
-				value=$( _style_parse_value "$rest" "$stylePath" )
-				_style_set_var "$varName" "$value" "$stylePath"
+				set -- $_exp_split
+				IFS=$_exp_oldifs
+				_exp_name=${1-}
+				_exp_rest=${2-}
+				[ -n "$_exp_name" ] || \
+					printErrorAndExit "\$set missing name in $_exp_path"
+				_exp_value=$( _styleParseValue "$_exp_rest" "$_exp_path" )
+				_styleSetVar "$_exp_name" "$_exp_value" "$_exp_path"
 				;;
 			\$unset[[:space:]]* )
-				unsetLine=${trimmed#'$unset'}
-				split=$( _style_split_var_and_rest "$unsetLine" )
-				oldIFS=$IFS
+				_exp_unset_line=${_exp_trim#'$unset'}
+				_exp_split=$( _styleSplitVarAndRest "$_exp_unset_line" )
+				_exp_oldifs=$IFS
 				IFS='
 '
-				set -- $split
-				IFS=$oldIFS
-				varName=${1-}
-				rest=${2-}
-				[ -n "$varName" ] || \
-					printErrorAndExit "\$unset missing name in $stylePath"
-				rest=$( _style_trim "$rest" )
-				[ -z "$rest" ] || \
-					printErrorAndExit "Unexpected text in $stylePath: $trimmed"
-				_style_unset_var "$varName" "$stylePath"
+				set -- $_exp_split
+				IFS=$_exp_oldifs
+				_exp_name=${1-}
+				_exp_rest=${2-}
+				[ -n "$_exp_name" ] || \
+					printErrorAndExit "\$unset missing name in $_exp_path"
+				_exp_rest=$( _styleTrim "$_exp_rest" )
+				[ -z "$_exp_rest" ] || \
+					printErrorAndExit "Unexpected text in $_exp_path: $_exp_trim"
+				_styleUnsetVar "$_exp_name" "$_exp_path"
 				;;
 			\$include\?[[:space:]]*|\
 			\$include\?\(*|\
 			\$include[[:space:]]*|\
 			\$include\(* )
-				includeOptional=0
-				case "$trimmed" in
+				_exp_inc_opt=0
+				case "$_exp_trim" in
 					\$include\?*)
-						includeOptional=1
-						includeLine=${trimmed#'$include?'}
+						_exp_inc_opt=1
+						_exp_inc_line=${_exp_trim#'$include?'}
 						;;
 					*)
-						includeLine=${trimmed#'$include'}
+						_exp_inc_line=${_exp_trim#'$include'}
 						;;
 				esac
-				includeDirective='$include'
-				if [ "$includeOptional" -eq 1 ]
+				_exp_inc_dir='$include'
+				if [ "$_exp_inc_opt" -eq 1 ]
 				then
-					includeDirective='$include?'
+					_exp_inc_dir='$include?'
 				fi
-				includeLine=$( _style_trim_left "$includeLine" )
-				includeOk=1
-				case "$includeLine" in
+				_exp_inc_line=$( _styleTrimLeft "$_exp_inc_line" )
+				_exp_inc_ok=1
+				case "$_exp_inc_line" in
 					\(* )
-						condBlock=${includeLine#\(}
-						case "$condBlock" in
+						_exp_cond_block=${_exp_inc_line#\(}
+						case "$_exp_cond_block" in
 							*\)* )
-								cond=${condBlock%%\)*}
-								after=${condBlock#"$cond"}
-								after=${after#\)}
-								includeLine=$( _style_trim_left "$after" )
+								_exp_cond=${_exp_cond_block%%\)*}
+								_exp_after=${_exp_cond_block#"$_exp_cond"}
+								_exp_after=${_exp_after#\)}
+								_exp_inc_line=$( _styleTrimLeft "$_exp_after" )
 								;;
 							*)
 								printErrorAndExit \
-									"Missing ')' in include condition in $stylePath"
+									"Missing ')' in include condition in $_exp_path"
 								;;
 						esac
-						if _style_eval_condition "$cond" "$stylePath"
+						if _styleEvalCondition "$_exp_cond" "$_exp_path"
 						then
-							includeOk=1
+							_exp_inc_ok=1
 						else
-							includeOk=0
+							_exp_inc_ok=0
 						fi
 						;;
 				esac
-				includeName=$( _style_trim "$includeLine" )
-				if [ -z "$includeName" ]
+				_exp_inc_name=$( _styleTrim "$_exp_inc_line" )
+				if [ -z "$_exp_inc_name" ]
 				then
 					printErrorAndExit \
-						"$includeDirective missing name in $stylePath"
+						"$_exp_inc_dir missing name in $_exp_path"
 				fi
-				if [ "$includeOk" -eq 0 ]
+				if [ "$_exp_inc_ok" -eq 0 ]
 				then
 					continue
 				fi
-				case "$includeName" in
-					/*) includePath=$includeName ;;
-					*) includePath="$styleDirAbs/$includeName" ;;
+				case "$_exp_inc_name" in
+					/*) _exp_inc_path=$_exp_inc_name ;;
+					*) _exp_inc_path="$_exp_dir_abs/$_exp_inc_name" ;;
 				esac
-				if [ -e "$includePath" ]
+				if [ -e "$_exp_inc_path" ]
 				then
-					expandStyle "$includePath"
+					expandStyle "$_exp_inc_path"
 				else
-					if [ "$includeOptional" -eq 1 ]
+					if [ "$_exp_inc_opt" -eq 1 ]
 					then
 						:
 					else
 						printErrorAndExit \
-							"\$include style not found: $includeName"
+							"\$include style not found: $_exp_inc_name"
 					fi
 				fi
 				;;
 
 			\$*)
-				printErrorAndExit "Unknown directive in $stylePath: $trimmed"
+				printErrorAndExit "Unknown directive in $_exp_path: $_exp_trim"
 				;;
 
 			*)
 				if [ "${__style_emit_settings:-1}" != "0" ]
 				then
-					printf '%s\n' "$trimmed"
+					printf '%s\n' "$_exp_trim"
 				fi
 				;;
 		esac
-	done < "$stylePath"
+	done < "$_exp_path"
 
-	if [ "$styleDepth" -eq 1 ] && [ -n "${__style_emit_exports:-}" ]
+	if [ "$_exp_depth" -eq 1 ] && [ -n "${__style_emit_exports:-}" ]
 	then
-		_style_export_caps_vars "$stylePath"
+		_styleExportCapsVars "$_exp_path"
 	fi
 
-	eval "stylePath=\${__style_saved_stylePath_$styleDepth-}"
-	eval "styleDir=\${__style_saved_styleDir_$styleDepth-}"
-	eval "stylePathAbs=\${__style_saved_stylePathAbs_$styleDepth-}"
-	eval "styleDirAbs=\${__style_saved_styleDirAbs_$styleDepth-}"
-	eval "__style_include_stack=\${__style_saved_includeStack_$styleDepth-}"
-	eval "unset __style_saved_stylePath_$styleDepth \
-		__style_saved_styleDir_$styleDepth \
-		__style_saved_stylePathAbs_$styleDepth \
-		__style_saved_styleDirAbs_$styleDepth \
-		__style_saved_includeStack_$styleDepth"
+	eval "_exp_path=\${__style_saved_stylePath_$_exp_depth-}"
+	eval "_exp_dir=\${__style_saved_styleDir_$_exp_depth-}"
+	eval "_exp_path_abs=\${__style_saved_stylePathAbs_$_exp_depth-}"
+	eval "_exp_dir_abs=\${__style_saved_styleDirAbs_$_exp_depth-}"
+	eval "__style_include_stack=\${__style_saved_includeStack_$_exp_depth-}"
+	eval "unset __style_saved_stylePath_$_exp_depth \
+		__style_saved_styleDir_$_exp_depth \
+		__style_saved_stylePathAbs_$_exp_depth \
+		__style_saved_styleDirAbs_$_exp_depth \
+		__style_saved_includeStack_$_exp_depth"
 
-	styleDepth=$((styleDepth - 1))
-	if [ "$styleDepth" -gt 0 ]
+	_exp_depth=$((_exp_depth - 1))
+	if [ "$_exp_depth" -gt 0 ]
 	then
-		__style_parse_depth=$styleDepth
+		__style_parse_depth=$_exp_depth
 	else
 		unset __style_parse_depth
 	fi
@@ -239,7 +239,7 @@ findCompileFlags( )
 		/*) ;;
 
 		*)
-			projectRoot=$( abs_dir "$projectRoot" ) || projectRoot=/
+			projectRoot=$( absDir "$projectRoot" ) || projectRoot=/
 			;;
 	esac
 
@@ -247,7 +247,7 @@ findCompileFlags( )
 		/*) searchDir=$srcDir ;;
 
 		*)
-			searchDir=$( abs_dir "$srcDir" ) || return 0
+			searchDir=$( absDir "$srcDir" ) || return 0
 			;;
 	esac
 
@@ -318,11 +318,11 @@ _supportsColorDiagnostics( )
 	[ -t 2 ] || return 1
 	command -v tput >/dev/null 2>&1 || return 1
 
-	colors=$( tput colors 2>/dev/null || printf '' )
-	case "$colors" in
+	_scd_colors=$( tput colors 2>/dev/null || printf '' )
+	case "$_scd_colors" in
 		''|*[!0-9]*) return 1 ;;
 	esac
-	[ "$colors" -gt 0 ] || return 1
+	[ "$_scd_colors" -gt 0 ] || return 1
 }
 
 
@@ -377,19 +377,20 @@ styleExportsForStyle( )
 #
 syncStyleSetVars( )
 {
-	stylePath=$1
+	_ssv_path=$1
 
-	assert "[ -n \"${stylePath:-}\" ]" "syncStyleSetVars() missing path"
+	assert "[ -n \"${_ssv_path:-}\" ]" \
+		"syncStyleSetVars() missing path"
 
-	exportLines=$( styleExportsForStyle "$stylePath" )
-	[ -n "$exportLines" ] || return 0
+	_ssv_lines=$( styleExportsForStyle "$_ssv_path" )
+	[ -n "$_ssv_lines" ] || return 0
 
-	while IFS= read -r exportLine || [ -n "$exportLine" ]
+	while IFS= read -r _ssv_line || [ -n "$_ssv_line" ]
 	do
-		[ -n "$exportLine" ] || continue
-		eval "$exportLine"
+		[ -n "$_ssv_line" ] || continue
+		eval "$_ssv_line"
 	done <<EOF
-$exportLines
+$_ssv_lines
 EOF
 }
 

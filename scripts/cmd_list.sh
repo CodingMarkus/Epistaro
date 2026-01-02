@@ -15,7 +15,7 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   list [-plain] t[argets]
 
       List available targets.
@@ -28,7 +28,7 @@ printHelp( )
 
       List available tests for a target, or all targets.
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 

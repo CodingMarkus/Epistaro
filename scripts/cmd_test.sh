@@ -14,7 +14,7 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   test [-s[tyle] <style>] [<target>[/suite[/...][/test]] ...]
 
       Build targets (test style by default), build tests, and run them.
@@ -22,7 +22,7 @@ printHelp( )
       You can scope to a suite or a specific test using a pseudo path,
       omitting .ut/.it for specific tests.
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 
@@ -85,7 +85,7 @@ then
 	printErrorAndExit "Style not found: $styleFile"
 fi
 
-platform_require_supported_target
+platformRequireSupportedTarget
 
 buildSettings=$( resolvedBuildSettings "$styleFile" )
 syncStyleSetVars "$styleFile"
@@ -277,8 +277,8 @@ $target"
 
 	testObjRoot=$( testsTargetObjDirPath "$buildDir" "$styleName" "$target" )
 	testOutDir=$( testsTargetBinDirPath "$buildDir" "$styleName" "$target" )
-	ensure_dir "$testObjRoot"
-	ensure_dir "$testOutDir"
+	ensureDir "$testObjRoot"
+	ensureDir "$testOutDir"
 
 	if ! buildTestObjects "$__projDir" "$testsRoot" "$testRel" \
 		"$testObjRoot" "$buildSettings"
@@ -296,16 +296,16 @@ $target"
 		|| printErrorAndExit "No objects found for test: $target/$testRel"
 
 	linkFlags=$buildSettings
-	if [ -n "${testSanitizeSettings:-}" ]
+	if [ -n "${__testSanitizeSettings:-}" ]
 	then
-		sanitizeFlags=$( quoteSettings "$testSanitizeSettings" )
+		sanitizeFlags=$( quoteSettings "$__testSanitizeSettings" )
 		linkFlags=$( appendQuotedSettings "$linkFlags" "$sanitizeFlags" )
 	fi
 	[ -n "$linkFlags" ] || linkFlags="--"
 
 	testBinPath=$( testBinaryPath "$testOutDir" "$testRel" )
 	case "$testBinPath" in
-		*/*) ensure_dir "${testBinPath%/*}" ;;
+		*/*) ensureDir "${testBinPath%/*}" ;;
 	esac
 
 	if [ "$testType" = "ut" ]

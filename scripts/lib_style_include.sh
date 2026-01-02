@@ -16,137 +16,186 @@ __included_lib_style_include_sh=1
 #
 # Evaluates an include condition.
 #
-_style_eval_condition( )
+_styleEvalCondition( )
 {
-	cond=$1
-	stylePath=$2
+	_sec_cond=$1
+	_sec_path=$2
 
-	cond=$( _style_trim "$cond" )
-	case "$cond" in
+	_sec_cond=$( _styleTrim "$_sec_cond" )
+	case "$_sec_cond" in
 		if-set[[:space:]]* )
-			rest=${cond#if-set}
-			split=$( _style_split_var_and_rest "$rest" )
-			oldIFS=$IFS
+			_sec_rest=${_sec_cond#if-set}
+			_sec_split=$( \
+				_styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
 			IFS='
 '
-			set -- $split
-			IFS=$oldIFS
-			varName=${1-}
-			rest=${2-}
-			rest=$( _style_trim "$rest" )
-			[ -n "$varName" ] || \
-				printErrorAndExit "Missing var name in $stylePath"
-			[ -z "$rest" ] || \
-				printErrorAndExit "Unexpected text in $stylePath: $cond"
-			_style_var_is_set "$varName" "$stylePath"
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			_sec_rest=$( \
+				_styleTrim "$_sec_rest" )
+			[ -n "$_sec_name" ] || \
+				printErrorAndExit \
+				"Missing var name in $_sec_path"
+			[ -z "$_sec_rest" ] || \
+				printErrorAndExit \
+				"Unexpected text in $_sec_path: \
+$_sec_cond"
+			_styleVarIsSet "$_sec_name" \
+				"$_sec_path"
 			;;
 		if-not-set[[:space:]]* )
-			rest=${cond#if-not-set}
-			split=$( _style_split_var_and_rest "$rest" )
-			oldIFS=$IFS
+			_sec_rest=${_sec_cond#if-not-set}
+			_sec_split=$( \
+				_styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
 			IFS='
 '
-			set -- $split
-			IFS=$oldIFS
-			varName=${1-}
-			rest=${2-}
-			rest=$( _style_trim "$rest" )
-			[ -n "$varName" ] || \
-				printErrorAndExit "Missing var name in $stylePath"
-			[ -z "$rest" ] || \
-				printErrorAndExit "Unexpected text in $stylePath: $cond"
-			_style_var_is_set "$varName" "$stylePath" && return 1
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			_sec_rest=$( \
+				_styleTrim "$_sec_rest" )
+			[ -n "$_sec_name" ] || \
+				printErrorAndExit \
+				"Missing var name in $_sec_path"
+			[ -z "$_sec_rest" ] || \
+				printErrorAndExit \
+				"Unexpected text in $_sec_path: \
+$_sec_cond"
+			_styleVarIsSet "$_sec_name" \
+				"$_sec_path" && return 1
 			return 0
 			;;
 		if-match[[:space:]]* )
-			rest=${cond#if-match}
-			split=$( _style_split_var_and_rest "$rest" )
-			oldIFS=$IFS
+			_sec_rest=${_sec_cond#if-match}
+			_sec_split=$( \
+				_styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
 			IFS='
 '
-			set -- $split
-			IFS=$oldIFS
-			varName=${1-}
-			rest=${2-}
-			[ -n "$varName" ] || \
-				printErrorAndExit "Missing var name in $stylePath"
-			rest=$( _style_trim_left "$rest" )
-			case "$rest" in
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			[ -n "$_sec_name" ] || \
+				printErrorAndExit \
+				"Missing var name in $_sec_path"
+			_sec_rest=$( \
+				_styleTrimLeft "$_sec_rest" )
+			case "$_sec_rest" in
 				/*/ )
-					pattern=${rest#/}
-					pattern=${pattern%/}
+					_sec_pat=\
+						${_sec_rest#/}
+					_sec_pat=\
+						${_sec_pat%/}
 					;;
 				*)
 					printErrorAndExit \
-						"Invalid match pattern in $stylePath: $cond"
+						"Invalid match pattern in \
+$_sec_path: \
+$_sec_cond"
 					;;
 			esac
-			if ! _style_var_is_set "$varName" "$stylePath"
+			if ! _styleVarIsSet "$_sec_name" \
+				"$_sec_path"
 			then
 				return 1
 			fi
-			value=$( _style_get_var "$varName" "$stylePath" )
-			printf '%s' "$value" | grep -E -q -- "$pattern"
+			_sec_val=$( \
+				_styleGetVar "$_sec_name" \
+					"$_sec_path" )
+			printf '%s' "$_sec_val" \
+				| grep -E -q -- "$_sec_pat"
 			;;
 		if-not-match[[:space:]]* )
-			rest=${cond#if-not-match}
-			split=$( _style_split_var_and_rest "$rest" )
-			oldIFS=$IFS
+			_sec_rest=\
+				${_sec_cond#if-not-match}
+			_sec_split=$( \
+				_styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
 			IFS='
 '
-			set -- $split
-			IFS=$oldIFS
-			varName=${1-}
-			rest=${2-}
-			[ -n "$varName" ] || \
-				printErrorAndExit "Missing var name in $stylePath"
-			rest=$( _style_trim_left "$rest" )
-			case "$rest" in
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			[ -n "$_sec_name" ] || \
+				printErrorAndExit \
+				"Missing var name in $_sec_path"
+			_sec_rest=$( \
+				_styleTrimLeft "$_sec_rest" )
+			case "$_sec_rest" in
 				/*/ )
-					pattern=${rest#/}
-					pattern=${pattern%/}
+					_sec_pat=\
+						${_sec_rest#/}
+					_sec_pat=\
+						${_sec_pat%/}
 					;;
 				*)
 					printErrorAndExit \
-						"Invalid match pattern in $stylePath: $cond"
+						"Invalid match pattern in \
+$_sec_path: \
+$_sec_cond"
 					;;
 			esac
-			if ! _style_var_is_set "$varName" "$stylePath"
+			if ! _styleVarIsSet "$_sec_name" \
+				"$_sec_path"
 			then
 				return 0
 			fi
-			value=$( _style_get_var "$varName" "$stylePath" )
-			if printf '%s' "$value" | grep -E -q -- "$pattern"
+			_sec_val=$( \
+				_styleGetVar "$_sec_name" \
+					"$_sec_path" )
+			if printf '%s' "$_sec_val" \
+				| grep -E -q -- "$_sec_pat"
 			then
 				return 1
 			fi
 			return 0
 			;;
 		if-equal[[:space:]]* )
-			rest=${cond#if-equal}
-			split=$( _style_split_var_and_rest "$rest" )
-			oldIFS=$IFS
+			_sec_rest=${_sec_cond#if-equal}
+			_sec_split=$( \
+				_styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
 			IFS='
 '
-			set -- $split
-			IFS=$oldIFS
-			varName=${1-}
-			rest=${2-}
-			[ -n "$varName" ] || \
-				printErrorAndExit "Missing var name in $stylePath"
-			rest=$( _style_trim_left "$rest" )
-			[ -n "$rest" ] || \
-				printErrorAndExit "Missing match value in $stylePath"
-			expected=$( _style_parse_value "$rest" "$stylePath" )
-			if ! _style_var_is_set "$varName" "$stylePath"
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			[ -n "$_sec_name" ] || \
+				printErrorAndExit \
+				"Missing var name in $_sec_path"
+			_sec_rest=$( \
+				_styleTrimLeft "$_sec_rest" )
+			[ -n "$_sec_rest" ] || \
+				printErrorAndExit \
+				"Missing match value in \
+$_sec_path"
+			_sec_exp=$( \
+				_styleParseValue "$_sec_rest" \
+					"$_sec_path" )
+			if ! _styleVarIsSet "$_sec_name" \
+				"$_sec_path"
 			then
 				return 1
 			fi
-			value=$( _style_get_var "$varName" "$stylePath" )
-			[ "$value" = "$expected" ]
+			_sec_val=$( \
+				_styleGetVar "$_sec_name" \
+					"$_sec_path" )
+			[ "$_sec_val" = \
+				"$_sec_exp" ]
 			;;
 		*)
-			printErrorAndExit "Unknown include condition in $stylePath: $cond"
+			printErrorAndExit \
+				"Unknown include condition in \
+$_sec_path: \
+$_sec_cond"
 			;;
 	esac
 }

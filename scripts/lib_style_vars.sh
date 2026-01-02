@@ -13,7 +13,7 @@ __included_lib_style_vars_sh=1
 #
 # Prints a single-quoted string safe for eval assignment.
 #
-_style_quote_eval( )
+_styleQuoteEval( )
 {
 	printf "'%s'" "$( printf "%s" "$1" | sed "s/'/'\\\\''/g" )"
 }
@@ -24,14 +24,17 @@ _style_quote_eval( )
 #
 # Validates a variable name for read-only use.
 #
-_style_validate_var_name_read( )
+_styleValidateVarNameRead( )
 {
-	name=$1
-	stylePath=$2
+	_svr_name=$1
+	_svr_path=$2
 
-	case "$name" in
+	case "$_svr_name" in
 		''|[!A-Za-z_]*|*[!A-Za-z0-9_]*)
-			printErrorAndExit "Invalid variable name in $stylePath: $name"
+			printErrorAndExit \
+				"Invalid variable name in \
+$_svr_path: \
+$_svr_name"
 			;;
 	esac
 }
@@ -42,16 +45,16 @@ _style_validate_var_name_read( )
 #
 # Validates a variable name for write operations (reserved names blocked).
 #
-_style_validate_var_name_write( )
+_styleValidateVarNameWrite( )
 {
-	name=$1
-	stylePath=$2
+	_svw_name=$1
+	_svw_path=$2
 
-	_style_validate_var_name_read "$name" "$stylePath"
-	case "$name" in
+	_styleValidateVarNameRead "$_svw_name" "$_svw_path"
+	case "$_svw_name" in
 		_*)
 			printErrorAndExit \
-				"Variables starting with '_' are reserved in $stylePath: $name"
+				"Variables starting with '_' are reserved in $_svw_path: $_svw_name"
 			;;
 	esac
 }
@@ -61,7 +64,7 @@ _style_validate_var_name_write( )
 #
 # Returns success if the name is all caps with digits/underscores.
 #
-_style_is_all_caps_name( )
+_styleIsAllCapsName( )
 {
 	case "$1" in
 		[A-Z][A-Z0-9_]*) return 0 ;;
@@ -74,26 +77,26 @@ _style_is_all_caps_name( )
 #
 # Tracks all-caps variables for export.
 #
-_style_track_caps_name( )
+_styleTrackCapsName( )
 {
-	name=$1
+	_stc_name=$1
 
-	_style_is_all_caps_name "$name" || return 0
+	_styleIsAllCapsName "$_stc_name" || return 0
 
 	case "
 ${__style_caps_vars:-}
 " in
 		*"
-$name
+$_stc_name
 "*) return 0 ;;
 	esac
 
 	if [ -n "${__style_caps_vars:-}" ]
 	then
 		__style_caps_vars="$__style_caps_vars
-$name"
+$_stc_name"
 	else
-		__style_caps_vars=$name
+		__style_caps_vars=$_stc_name
 	fi
 }
 
@@ -102,12 +105,12 @@ $name"
 #
 # Returns success if an external script variable is set.
 #
-_style_external_var_is_set( )
+_styleExternalVarIsSet( )
 {
-	name=$1
-	varName="__style_set_$name"
-	eval "flag=\${$varName+x}"
-	[ -n "${flag:-}" ]
+	_seis_name=$1
+	_seis_var="__style_set_$_seis_name"
+	eval "_seis_flag=\${$_seis_var+x}"
+	[ -n "${_seis_flag:-}" ]
 }
 
 
@@ -115,11 +118,11 @@ _style_external_var_is_set( )
 #
 # Prints the external script variable value.
 #
-_style_external_var_get( )
+_styleExternalVarGet( )
 {
-	name=$1
-	varName="__style_set_$name"
-	eval "printf '%s' \"\${$varName-}\""
+	_seg_name=$1
+	_seg_var="__style_set_$_seg_name"
+	eval "printf '%s' \"\${$_seg_var-}\""
 }
 
 
@@ -129,20 +132,20 @@ _style_external_var_get( )
 #
 # Sets a style variable and marks it as present.
 #
-_style_set_var( )
+_styleSetVar( )
 {
-	name=$1
-	value=${2-}
-	stylePath=$3
+	_ssv_name=$1
+	_ssv_value=${2-}
+	_ssv_path=$3
 
-	_style_validate_var_name_write "$name" "$stylePath"
-	_style_track_caps_name "$name"
+	_styleValidateVarNameWrite "$_ssv_name" "$_ssv_path"
+	_styleTrackCapsName "$_ssv_name"
 
-	varSet="__style_var_set_$name"
-	varValue="__style_var_value_$name"
+	_ssv_var_set="__style_var_set_$_ssv_name"
+	_ssv_var_value="__style_var_value_$_ssv_name"
 
-	eval "$varSet=1"
-	eval "$varValue=$(_style_quote_eval "$value")"
+	eval "$_ssv_var_set=1"
+	eval "$_ssv_var_value=$(_styleQuoteEval "$_ssv_value")"
 }
 
 
@@ -151,19 +154,19 @@ _style_set_var( )
 #
 # Unsets a style variable and clears its presence marker.
 #
-_style_unset_var( )
+_styleUnsetVar( )
 {
-	name=$1
-	stylePath=$2
+	_suv_name=$1
+	_suv_path=$2
 
-	_style_validate_var_name_write "$name" "$stylePath"
-	_style_track_caps_name "$name"
+	_styleValidateVarNameWrite "$_suv_name" "$_suv_path"
+	_styleTrackCapsName "$_suv_name"
 
-	varSet="__style_var_set_$name"
-	varValue="__style_var_value_$name"
+	_suv_var_set="__style_var_set_$_suv_name"
+	_suv_var_value="__style_var_value_$_suv_name"
 
-	eval "$varSet=0"
-	eval "unset $varValue"
+	eval "$_suv_var_set=0"
+	eval "unset $_suv_var_value"
 }
 
 
@@ -172,21 +175,21 @@ _style_unset_var( )
 #
 # Returns success if the variable has been set.
 #
-_style_var_is_set( )
+_styleVarIsSet( )
 {
-	name=$1
-	stylePath=$2
+	_svis_name=$1
+	_svis_path=$2
 
-	_style_validate_var_name_read "$name" "$stylePath"
+	_styleValidateVarNameRead "$_svis_name" "$_svis_path"
 
-	varSet="__style_var_set_$name"
-	eval "flag=\${$varSet-}"
-	case "${flag:-}" in
+	_svis_var_set="__style_var_set_$_svis_name"
+	eval "_svis_flag=\${$_svis_var_set-}"
+	case "${_svis_flag:-}" in
 		1) return 0 ;;
 		0) return 1 ;;
 	esac
 
-	_style_external_var_is_set "$name"
+	_styleExternalVarIsSet "$_svis_name"
 }
 
 
@@ -195,19 +198,19 @@ _style_var_is_set( )
 #
 # Prints the variable value (empty if unset).
 #
-_style_get_var( )
+_styleGetVar( )
 {
-	name=$1
-	stylePath=$2
+	_sgv_name=$1
+	_sgv_path=$2
 
-	_style_validate_var_name_read "$name" "$stylePath"
+	_styleValidateVarNameRead "$_sgv_name" "$_sgv_path"
 
-	varSet="__style_var_set_$name"
-	eval "flag=\${$varSet-}"
-	case "${flag:-}" in
+	_sgv_var_set="__style_var_set_$_sgv_name"
+	eval "_sgv_flag=\${$_sgv_var_set-}"
+	case "${_sgv_flag:-}" in
 		1)
-			varValue="__style_var_value_$name"
-			eval "printf '%s' \"\${$varValue-}\""
+			_sgv_var_value="__style_var_value_$_sgv_name"
+			eval "printf '%s' \"\${$_sgv_var_value-}\""
 			return 0
 			;;
 		0)
@@ -216,9 +219,9 @@ _style_get_var( )
 			;;
 	esac
 
-	if _style_external_var_is_set "$name"
+	if _styleExternalVarIsSet "$_sgv_name"
 	then
-		_style_external_var_get "$name"
+		_styleExternalVarGet "$_sgv_name"
 		return 0
 	fi
 
@@ -230,25 +233,25 @@ _style_get_var( )
 #
 # Prints export/unset commands for tracked all-caps variables.
 #
-_style_export_caps_vars( )
+_styleExportCapsVars( )
 {
-	stylePath=$1
+	_secv_path=$1
 
 	if [ -z "${__style_caps_vars:-}" ]
 	then
 		return 0
 	fi
 
-	while IFS= read -r name || [ -n "$name" ]
+	while IFS= read -r _secv_name || [ -n "$_secv_name" ]
 	do
-		[ -n "$name" ] || continue
-		if _style_var_is_set "$name" "$stylePath"
+		[ -n "$_secv_name" ] || continue
+		if _styleVarIsSet "$_secv_name" "$_secv_path"
 		then
-			value=$( _style_get_var "$name" "$stylePath" )
-			printf 'export %s=%s\n' "__style_set_$name" \
-				"$(_style_quote_eval "$value")"
+			_secv_value=$( _styleGetVar "$_secv_name" "$_secv_path" )
+			printf 'export %s=%s\n' "__style_set_$_secv_name" \
+				"$(_styleQuoteEval "$_secv_value")"
 		else
-			printf 'unset %s\n' "__style_set_$name"
+			printf 'unset %s\n' "__style_set_$_secv_name"
 		fi
 	done <<EOF
 $__style_caps_vars

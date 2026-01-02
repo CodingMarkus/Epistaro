@@ -27,59 +27,74 @@ isStyleFlag( )
 }
 
 
-# $1 - Suite directory path.
+# $1 - Tests root directory path.
+# $2 - Suite directory path.
 #
 # Prints test paths within the suite, relative to the tests root.
 #
 _collectTestsInSuite( )
 {
-	suiteDir=$1
+	_cts_root=$1
+	_cts_dir=$2
 
-	testDirs=""
-	suiteDirs=""
-	while IFS= read -r dir || [ -n "$dir" ]
+	_cts_tests=""
+	_cts_suites=""
+	while IFS= read -r _cts_entry || \
+		[ -n "$_cts_entry" ]
 	do
-		[ -n "$dir" ] || continue
-		base=${dir##*/}
-		case "$base" in
-			*.ut|*.it) testDirs="$testDirs
-$dir" ;;
-			*) suiteDirs="$suiteDirs
-$dir" ;;
+		[ -n "$_cts_entry" ] || continue
+		_cts_base=${_cts_entry##*/}
+		case "$_cts_base" in
+			*.ut|*.it) _cts_tests=\
+"$_cts_tests
+$_cts_entry" ;;
+			*) _cts_suites=\
+"$_cts_suites
+$_cts_entry" ;;
 		esac
 	done <<EOF
-$( find "$suiteDir" -mindepth 1 -maxdepth 1 -type d -print )
+$( find "$_cts_dir" -mindepth 1 -maxdepth 1 \
+	-type d -print )
 EOF
 
-	if [ -n "$testDirs" ] && [ -n "$suiteDirs" ]
+	if [ -n "$_cts_tests" ] && \
+		[ -n "$_cts_suites" ]
 	then
-		suiteRel=${suiteDir#"$testsRoot"/}
-		if [ -z "$suiteRel" ] || [ "$suiteRel" = "$suiteDir" ]
+		_cts_rel=${_cts_dir#"$_cts_root"/}
+		if [ -z "$_cts_rel" ] || \
+			[ "$_cts_rel" = \
+			"$_cts_dir" ]
 		then
-			suiteRel="tests"
+			_cts_rel="tests"
 		fi
 		printErrorAndExit \
-			"Suite contains tests and sub-suites: $suiteRel"
+			"Suite contains tests and sub-suites: \
+$_cts_rel"
 	fi
 
-	if [ -n "$testDirs" ]
+	if [ -n "$_cts_tests" ]
 	then
-		while IFS= read -r testDir || [ -n "$testDir" ]
+		while IFS= read -r _cts_test_dir || \
+			[ -n "$_cts_test_dir" ]
 		do
-			[ -n "$testDir" ] || continue
-			printf '%s\n' "${testDir#"$testsRoot"/}"
+			[ -n "$_cts_test_dir" ] || continue
+			printf '%s\n' \
+				"${_cts_test_dir#\
+"$_cts_root"/}"
 		done <<EOF
-$testDirs
+$_cts_tests
 EOF
 		return 0
 	fi
 
-	while IFS= read -r subDir || [ -n "$subDir" ]
+	while IFS= read -r _cts_sub_dir || \
+		[ -n "$_cts_sub_dir" ]
 	do
-		[ -n "$subDir" ] || continue
-		_collectTestsInSuite "$subDir"
+		[ -n "$_cts_sub_dir" ] || continue
+		_collectTestsInSuite "$_cts_root" \
+			"$_cts_sub_dir"
 	done <<EOF
-$suiteDirs
+$_cts_suites
 EOF
 }
 
@@ -92,65 +107,77 @@ EOF
 #
 collectTestDirs( )
 {
-	projectRoot=$1
-	target=$2
-	selection=${3:-}
+	_ctd_root=$1
+	_ctd_target=$2
+	_ctd_sel=${3:-}
 
-	testsRoot=$projectRoot/targets/$target/tests
-	if [ ! -d "$testsRoot" ]
+	_ctd_tests=$_ctd_root/targets/$_ctd_target/tests
+	if [ ! -d "$_ctd_tests" ]
 	then
-		if [ -n "$selection" ]
+		if [ -n "$_ctd_sel" ]
 		then
-			printErrorAndExit "Tests not found: $target/$selection"
+			printErrorAndExit \
+				"Tests not found: \
+$_ctd_target/$_ctd_sel"
 		fi
 		return 0
 	fi
 
-	testsRoot=$( strip_trailing_slash "$testsRoot" )
-	selection=${selection%/}
+	_ctd_tests=$( stripTrailingSlash "$_ctd_tests" )
+	_ctd_sel=${_ctd_sel%/}
 
-	case "$selection" in
+	case "$_ctd_sel" in
 		""|.) ;;
 		/*|*"/../"*|*"/.."|../*|..) \
-			printErrorAndExit "Invalid test path: $target/$selection" ;;
+			printErrorAndExit \
+				"Invalid test path: \
+$_ctd_target/$_ctd_sel" ;;
 	esac
 
-	case "$selection" in
+	case "$_ctd_sel" in
 		""|.)
-			_collectTestsInSuite "$testsRoot"
+			_collectTestsInSuite "$_ctd_tests" \
+				"$_ctd_tests"
 			;;
 
 		*.ut|*.it)
-			testDir=$testsRoot/$selection
-			[ -d "$testDir" ] \
-				|| printErrorAndExit "Test not found: $target/$selection"
-			printf '%s\n' "$selection"
+			_ctd_dir=$_ctd_tests/$_ctd_sel
+			[ -d "$_ctd_dir" ] || \
+				printErrorAndExit \
+				"Test not found: \
+$_ctd_target/$_ctd_sel"
+			printf '%s\n' "$_ctd_sel"
 			;;
 
 		*)
-			candidateUt=$testsRoot/$selection.ut
-			candidateIt=$testsRoot/$selection.it
+			_ctd_ut=$_ctd_tests/$_ctd_sel.ut
+			_ctd_it=$_ctd_tests/$_ctd_sel.it
 
-			if [ -d "$candidateUt" ] && [ -d "$candidateIt" ]
+			if [ -d "$_ctd_ut" ] && \
+				[ -d "$_ctd_it" ]
 			then
 				printErrorAndExit \
-					"Duplicate test name: $target/$selection"
+					"Duplicate test name: \
+$_ctd_target/$_ctd_sel"
 			fi
-			if [ -d "$candidateUt" ]
+			if [ -d "$_ctd_ut" ]
 			then
-				printf '%s.ut\n' "$selection"
+				printf '%s.ut\n' "$_ctd_sel"
 				return 0
 			fi
-			if [ -d "$candidateIt" ]
+			if [ -d "$_ctd_it" ]
 			then
-				printf '%s.it\n' "$selection"
+				printf '%s.it\n' "$_ctd_sel"
 				return 0
 			fi
 
-			suiteDir=$testsRoot/$selection
-			[ -d "$suiteDir" ] || printErrorAndExit \
-				"Test or suite not found: $target/$selection"
-			_collectTestsInSuite "$suiteDir"
+			_ctd_suite=$_ctd_tests/$_ctd_sel
+			[ -d "$_ctd_suite" ] || \
+				printErrorAndExit \
+				"Test or suite not found: \
+$_ctd_target/$_ctd_sel"
+			_collectTestsInSuite "$_ctd_tests" \
+				"$_ctd_suite"
 			;;
 	esac
 }
@@ -166,115 +193,115 @@ collectTestDirs( )
 #
 buildTestObjects( )
 {
-	projectRoot=$1
-	testsRoot=$2
-	testRel=$3
-	objRoot=$4
-	buildSettings=$5
+	_bto_root=$1
+	_bto_tests=$2
+	_bto_rel=$3
+	_bto_obj_root=$4
+	_bto_settings=$5
 
-	testSrcDir=$testsRoot/$testRel
-	[ -d "$testSrcDir" ] \
-		|| printErrorAndExit "Test source dir not found: $testRel"
+	_bto_src_dir=$_bto_tests/$_bto_rel
+	[ -d "$_bto_src_dir" ] \
+		|| printErrorAndExit "Test source dir not found: $_bto_rel"
 
-	srcList=$( find "$testSrcDir" -type f -name '*.c' -print )
-	if [ -z "$srcList" ]
+	_bto_src_list=$( find "$_bto_src_dir" -type f -name '*.c' -print )
+	if [ -z "$_bto_src_list" ]
 	then
 		return 2
 	fi
 
-	oldBuildSanitize=${__buildSanitizeSettings:-}
-	oldTargetSanitize=${__targetSanitizeSettings:-}
-	oldTargetSanitizePaths=${__targetSanitizePaths:-}
+	_bto_old_build_san=${__buildSanitizeSettings:-}
+	_bto_old_target_san=${__targetSanitizeSettings:-}
+	_bto_old_target_paths=${__targetSanitizePaths:-}
 
-	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$buildSettings" )
+	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$_bto_settings" )
 	__targetSanitizeSettings=""
 	__targetSanitizePaths=""
 
-	compileSpacing=0
-	compiledAny=0
-	while IFS= read -r srcPath || [ -n "$srcPath" ]
+	_bto_spacing=0
+	_bto_compiled=0
+	while IFS= read -r _bto_src || [ -n "$_bto_src" ]
 	do
-		[ -n "$srcPath" ] || continue
+		[ -n "$_bto_src" ] || continue
 
-		relPath=${srcPath#"$testsRoot"/}
-		objRel=${relPath%.c}
-		objPath=$objRoot/$objRel.o
-		depPath=$objRoot/$objRel.dep
+		_bto_rel_path=${_bto_src#"$_bto_tests"/}
+		_bto_obj_rel=${_bto_rel_path%.c}
+		_bto_obj_path=$_bto_obj_root/$_bto_obj_rel.o
+		_bto_dep_path=$_bto_obj_root/$_bto_obj_rel.dep
 
-		case "$srcPath" in
-			*/*) srcDir=${srcPath%/*} ;;
-			*) srcDir="." ;;
+		case "$_bto_src" in
+			*/*) _bto_src_dir=${_bto_src%/*} ;;
+			*) _bto_src_dir="." ;;
 		esac
 
 		__fileFlagsReady=0
 
-		if depFileIsOutdated "$depPath"
+		if depFileIsOutdated "$_bto_dep_path"
 		then
-			_prepareFlags "$projectRoot" "$srcDir" "$buildSettings"
-			generateDepFile "$srcPath" "$depPath" "$__workDir" \
+			_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings"
+			generateDepFile "$_bto_src" "$_bto_dep_path" "$__workDir" \
 				"$__fileFlags"
 		fi
 
-		if isOutdated "$objPath" "$depPath"
+		if isOutdated "$_bto_obj_path" "$_bto_dep_path"
 		then
-			if [ "$compileSpacing" -eq 1 ]
+			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
-			printf 'Compiling %s...\n' "$relPath"
-			_buildFileWithOutput "$projectRoot" "$srcPath" \
-				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$__buildFileHadOutput
-			compiledAny=1
+			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
+			_bto_spacing=$__buildFileHadOutput
+			_bto_compiled=1
 			continue
 		fi
 
 		set --
-		while IFS= read -r dep || [ -n "$dep" ]
+		while IFS= read -r _bto_dep || [ -n "$_bto_dep" ]
 		do
-			[ -n "$dep" ] || continue
-			case "$dep" in
-				/*) depPathResolved=$dep ;;
-				*) depPathResolved=$srcDir/$dep ;;
+			[ -n "$_bto_dep" ] || continue
+			case "$_bto_dep" in
+				/*) _bto_dep_res=$_bto_dep ;;
+				*) _bto_dep_res=$_bto_src_dir/$_bto_dep ;;
 			esac
-			set -- "$@" "$depPathResolved"
-		done < "$depPath"
+			set -- "$@" "$_bto_dep_res"
+		done < "$_bto_dep_path"
 
 		if [ "$#" -eq 0 ]
 		then
-			if [ "$compileSpacing" -eq 1 ]
+			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
-			printf 'Compiling %s...\n' "$relPath"
-			_buildFileWithOutput "$projectRoot" "$srcPath" \
-				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$__buildFileHadOutput
-			compiledAny=1
+			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
+			_bto_spacing=$__buildFileHadOutput
+			_bto_compiled=1
 			continue
 		fi
 
-		if isOutdated "$objPath" "$@"
+		if isOutdated "$_bto_obj_path" "$@"
 		then
-			if [ "$compileSpacing" -eq 1 ]
+			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
-			printf 'Compiling %s...\n' "$relPath"
-			_buildFileWithOutput "$projectRoot" "$srcPath" \
-				"$objPath" "$srcDir" "$buildSettings"
-			compileSpacing=$__buildFileHadOutput
-			compiledAny=1
+			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
+			_bto_spacing=$__buildFileHadOutput
+			_bto_compiled=1
 		fi
 	done <<EOF
-$srcList
+$_bto_src_list
 EOF
 
-	testSanitizeSettings=$__targetSanitizeSettings
+	__testSanitizeSettings=$__targetSanitizeSettings
 
-	__buildSanitizeSettings=$oldBuildSanitize
-	__targetSanitizeSettings=$oldTargetSanitize
-	__targetSanitizePaths=$oldTargetSanitizePaths
+	__buildSanitizeSettings=$_bto_old_build_san
+	__targetSanitizeSettings=$_bto_old_target_san
+	__targetSanitizePaths=$_bto_old_target_paths
 }
 
 
@@ -285,16 +312,16 @@ EOF
 #
 collectTestObjects( )
 {
-	objRoot=$1
-	testRel=$2
+	_cto_root=$1
+	_cto_rel=$2
 
-	testObjDir=$objRoot/$testRel
-	if [ ! -d "$testObjDir" ]
+	_cto_dir=$_cto_root/$_cto_rel
+	if [ ! -d "$_cto_dir" ]
 	then
 		return 0
 	fi
 
-	find "$testObjDir" -type f -name '*.o' -print
+	find "$_cto_dir" -type f -name '*.o' -print
 }
 
 
@@ -307,19 +334,19 @@ collectTestObjects( )
 #
 collectTargetObjects( )
 {
-	buildDir=$1
-	styleName=$2
-	target=$3
-	excludeMain=${4:-0}
+	_ctg_build=$1
+	_ctg_style=$2
+	_ctg_target=$3
+	_ctg_exclude=${4:-0}
 
-	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$styleName" "$target" )
-	[ -d "$objRoot" ] || return 0
+	_ctg_obj_root=$( buildTargetObjSrcDirPath "$_ctg_build" "$_ctg_style" "$_ctg_target" )
+	[ -d "$_ctg_obj_root" ] || return 0
 
-	if [ "$excludeMain" -eq 1 ]
+	if [ "$_ctg_exclude" -eq 1 ]
 	then
-		find "$objRoot" -type f -name '*.o' ! -name 'main.o' -print
+		find "$_ctg_obj_root" -type f -name '*.o' ! -name 'main.o' -print
 	else
-		find "$objRoot" -type f -name '*.o' -print
+		find "$_ctg_obj_root" -type f -name '*.o' -print
 	fi
 }
 
@@ -331,16 +358,16 @@ collectTargetObjects( )
 #
 testBinaryPath( )
 {
-	testsTargetDir=$1
-	testRel=$2
+	_tbp_dir=$1
+	_tbp_rel=$2
 
-	testBase=${testRel##*/}
-	testName=${testBase%.*}
+	_tbp_base=${_tbp_rel##*/}
+	_tbp_name=${_tbp_base%.*}
 
-	case "$testRel" in
-		*/*) printf '%s/%s/%s\n' "$testsTargetDir" \
-			"${testRel%/*}" "$testName" ;;
-		*) printf '%s/%s\n' "$testsTargetDir" "$testName" ;;
+	case "$_tbp_rel" in
+		*/*) printf '%s/%s/%s\n' "$_tbp_dir" \
+			"${_tbp_rel%/*}" "$_tbp_name" ;;
+		*) printf '%s/%s\n' "$_tbp_dir" "$_tbp_name" ;;
 	esac
 }
 
@@ -352,24 +379,24 @@ testBinaryPath( )
 #
 runTestBinary( )
 {
-	binPath=$1
-	libDir=${2:-}
+	_rtb_path=$1
+	_rtb_lib=${2:-}
 
-	binDir=${binPath%/*}
-	binBase=${binPath##*/}
+	_rtb_dir=${_rtb_path%/*}
+	_rtb_base=${_rtb_path##*/}
 
-	if [ -n "$libDir" ]
+	if [ -n "$_rtb_lib" ]
 	then
 		(
-			cd "$binDir"
-			DYLD_LIBRARY_PATH="$libDir${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
-			LD_LIBRARY_PATH="$libDir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-			"./$binBase"
+			cd "$_rtb_dir"
+			DYLD_LIBRARY_PATH="$_rtb_lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
+			LD_LIBRARY_PATH="$_rtb_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+			"./$_rtb_base"
 		)
 	else
 		(
-			cd "$binDir"
-			"./$binBase"
+			cd "$_rtb_dir"
+			"./$_rtb_base"
 		)
 	fi
 }
@@ -383,39 +410,39 @@ runTestBinary( )
 #
 runIntegrationScripts( )
 {
-	testDir=$1
-	binPath=$2
-	testLabel=$3
+	_ris_dir=$1
+	_ris_bin=$2
+	_ris_label=$3
 
-	execList=$( find "$testDir" -maxdepth 1 -type f -perm -111 -print )
-	if [ -n "$execList" ]
+	_ris_execs=$( find "$_ris_dir" -maxdepth 1 -type f -perm -111 -print )
+	if [ -n "$_ris_execs" ]
 	then
-		scriptList=$execList
+		_ris_scripts=$_ris_execs
 	else
-		scriptList=$( find "$testDir" -maxdepth 1 -type f \
+		_ris_scripts=$( find "$_ris_dir" -maxdepth 1 -type f \
 			-name '*.sh' -print )
 	fi
 
-	if [ -z "$scriptList" ]
+	if [ -z "$_ris_scripts" ]
 	then
-		printErrorAndExit "No test scripts found: $testLabel"
+		printErrorAndExit "No test scripts found: $_ris_label"
 	fi
 
-	while IFS= read -r scriptPath || [ -n "$scriptPath" ]
+	while IFS= read -r _ris_path || [ -n "$_ris_path" ]
 	do
-		[ -n "$scriptPath" ] || continue
-		scriptBase=${scriptPath##*/}
-		printf 'Running %s...\n' "$scriptBase"
+		[ -n "$_ris_path" ] || continue
+		_ris_base=${_ris_path##*/}
+		printf 'Running %s...\n' "$_ris_base"
 		(
-			cd "$testDir"
-			if [ -x "$scriptPath" ]
+			cd "$_ris_dir"
+			if [ -x "$_ris_path" ]
 			then
-				"$scriptPath" "$binPath"
+				"$_ris_path" "$_ris_bin"
 			else
-				sh "$scriptPath" "$binPath"
+				sh "$_ris_path" "$_ris_bin"
 			fi
 		)
 	done <<EOF
-$scriptList
+$_ris_scripts
 EOF
 }

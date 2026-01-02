@@ -75,15 +75,15 @@ _sanitizeSettingsFromQuoted( )
 #
 _addTargetSanitizeSetting( )
 {
-	sanitizeFlag=$1
+	_ats_flag=$1
 
-	[ -n "$sanitizeFlag" ] || return 0
+	[ -n "$_ats_flag" ] || return 0
 
 	case "
 ${__buildSanitizeSettings:-}
 " in
 		*"
-$sanitizeFlag
+$_ats_flag
 "*) return 0 ;;
 	esac
 
@@ -91,15 +91,15 @@ $sanitizeFlag
 ${__targetSanitizeSettings:-}
 " in
 		*"
-$sanitizeFlag
+$_ats_flag
 "*) return 0 ;;
 	esac
 
 	if [ -n "${__targetSanitizeSettings:-}" ]
 	then
 		__targetSanitizeSettings="$__targetSanitizeSettings
-$sanitizeFlag"
+$_ats_flag"
 	else
-		__targetSanitizeSettings=$sanitizeFlag
+		__targetSanitizeSettings=$_ats_flag
 	fi
 }

@@ -13,7 +13,7 @@ __included_lib_style_parse_sh=1
 #
 # Prints the input without leading whitespace.
 #
-_style_trim_left( )
+_styleTrimLeft( )
 {
 	printf '%s' "$1" | sed 's/^[[:space:]]*//'
 }
@@ -23,7 +23,7 @@ _style_trim_left( )
 #
 # Prints the input without leading or trailing whitespace.
 #
-_style_trim( )
+_styleTrim( )
 {
 	printf '%s' "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }
@@ -33,11 +33,11 @@ _style_trim( )
 #
 # Prints the variable name on the first line and the remainder on the second.
 #
-_style_split_var_and_rest( )
+_styleSplitVarAndRest( )
 (
 	line=$1
 
-	line=$( _style_trim_left "$line" )
+	line=$( _styleTrimLeft "$line" )
 	varName=${line%%[[:space:]]*}
 	if [ "$line" = "$varName" ]
 	then
@@ -54,7 +54,7 @@ _style_split_var_and_rest( )
 #
 # Prints the quoted content on the first line and the remainder on the second.
 #
-_style_split_quoted( )
+_styleSplitQuoted( )
 (
 	input=$1
 
@@ -97,7 +97,7 @@ BEGIN { ORS=""; }
 #
 # Prints the unescaped string.
 #
-_style_unescape_quoted( )
+_styleUnescapeQuoted( )
 (
 	input=$1
 
@@ -142,12 +142,12 @@ BEGIN { ORS=""; }
 #
 # Prints the parsed value.
 #
-_style_parse_value( )
+_styleParseValue( )
 (
 	valueLine=$1
 	stylePath=$2
 
-	valueLine=$( _style_trim_left "$valueLine" )
+	valueLine=$( _styleTrimLeft "$valueLine" )
 	if [ -z "$valueLine" ]
 	then
 		printf '%s' ""
@@ -156,7 +156,7 @@ _style_parse_value( )
 
 	case "$valueLine" in
 		\"* )
-			split=$( _style_split_quoted "$valueLine" ) || \
+			split=$( _styleSplitQuoted "$valueLine" ) || \
 				printErrorAndExit "Unterminated quoted value in $stylePath"
 			oldIFS=$IFS
 			IFS='
@@ -165,16 +165,16 @@ _style_parse_value( )
 			IFS=$oldIFS
 			rawValue=${1-}
 			leftover=${2-}
-			leftover=$( _style_trim "$leftover" )
+			leftover=$( _styleTrim "$leftover" )
 			if [ -n "$leftover" ]
 			then
 				printErrorAndExit \
 					"Unexpected trailing text after quote in $stylePath"
 			fi
-			_style_unescape_quoted "$rawValue"
+			_styleUnescapeQuoted "$rawValue"
 			;;
 		*)
-			printf '%s' "$( _style_trim "$valueLine" )"
+			printf '%s' "$( _styleTrim "$valueLine" )"
 			;;
 	esac
 )

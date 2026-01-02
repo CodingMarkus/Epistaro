@@ -34,35 +34,33 @@ initCmdPaths( )
 # Finds the script for a command name or prefix, excluding cmd_proj.sh.
 #
 findCmdScript( )
-{
-	(
-		cmdDir=${1:-}
-		cmdName=${2:-}
+(
+	cmdDir=${1:-}
+	cmdName=${2:-}
 
-		[ -n "$cmdDir" ] || return 1
-		[ -n "$cmdName" ] || return 1
+	[ -n "$cmdDir" ] || return 1
+	[ -n "$cmdName" ] || return 1
 
-		case "$cmdName" in
-			*/*) return 1 ;;
-		esac
+	case "$cmdName" in
+		*/*) return 1 ;;
+	esac
 
-		exactPath="$cmdDir/cmd_${cmdName}.sh"
-		if [ -f "$exactPath" ] \
-			&& [ "$( basename -- "$exactPath" )" != "cmd_proj.sh" ]
-		then
-			printf '%s\n' "$exactPath"
-			return 0
-		fi
+	exactPath="$cmdDir/cmd_${cmdName}.sh"
+	if [ -f "$exactPath" ] \
+		&& [ "$( basename -- "$exactPath" )" != "cmd_proj.sh" ]
+	then
+		printf '%s\n' "$exactPath"
+		return 0
+	fi
 
-		for cmdPath in "$cmdDir"/cmd_"$cmdName"*.sh
-		do
-			[ -e "$cmdPath" ] || continue
-			cmdBase=$( basename -- "$cmdPath" )
-			[ "$cmdBase" = "cmd_proj.sh" ] && continue
-			printf '%s\n' "$cmdPath"
-			return 0
-		done
+	for cmdPath in "$cmdDir"/cmd_"$cmdName"*.sh
+	do
+		[ -e "$cmdPath" ] || continue
+		cmdBase=$( basename -- "$cmdPath" )
+		[ "$cmdBase" = "cmd_proj.sh" ] && continue
+		printf '%s\n' "$cmdPath"
+		return 0
+	done
 
-		return 1
-	)
-}
+	return 1
+)

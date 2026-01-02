@@ -324,33 +324,34 @@ resolveTargetName( )
 	assert "[ -n \"${1:-}\" ]" "resolveTargetName() missing project dir"
 	assert "[ -n \"${2:-}\" ]" "resolveTargetName() missing target name"
 
-	projectRoot=$1
-	targetName=$2
+	_rt_root=$1
+	_rt_name=$2
 
-	ensureValidTargetName "$targetName"
+	ensureValidTargetName "$_rt_name"
 
-	if [ -d "$projectRoot/targets/$targetName" ]
+	if [ -d "$_rt_root/targets/$_rt_name" ]
 	then
-		printf '%s\n' "$targetName"
+		printf '%s\n' "$_rt_name"
 		return 0
 	fi
 
-	resolvedTarget=
-	for candidate in "$projectRoot/targets/$targetName".*
+	_rt_resolved=
+	for _rt_candidate in "$_rt_root/targets/$_rt_name".*
 	do
-		[ -d "$candidate" ] || continue
-		if [ -n "$resolvedTarget" ]
+		[ -d "$_rt_candidate" ] || continue
+		if [ -n "$_rt_resolved" ]
 		then
-			printErrorAndExit "Target name is ambiguous: $targetName"
+			printErrorAndExit \
+				"Target name is ambiguous: $_rt_name"
 		fi
-		resolvedTarget=${candidate##*/}
+		_rt_resolved=${_rt_candidate##*/}
 	done
 
-	if [ -n "$resolvedTarget" ]
+	if [ -n "$_rt_resolved" ]
 	then
-		printf '%s\n' "$resolvedTarget"
+		printf '%s\n' "$_rt_resolved"
 		return 0
 	fi
 
-	printErrorAndExit "Target not found: $targetName"
+	printErrorAndExit "Target not found: $_rt_name"
 }

@@ -19,18 +19,18 @@ listTargetsAndExit( )
 	assert "[ -n \"${1:-}\" ]" \
 		"listTargetsAndExit() missing project dir"
 
-	projectRoot=$1
-	mode=${2:-}
+	_lt_root=$1
+	_lt_mode=${2:-}
 
-	[ -d "$projectRoot/targets" ] || exit 0
+	[ -d "$_lt_root/targets" ] || exit 0
 
-	targets=$( find "$projectRoot/targets" -mindepth 1 -maxdepth 1 \
+	_lt_targets=$( find "$_lt_root/targets" -mindepth 1 -maxdepth 1 \
 		-type d -print 2>/dev/null | sed 's#.*/##' )
-	[ -n "$targets" ] || exit 0
+	[ -n "$_lt_targets" ] || exit 0
 
-	if [ "$mode" = "plain" ]
+	if [ "$_lt_mode" = "plain" ]
 	then
-		printf '%s\n' "$targets" | awk '
+		printf '%s\n' "$_lt_targets" | awk '
 			{
 				base=$0
 				if (sub(/\.[^.]+$/, "", base)) { }
@@ -41,7 +41,7 @@ listTargetsAndExit( )
 	fi
 
 	printf '\nAvailable targets:\n\n'
-	printf '%s\n' "$targets" | awk '
+	printf '%s\n' "$_lt_targets" | awk '
 		{
 			orig=$0
 			base=$0
@@ -71,24 +71,24 @@ listStylesAndExit( )
 	assert "[ -n \"${1:-}\" ]" \
 		"listStylesAndExit() missing project dir"
 
-	projectRoot=$1
-	mode=${2:-}
+	_ls_root=$1
+	_ls_mode=${2:-}
 
-	[ -d "$projectRoot/styles" ] || exit 0
+	[ -d "$_ls_root/styles" ] || exit 0
 
-	styles=$( find "$projectRoot/styles" -maxdepth 1 -type f \
+	_ls_styles=$( find "$_ls_root/styles" -maxdepth 1 -type f \
 		-name '*.cfg' -print 2>/dev/null \
 		| sed -e 's#.*/##' -e 's/\.cfg$//' )
-	[ -n "$styles" ] || exit 0
+	[ -n "$_ls_styles" ] || exit 0
 
-	if [ "$mode" = "plain" ]
+	if [ "$_ls_mode" = "plain" ]
 	then
-		printf '%s\n' "$styles"
+		printf '%s\n' "$_ls_styles"
 		exit 0
 	fi
 
 	printf '\nAvailable styles:\n\n'
-	printf '%s\n' "$styles" | awk '{ printf "   - %s\n", $0 }'
+	printf '%s\n' "$_ls_styles" | awk '{ printf "   - %s\n", $0 }'
 	exit 0
 }
 
@@ -103,37 +103,37 @@ listTestsAndExit( )
 {
 	assert "[ -n \"${1:-}\" ]" "listTestsAndExit() missing project dir"
 
-	projectRoot=$1
-	target=${2:-}
-	mode=${3:-}
+	_ltt_root=$1
+	_ltt_target=${2:-}
+	_ltt_mode=${3:-}
 
-	if [ "$target" = "plain" ] && [ -z "$mode" ]
+	if [ "$_ltt_target" = "plain" ] && [ -z "$_ltt_mode" ]
 	then
-		mode=plain
-		target=
+		_ltt_mode=plain
+		_ltt_target=
 	fi
 
-	if [ -n "$target" ]
+	if [ -n "$_ltt_target" ]
 	then
-		testsRoot=$projectRoot/targets/$target/tests
-		[ -d "$testsRoot" ] || exit 0
+		_ltt_tests=$_ltt_root/targets/$_ltt_target/tests
+		[ -d "$_ltt_tests" ] || exit 0
 
-		testDirs=$( find "$testsRoot" -type d \
+		_ltt_dirs=$( find "$_ltt_tests" -type d \
 			\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
-		[ -n "$testDirs" ] || exit 0
+		[ -n "$_ltt_dirs" ] || exit 0
 
-		if [ "$mode" = "plain" ]
+		if [ "$_ltt_mode" = "plain" ]
 		then
-			printf '%s\n' "$testDirs" \
-				| sed "s#^$testsRoot/##" \
-				| awk -v prefix="$target/" \
+			printf '%s\n' "$_ltt_dirs" \
+				| sed "s#^$_ltt_tests/##" \
+				| awk -v prefix="$_ltt_target/" \
 					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
 			exit 0
 		fi
 
-		printf '\nAvailable tests for "%s":\n\n' "$target"
-		printf '%s\n' "$testDirs" \
-			| sed "s#^$testsRoot/##" \
+		printf '\nAvailable tests for "%s":\n\n' "$_ltt_target"
+		printf '%s\n' "$_ltt_dirs" \
+			| sed "s#^$_ltt_tests/##" \
 			| awk '
 				{
 					orig=$0
@@ -152,29 +152,29 @@ listTestsAndExit( )
 		exit 0
 	fi
 
-	for targetDir in "$projectRoot"/targets/*
+	for _ltt_dir in "$_ltt_root"/targets/*
 	do
-		[ -d "$targetDir" ] || continue
-		target=$( basename -- "$targetDir" )
-		testsRoot=$targetDir/tests
-		[ -d "$testsRoot" ] || continue
+		[ -d "$_ltt_dir" ] || continue
+		_ltt_target=$( basename -- "$_ltt_dir" )
+		_ltt_tests=$_ltt_dir/tests
+		[ -d "$_ltt_tests" ] || continue
 
-		testDirs=$( find "$testsRoot" -type d \
+		_ltt_dirs=$( find "$_ltt_tests" -type d \
 			\( -name '*.ut' -o -name '*.it' \) -print 2>/dev/null )
-		[ -n "$testDirs" ] || continue
+		[ -n "$_ltt_dirs" ] || continue
 
-		if [ "$mode" = "plain" ]
+		if [ "$_ltt_mode" = "plain" ]
 		then
-			printf '%s\n' "$testDirs" \
-				| sed "s#^$testsRoot/##" \
-				| awk -v prefix="$target/" \
+			printf '%s\n' "$_ltt_dirs" \
+				| sed "s#^$_ltt_tests/##" \
+				| awk -v prefix="$_ltt_target/" \
 					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
 			continue
 		fi
 
-		printf '\nAvailable tests for "%s":\n\n' "$target"
-		printf '%s\n' "$testDirs" \
-			| sed "s#^$testsRoot/##" \
+		printf '\nAvailable tests for "%s":\n\n' "$_ltt_target"
+		printf '%s\n' "$_ltt_dirs" \
+			| sed "s#^$_ltt_tests/##" \
 			| awk '
 				{
 					orig=$0

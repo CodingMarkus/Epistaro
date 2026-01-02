@@ -13,7 +13,7 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   update
 
       Update all project configuration and generated files.
@@ -22,7 +22,7 @@ printHelp( )
 
       Update build configuration files (like .clangd).
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 
@@ -39,8 +39,8 @@ printHelpAndExit( )
 #
 updateConfig( )
 {
-	defaultStylePath=$__projDir/styles/_defaults/_default.cfg
-	updateClangd "$__projDir/.clangd" "$defaultStylePath"
+	_uc_style=$__projDir/styles/_defaults/_default.cfg
+	updateClangd "$__projDir/.clangd" "$_uc_style"
 }
 
 

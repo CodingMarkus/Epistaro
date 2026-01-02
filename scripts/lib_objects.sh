@@ -30,11 +30,11 @@ collectObjectArgs( )
 		/*) workDirAbs=$workDir ;;
 
 		*)
-			workDirAbs=$( abs_dir "$workDir" ) \
+			workDirAbs=$( absDir "$workDir" ) \
 				|| printErrorAndExit "Work dir not found: $workDir"
 			;;
 	esac
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	objArgs=""
 	for objPath in "$@"

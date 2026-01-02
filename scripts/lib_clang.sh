@@ -44,9 +44,9 @@ generateDepFile( )
 		*) srcDir="."; srcBase="$srcPath" ;;
 	esac
 
-	srcDirAbs=$( abs_dir "$srcDir" ) \
+	srcDirAbs=$( absDir "$srcDir" ) \
 		|| printErrorAndExit "Source dir not found: $srcDir"
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
 
 	case "$srcPath" in
@@ -65,8 +65,8 @@ generateDepFile( )
 		/*) depPathAbs=$depPath ;;
 		*) depPathAbs=$( pwd -P )/$depPath ;;
 	esac
-	srcDirAbs=$( strip_trailing_slash "$srcDirAbs" )
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	srcDirAbs=$( stripTrailingSlash "$srcDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	tmpPath=$depPathAbs.tmp.$$
 	trap 'rm -f "$tmpPath"' EXIT INT TERM
@@ -188,11 +188,11 @@ buildFile( )
 		*) srcDir="."; srcBase="$srcPath" ;;
 	esac
 
-	srcDirAbs=$( abs_dir "$srcDir" ) \
+	srcDirAbs=$( absDir "$srcDir" ) \
 		|| printErrorAndExit "Source dir not found: $srcDir"
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	case "$srcPath" in
 		/*) srcPathAbs=$srcPath ;;
@@ -211,7 +211,7 @@ buildFile( )
 #
 _dynamicLibFlag( )
 {
-	if platform_target_is_apple
+	if platformTargetIsApple
 	then
 		printf '%s\n' "-dynamiclib"
 	else
@@ -247,11 +247,11 @@ prelinkObjects( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	ensure_dir "$outDir"
+	ensureDir "$outDir"
 
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
@@ -290,11 +290,11 @@ linkDynamicLibrary( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	ensure_dir "$outDir"
+	ensureDir "$outDir"
 
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 
@@ -333,11 +333,11 @@ linkBinary( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	ensure_dir "$outDir"
+	ensureDir "$outDir"
 
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 

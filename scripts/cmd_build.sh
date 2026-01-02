@@ -11,14 +11,14 @@ initCmdPaths "$__scriptDir"
 #
 printHelp( )
 {
-	helpText="
+	_ph_text="
   build [<style> [<target> ...]]
 
       Build target(s) using style.
       If no target is provided, all targets are built.
       If no style is provided, all targets are built deployment style.
 "
-	printf '%s' "$helpText"
+	printf '%s' "$_ph_text"
 }
 
 
@@ -70,7 +70,7 @@ fi
 
 . lib_build_settings.sh
 
-platform_require_supported_target
+platformRequireSupportedTarget
 
 buildSettings=$( resolvedBuildSettings "$styleFile" )
 syncStyleSetVars "$styleFile"

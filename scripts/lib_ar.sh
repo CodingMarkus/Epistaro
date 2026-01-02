@@ -39,11 +39,11 @@ createStaticLibraryFromObjects( )
 		*/*) outDir=${outPath%/*} ;;
 		*) outDir="." ;;
 	esac
-	ensure_dir "$outDir"
+	ensureDir "$outDir"
 
-	workDirAbs=$( abs_dir "$workDir" ) \
+	workDirAbs=$( absDir "$workDir" ) \
 		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( strip_trailing_slash "$workDirAbs" )
+	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
 
 	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
 

@@ -14,11 +14,11 @@ __included_lib_fs_sh=1
 # Prints absolute path for the directory.
 # Returns non-zero if the directory cannot be resolved.
 #
-abs_dir( )
+absDir( )
 (
 	dir=$1
 
-	assert "[ -n \"${dir:-}\" ]" "abs_dir() missing dir"
+	assert "[ -n \"${dir:-}\" ]" "absDir() missing dir"
 
 	case "$dir" in
 		/*) printf '%s\n' "$dir" ;;
@@ -35,11 +35,11 @@ abs_dir( )
 # Prints absolute path for the file.
 # Returns non-zero if the path cannot be resolved.
 #
-abs_path( )
+absPath( )
 (
 	path=$1
 
-	assert "[ -n \"${path:-}\" ]" "abs_path() missing path"
+	assert "[ -n \"${path:-}\" ]" "absPath() missing path"
 
 	case "$path" in
 		/*) printf '%s\n' "$path" ;;
@@ -49,7 +49,7 @@ abs_path( )
 				*/*) dir=${path%/*}; base=${path##*/} ;;
 				*) dir="."; base=$path ;;
 			esac
-			dirAbs=$( abs_dir "$dir" ) || return 1
+			dirAbs=$( absDir "$dir" ) || return 1
 			printf '%s/%s\n' "$dirAbs" "$base"
 			;;
 	esac
@@ -60,17 +60,17 @@ abs_path( )
 #
 # Prints the path without a trailing slash (except for /).
 #
-strip_trailing_slash( )
+stripTrailingSlash( )
 {
-	path=$1
+	_sts_path=$1
 
-	assert "[ -n \"${path:-}\" ]" \
-		"strip_trailing_slash() missing path"
+	assert "[ -n \"${_sts_path:-}\" ]" \
+		"stripTrailingSlash() missing path"
 
-	case "$path" in
-		/) printf '%s\n' "$path" ;;
-		*/) printf '%s\n' "${path%/}" ;;
-		*) printf '%s\n' "$path" ;;
+	case "$_sts_path" in
+		/) printf '%s\n' "$_sts_path" ;;
+		*/) printf '%s\n' "${_sts_path%/}" ;;
+		*) printf '%s\n' "$_sts_path" ;;
 	esac
 }
 
@@ -79,11 +79,11 @@ strip_trailing_slash( )
 #
 # Ensures directory exists.
 #
-ensure_dir( )
+ensureDir( )
 {
-	dir=$1
+	_ed_dir=$1
 
-	assert "[ -n \"${dir:-}\" ]" "ensure_dir() missing dir"
+	assert "[ -n \"${_ed_dir:-}\" ]" "ensureDir() missing dir"
 
-	[ -d "$dir" ] || mkdir -p "$dir"
+	[ -d "$_ed_dir" ] || mkdir -p "$_ed_dir"
 }
