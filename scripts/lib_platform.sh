@@ -15,16 +15,17 @@ platformDetectHostOs( )
 {
 	if command -v uname >/dev/null 2>&1
 	then
-		case "$( uname -s 2>/dev/null )" in
-			Linux) printf '%s\n' "Linux" ;;
-			Darwin) printf '%s\n' "macOS" ;;
-			FreeBSD) printf '%s\n' "FreeBSD" ;;
-			NetBSD) printf '%s\n' "NetBSD" ;;
-			OpenBSD) printf '%s\n' "OpenBSD" ;;
-			CYGWIN*|MINGW*|MSYS*|Windows_NT)
-				printf '%s\n' "Windows"
+		uname_s=$( uname -s 2>/dev/null | tr '[:upper:]' '[:lower:]' )
+		case "$uname_s" in
+			linux) printf '%s\n' "linux" ;;
+			darwin) printf '%s\n' "macos" ;;
+			freebsd) printf '%s\n' "freebsd" ;;
+			netbsd) printf '%s\n' "netbsd" ;;
+			openbsd) printf '%s\n' "openbsd" ;;
+			cygwin*|mingw*|msys*|windows_nt)
+				printf '%s\n' "windows"
 				;;
-			Emscripten) printf '%s\n' "Emscripten" ;;
+			emscripten) printf '%s\n' "emscripten" ;;
 		esac
 	fi
 	return 0
@@ -33,7 +34,7 @@ platformDetectHostOs( )
 
 # Initializes __style_set__TARGET* variables for style expansion.
 #
-# TARGET format: <OS>[-<CPU>]. CPU parsing is reserved for future use.
+# TARGET format: <os>[-<CPU>]. CPU parsing is reserved for future use.
 #
 platformInitTargetVars( )
 {
@@ -51,6 +52,9 @@ platformInitTargetVars( )
 		*-*)
 			__style_set__TARGET_OS=${__style_set__TARGET%%-*}
 			__style_set__TARGET_CPU=${__style_set__TARGET#*-}
+			__style_set__TARGET_OS=$( printf '%s' "$__style_set__TARGET_OS" | \
+				tr '[:upper:]' '[:lower:]' )
+			__style_set__TARGET=${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
 			;;
 		"")
 			__style_set__TARGET_OS=""
@@ -59,6 +63,9 @@ platformInitTargetVars( )
 		*)
 			__style_set__TARGET_OS=$__style_set__TARGET
 			__style_set__TARGET_CPU=""
+			__style_set__TARGET_OS=$( printf '%s' "$__style_set__TARGET_OS" | \
+				tr '[:upper:]' '[:lower:]' )
+			__style_set__TARGET=$__style_set__TARGET_OS
 			;;
 	esac
 }
@@ -70,19 +77,19 @@ platformTargetIsApple( )
 {
 	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
-		macOS|iOS|tvOS|iPadOS|watchOS) return 0 ;;
+		macos|ios|tvos|ipados|watchos) return 0 ;;
 		*) return 1 ;;
 	esac
 }
 
 
-# Returns success if the target OS is Windows.
+# Returns success if the target OS is windows.
 #
 platformTargetIsWindows( )
 {
 	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
-		Windows) return 0 ;;
+		windows) return 0 ;;
 		*) return 1 ;;
 	esac
 }
@@ -94,8 +101,8 @@ platformTargetIsSupported( )
 {
 	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
-		Linux|macOS|Windows|iOS|tvOS|iPadOS|watchOS|\
-		FreeBSD|NetBSD|OpenBSD|Emscripten)
+		linux|macos|windows|ios|tvos|ipados|watchos|\
+		freebsd|netbsd|openbsd|emscripten)
 			return 0
 			;;
 		*) return 1 ;;
@@ -121,8 +128,8 @@ platformRequireSupportedTarget( )
 
 	printErrorAndExit \
 		"Unsupported target OS: ${__style_set__TARGET_OS}. Supported OSes: \
-Linux, macOS, Windows, iOS, tvOS, iPadOS, watchOS, FreeBSD, NetBSD, OpenBSD, \
-Emscripten."
+linux, macos, windows, ios, tvos, ipados, watchos, freebsd, netbsd, openbsd, \
+emscripten."
 }
 
 
