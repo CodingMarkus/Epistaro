@@ -43,7 +43,7 @@ case "${1:-}" in
 		;;
 esac
 
-styleName=test
+styleName="test"
 
 while [ "$#" -gt 0 ]
 do
@@ -253,7 +253,7 @@ $target"
 	[ -d "$testDir" ] \
 		|| printErrorAndExit "Test not found: $target/$testRel"
 
-	printf '-- %s\n' "$testRel"
+	printf '%s\n' "-- $testRel"
 
 	if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
 	then
