@@ -31,10 +31,7 @@ _styleValidateVarNameRead( )
 
 	case "$_svr_name" in
 		''|[!A-Za-z_]*|*[!A-Za-z0-9_]*)
-			printErrorAndExit \
-				"Invalid variable name in \
-$_svr_path: \
-$_svr_name"
+			printErrorAndExit "Invalid variable name in $_svr_path: $_svr_name"
 			;;
 	esac
 }
@@ -54,7 +51,8 @@ _styleValidateVarNameWrite( )
 	case "$_svw_name" in
 		_*)
 			printErrorAndExit \
-				"Variables starting with '_' are reserved in $_svw_path: $_svw_name"
+				"Variables starting with '_' are reserved in "\
+"$_svw_path: $_svw_name"
 			;;
 	esac
 }

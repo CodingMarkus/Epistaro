@@ -38,8 +38,7 @@ updateClangd( )
 			'index($0, marker) { print; exit }' "$clangdPath" )
 		if [ -n "$markerLine" ]
 		then
-			indent=$( printf '%s' "$markerLine" \
-				| sed 's/[^[:space:]].*$//' )
+			indent=$( printf '%s' "$markerLine" | sed 's/[^[:space:]].*$//' )
 			awk -v marker="$markerText" \
 				'index($0, marker) { print; exit } { print }' \
 				"$clangdPath" > "$tmpPath"
@@ -49,8 +48,8 @@ updateClangd( )
 			[ -n "$indent" ] || indent=$defaultIndent
 			cat "$clangdPath" > "$tmpPath"
 			printf '\n' >> "$tmpPath"
-			printf '%s%s\n' "$indent" "# ------ $markerText ------" \
-				>> "$tmpPath"
+			printf '%s%s\n' "$indent" \
+				"# ------ $markerText ------" >> "$tmpPath"
 		fi
 	else
 		indent=$defaultIndent
@@ -65,8 +64,8 @@ CompileFlags:
     - -DPROFILING
 
 EOF
-		printf '%s%s\n' "$indent" "# ------ $markerText ------" \
-			>> "$tmpPath"
+		printf '%s%s\n' "$indent" \
+			"# ------ $markerText ------" >> "$tmpPath"
 	fi
 
 	printf '%s\n' "${indent}#" >> "$tmpPath"
@@ -77,8 +76,7 @@ EOF
 	settings=$( expandStyle "$stylePath" )
 	if [ -n "$settings" ]
 	then
-		printf '%s\n' "$settings" \
-		| while IFS= read -r line || [ -n "$line" ]
+		printf '%s\n' "$settings" | while IFS= read -r line || [ -n "$line" ]
 		do
 			[ -n "$line" ] || continue
 			printf '%s- %s\n' "$indent" "$line"

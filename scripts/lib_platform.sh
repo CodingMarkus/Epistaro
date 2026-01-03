@@ -71,7 +71,8 @@ platformInitTargetVars( )
 		then
 			if [ -n "${__style_set__TARGET_CPU:-}" ]
 			then
-				__style_set__TARGET=${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
+				__style_set__TARGET=\
+${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
 			else
 				__style_set__TARGET=$__style_set__TARGET_OS
 			fi
@@ -84,11 +85,14 @@ platformInitTargetVars( )
 		*-*)
 			__style_set__TARGET_OS=${__style_set__TARGET%%-*}
 			__style_set__TARGET_CPU=${__style_set__TARGET#*-}
-			__style_set__TARGET_OS=$( printf '%s' "$__style_set__TARGET_OS" | \
-				tr '[:upper:]' '[:lower:]' )
-			__style_set__TARGET_CPU=$( printf '%s' "$__style_set__TARGET_CPU" | \
-				tr '[:upper:]' '[:lower:]' )
-			__style_set__TARGET=${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
+			__style_set__TARGET_OS=$( \
+				printf '%s' "$__style_set__TARGET_OS" \
+					| tr '[:upper:]' '[:lower:]' )
+			__style_set__TARGET_CPU=$( \
+				printf '%s' "$__style_set__TARGET_CPU" \
+					| tr '[:upper:]' '[:lower:]' )
+			__style_set__TARGET=\
+${__style_set__TARGET_OS}-${__style_set__TARGET_CPU}
 			;;
 		"")
 			__style_set__TARGET_OS=""
@@ -179,17 +183,17 @@ platformRequireSupportedTarget( )
 			;;
 		*)
 			printErrorAndExit \
-				"Unsupported target OS: ${__style_set__TARGET_OS}. Supported OSes: \
-linux, macos, windows, ios, tvos, ipados, watchos, freebsd, netbsd, openbsd, \
-emscripten."
+				"Unsupported target OS: ${__style_set__TARGET_OS}. "\
+"Supported OSes: linux, macos, windows, ios, tvos, "\
+"ipados, watchos, freebsd, netbsd, openbsd, emscripten."
 			;;
 	esac
 
 	if ! platformTargetCpuIsSupported
 	then
 		printErrorAndExit \
-			"Unsupported target CPU: ${__style_set__TARGET_CPU}. Supported CPUs: \
-arm64, arm32vfp3, ia32sse2, x64, wasm32, asmjs."
+			"Unsupported target CPU: ${__style_set__TARGET_CPU}. "\
+"Supported CPUs: arm64, arm32vfp3, ia32sse2, x64, wasm32, asmjs."
 	fi
 
 	return 0

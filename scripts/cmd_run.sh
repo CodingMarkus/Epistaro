@@ -121,8 +121,7 @@ case "$__origDir" in
 	*) buildDir="$__origDir" ;;
 esac
 
-buildTarget "$__projDir" "$target" "$styleName" "$buildDir" \
-	"$buildSettings"
+buildTarget "$__projDir" "$target" "$styleName" "$buildDir" "$buildSettings"
 
 targetDir=$( buildTargetDirPath "$buildDir" "$styleName" "$target" )
 binPath=$targetDir/$target

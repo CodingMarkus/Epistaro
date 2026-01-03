@@ -39,60 +39,46 @@ _collectTestsInSuite( )
 
 	_cts_tests=""
 	_cts_suites=""
-	while IFS= read -r _cts_entry || \
-		[ -n "$_cts_entry" ]
+	while IFS= read -r _cts_entry || [ -n "$_cts_entry" ]
 	do
 		[ -n "$_cts_entry" ] || continue
 		_cts_base=${_cts_entry##*/}
 		case "$_cts_base" in
-			*.ut|*.it) _cts_tests=\
-"$_cts_tests
+			*.ut|*.it) _cts_tests="$_cts_tests
 $_cts_entry" ;;
-			*) _cts_suites=\
-"$_cts_suites
+			*) _cts_suites="$_cts_suites
 $_cts_entry" ;;
 		esac
 	done <<EOF
-$( find "$_cts_dir" -mindepth 1 -maxdepth 1 \
-	-type d -print )
+$( find "$_cts_dir" -mindepth 1 -maxdepth 1  -type d -print )
 EOF
 
-	if [ -n "$_cts_tests" ] && \
-		[ -n "$_cts_suites" ]
+	if [ -n "$_cts_tests" ] && [ -n "$_cts_suites" ]
 	then
 		_cts_rel=${_cts_dir#"$_cts_root"/}
-		if [ -z "$_cts_rel" ] || \
-			[ "$_cts_rel" = \
-			"$_cts_dir" ]
+		if [ -z "$_cts_rel" ] || [ "$_cts_rel" = "$_cts_dir" ]
 		then
 			_cts_rel="tests"
 		fi
-		printErrorAndExit \
-			"Suite contains tests and sub-suites: \
-$_cts_rel"
+		printErrorAndExit "Suite contains tests and sub-suites: $_cts_rel"
 	fi
 
 	if [ -n "$_cts_tests" ]
 	then
-		while IFS= read -r _cts_test_dir || \
-			[ -n "$_cts_test_dir" ]
+		while IFS= read -r _cts_test_dir || [ -n "$_cts_test_dir" ]
 		do
 			[ -n "$_cts_test_dir" ] || continue
-			printf '%s\n' \
-				"${_cts_test_dir#\
-"$_cts_root"/}"
+			printf '%s\n' "${_cts_test_dir#"$_cts_root"/}"
 		done <<EOF
 $_cts_tests
 EOF
 		return 0
 	fi
 
-	while IFS= read -r _cts_sub_dir || \
-		[ -n "$_cts_sub_dir" ]
+	while IFS= read -r _cts_sub_dir || [ -n "$_cts_sub_dir" ]
 	do
 		[ -n "$_cts_sub_dir" ] || continue
-		_collectTestsInSuite "$_cts_root" \
-			"$_cts_sub_dir"
+		_collectTestsInSuite "$_cts_root" "$_cts_sub_dir"
 	done <<EOF
 $_cts_suites
 EOF
@@ -116,9 +102,7 @@ collectTestDirs( )
 	then
 		if [ -n "$_ctd_sel" ]
 		then
-			printErrorAndExit \
-				"Tests not found: \
-$_ctd_target/$_ctd_sel"
+			printErrorAndExit "Tests not found: $_ctd_target/$_ctd_sel"
 		fi
 		return 0
 	fi
@@ -128,23 +112,18 @@ $_ctd_target/$_ctd_sel"
 
 	case "$_ctd_sel" in
 		""|.) ;;
-		/*|*"/../"*|*"/.."|../*|..) \
-			printErrorAndExit \
-				"Invalid test path: \
+		/*|*"/../"*|*"/.."|../*|..) printErrorAndExit "Invalid test path: \
 $_ctd_target/$_ctd_sel" ;;
 	esac
 
 	case "$_ctd_sel" in
 		""|.)
-			_collectTestsInSuite "$_ctd_tests" \
-				"$_ctd_tests"
+			_collectTestsInSuite "$_ctd_tests" "$_ctd_tests"
 			;;
 
 		*.ut|*.it)
 			_ctd_dir=$_ctd_tests/$_ctd_sel
-			[ -d "$_ctd_dir" ] || \
-				printErrorAndExit \
-				"Test not found: \
+			[ -d "$_ctd_dir" ] || printErrorAndExit "Test not found: \
 $_ctd_target/$_ctd_sel"
 			printf '%s\n' "$_ctd_sel"
 			;;
@@ -153,12 +132,9 @@ $_ctd_target/$_ctd_sel"
 			_ctd_ut=$_ctd_tests/$_ctd_sel.ut
 			_ctd_it=$_ctd_tests/$_ctd_sel.it
 
-			if [ -d "$_ctd_ut" ] && \
-				[ -d "$_ctd_it" ]
+			if [ -d "$_ctd_ut" ] && [ -d "$_ctd_it" ]
 			then
-				printErrorAndExit \
-					"Duplicate test name: \
-$_ctd_target/$_ctd_sel"
+				printErrorAndExit "Duplicate test name: $_ctd_target/$_ctd_sel"
 			fi
 			if [ -d "$_ctd_ut" ]
 			then
@@ -172,12 +148,9 @@ $_ctd_target/$_ctd_sel"
 			fi
 
 			_ctd_suite=$_ctd_tests/$_ctd_sel
-			[ -d "$_ctd_suite" ] || \
-				printErrorAndExit \
-				"Test or suite not found: \
-$_ctd_target/$_ctd_sel"
-			_collectTestsInSuite "$_ctd_tests" \
-				"$_ctd_suite"
+			[ -d "$_ctd_suite" ] || printErrorAndExit \
+				"Test or suite not found: $_ctd_target/$_ctd_sel"
+			_collectTestsInSuite "$_ctd_tests" "$_ctd_suite"
 			;;
 	esac
 }
@@ -239,14 +212,10 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" \
-					"$_bto_settings" \
-					"$_bto_build_sanitize" \
-					"$_bto_target_sanitize" \
-					"$_bto_target_paths" \
-					_bto_work_dir _bto_file_flags \
-					_bto_target_sanitize \
-					_bto_target_paths
+				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+					"$_bto_build_sanitize" "$_bto_target_sanitize" \
+					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
+					_bto_target_sanitize _bto_target_paths
 				_bto_flags_ready=1
 			fi
 			generateDepFile "$_bto_src" "$_bto_dep_path" \
@@ -257,14 +226,10 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" \
-					"$_bto_settings" \
-					"$_bto_build_sanitize" \
-					"$_bto_target_sanitize" \
-					"$_bto_target_paths" \
-					_bto_work_dir _bto_file_flags \
-					_bto_target_sanitize \
-					_bto_target_paths
+				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+					"$_bto_build_sanitize" "$_bto_target_sanitize" \
+					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
+					_bto_target_sanitize _bto_target_paths
 				_bto_flags_ready=1
 			fi
 			if [ "$_bto_spacing" -eq 1 ]
@@ -275,7 +240,8 @@ buildTestObjects( )
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
-				"$_bto_file_flags" _bto_had_output
+				"$_bto_file_flags" \
+				_bto_had_output
 			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 			continue
@@ -296,14 +262,10 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" \
-					"$_bto_settings" \
-					"$_bto_build_sanitize" \
-					"$_bto_target_sanitize" \
-					"$_bto_target_paths" \
-					_bto_work_dir _bto_file_flags \
-					_bto_target_sanitize \
-					_bto_target_paths
+				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+					"$_bto_build_sanitize" "$_bto_target_sanitize" \
+					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
+					_bto_target_sanitize _bto_target_paths
 				_bto_flags_ready=1
 			fi
 			if [ "$_bto_spacing" -eq 1 ]
@@ -314,7 +276,8 @@ buildTestObjects( )
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
-				"$_bto_file_flags" _bto_had_output
+				"$_bto_file_flags" \
+				_bto_had_output
 			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 			continue
@@ -324,14 +287,10 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" \
-					"$_bto_settings" \
-					"$_bto_build_sanitize" \
-					"$_bto_target_sanitize" \
-					"$_bto_target_paths" \
-					_bto_work_dir _bto_file_flags \
-					_bto_target_sanitize \
-					_bto_target_paths
+				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+					"$_bto_build_sanitize" "$_bto_target_sanitize" \
+					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
+					_bto_target_sanitize _bto_target_paths
 				_bto_flags_ready=1
 			fi
 			if [ "$_bto_spacing" -eq 1 ]
@@ -342,7 +301,8 @@ buildTestObjects( )
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
-				"$_bto_file_flags" _bto_had_output
+				"$_bto_file_flags" \
+				_bto_had_output
 			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 		fi
@@ -391,7 +351,8 @@ collectTargetObjects( )
 	_ctg_target=$3
 	_ctg_exclude=${4:-0}
 
-	_ctg_obj_root=$( buildTargetObjSrcDirPath "$_ctg_build" "$_ctg_style" "$_ctg_target" )
+	_ctg_obj_root=$( buildTargetObjSrcDirPath "$_ctg_build" \
+		"$_ctg_style" "$_ctg_target" )
 	[ -d "$_ctg_obj_root" ] || return 0
 
 	if [ "$_ctg_exclude" -eq 1 ]
@@ -417,8 +378,7 @@ testBinaryPath( )
 	_tbp_name=${_tbp_base%.*}
 
 	case "$_tbp_rel" in
-		*/*) printf '%s/%s/%s\n' "$_tbp_dir" \
-			"${_tbp_rel%/*}" "$_tbp_name" ;;
+		*/*) printf '%s/%s/%s\n' "$_tbp_dir" "${_tbp_rel%/*}" "$_tbp_name" ;;
 		*) printf '%s/%s\n' "$_tbp_dir" "$_tbp_name" ;;
 	esac
 }
@@ -441,8 +401,10 @@ runTestBinary( )
 	then
 		(
 			cd "$_rtb_dir"
-			DYLD_LIBRARY_PATH="$_rtb_lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
-			LD_LIBRARY_PATH="$_rtb_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+			_rtb_dyld_path="$_rtb_lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+			_rtb_ld_path="$_rtb_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+			DYLD_LIBRARY_PATH=$_rtb_dyld_path \
+			LD_LIBRARY_PATH=$_rtb_ld_path \
 			"./$_rtb_base"
 		)
 	else

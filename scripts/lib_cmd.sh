@@ -8,7 +8,8 @@ __included_lib_cmd_sh=1
 
 # $1 - Script directory path.
 #
-# Initializes __origDir, __scriptDir, and __projDir, then cd's into __scriptDir.
+# Initializes __origDir, __scriptDir, and __projDir.
+# Then cd's into __scriptDir.
 #
 initCmdPaths( )
 {

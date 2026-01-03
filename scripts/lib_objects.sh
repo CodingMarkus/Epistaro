@@ -22,8 +22,7 @@ collectObjectArgs( )
 	workDir=$1
 	shift
 
-	assert "[ -n \"${workDir:-}\" ]" \
-		"collectObjectArgs() missing work dir"
+	assert "[ -n \"${workDir:-}\" ]" "collectObjectArgs() missing work dir"
 	assert "[ $# -gt 0 ]" "collectObjectArgs() missing object files"
 
 	case "$workDir" in
@@ -44,8 +43,7 @@ collectObjectArgs( )
 			/*) objAbs=$objPath ;;
 			*) objAbs=$workDirAbs/$objPath ;;
 		esac
-		[ -f "$objAbs" ] \
-			|| printErrorAndExit "Object file not found: $objAbs"
+		[ -f "$objAbs" ] || printErrorAndExit "Object file not found: $objAbs"
 		quotedObj=$( quote "$objAbs" )
 		if [ -z "$objArgs" ]
 		then

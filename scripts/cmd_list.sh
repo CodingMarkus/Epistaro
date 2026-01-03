@@ -80,7 +80,8 @@ case "${1:-}" in
 				;;
 			2)
 				target=$( resolveTargetName "$__projDir" "$2" )
-				listTestsAndExit "$__projDir" "$target" "$plainMode"
+				listTestsAndExit "$__projDir" "$target" \
+					"$plainMode"
 				;;
 			*)
 				printHelpAndExit

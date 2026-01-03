@@ -80,7 +80,8 @@ resolveStyleFile( )
 
 # $1 - Test line (target|test path).
 #
-# Sets test parsing globals: _pt_target, _pt_rel, _pt_test_type, _pt_target_type
+# Sets test parsing globals: _pt_target, _pt_rel, _pt_test_type,
+# _pt_target_type
 #
 parseTestLine( )
 {
@@ -95,7 +96,10 @@ parseTestLine( )
 	case "$_pt_rel" in
 		*.ut) _pt_test_type=ut ;;
 		*.it) _pt_test_type=it ;;
-		*) printErrorAndExit "Invalid test name: $_pt_target/$_pt_rel" ;;
+		*)
+			printErrorAndExit \
+				"Invalid test name: $_pt_target/$_pt_rel"
+			;;
 	esac
 
 	case "$_pt_target" in
@@ -177,8 +181,8 @@ else
 			*/*)
 				targetPart=${spec%%/*}
 				selection=${spec#*/}
-				[ -n "$selection" ] \
-					|| printErrorAndExit "Invalid test path: $spec"
+				[ -n "$selection" ] || printErrorAndExit \
+					"Invalid test path: $spec"
 				;;
 			*)
 				targetPart=$spec
@@ -293,7 +297,8 @@ $builtTargets
 $target
 "*) ;;
 			*)
-				buildTarget "$__projDir" "$target" "$styleName" "$buildDir" \
+				buildTarget "$__projDir" "$target" \
+					"$styleName" "$buildDir" \
 					"$buildSettings"
 				builtTargets="$builtTargets
 $target"
@@ -302,48 +307,51 @@ $target"
 
 		testsRoot=$__projDir/targets/$target/tests
 		testDir=$testsRoot/$testRel
-		[ -d "$testDir" ] \
-			|| printErrorAndExit "Test not found: $target/$testRel"
+		[ -d "$testDir" ] || printErrorAndExit \
+			"Test not found: $target/$testRel"
 
 		if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
 		then
 			if find "$testDir" -type f -name '*.c' -print -quit \
 				| grep -q .
 			then
-				printErrorAndExit \
-					"Integration test must be scripts only: $target/$testRel"
+				_err_msg="Integration test must be "
+				_err_msg="${_err_msg}scripts only: $target/$testRel"
+				printErrorAndExit "$_err_msg"
 			fi
 			continue
 		fi
 
-		testObjRoot=$( testsTargetObjDirPath "$buildDir" "$styleName" \
-			"$target" )
-		testOutDir=$( testsTargetBinDirPath "$buildDir" "$styleName" \
-			"$target" )
+		testObjRoot=$( testsTargetObjDirPath "$buildDir" \
+			"$styleName" "$target" )
+		testOutDir=$( testsTargetBinDirPath "$buildDir" \
+			"$styleName" "$target" )
 		ensureDir "$testObjRoot"
 		ensureDir "$testOutDir"
 
 		testSanitizeSettings=""
 		if ! buildTestObjects "$__projDir" "$testsRoot" "$testRel" \
-			"$testObjRoot" "$buildSettings" \
-			testSanitizeSettings
+			"$testObjRoot" "$buildSettings" testSanitizeSettings
 		then
 			if [ "$?" -eq 2 ]
 			then
-				printErrorAndExit \
-					"No C sources found for test: $target/$testRel"
+					_err_msg="No C sources found for "
+					_err_msg="${_err_msg}test: $target/$testRel"
+					printErrorAndExit "$_err_msg"
 			fi
 			exit 1
 		fi
 
 		testObjs=$( collectTestObjects "$testObjRoot" "$testRel" )
 		[ -n "$testObjs" ] \
-			|| printErrorAndExit "No objects found for test: $target/$testRel"
+			|| printErrorAndExit \
+				"No objects found for test: $target/$testRel"
 
 		linkFlags=$buildSettings
 		if [ -n "$testSanitizeSettings" ]
 		then
-			sanitizeFlags=$( quoteSettings "$testSanitizeSettings" )
+			sanitizeFlags=$( quoteSettings \
+				"$testSanitizeSettings" )
 			linkFlags=$( appendQuotedSettings "$linkFlags" \
 				"$sanitizeFlags" )
 		fi
@@ -362,10 +370,11 @@ $target"
 				excludeMain=1
 			fi
 
-			targetObjs=$( collectTargetObjects "$buildDir" "$styleName" \
-				"$target" "$excludeMain" )
+			targetObjs=$( collectTargetObjects "$buildDir" \
+				"$styleName" "$target" "$excludeMain" )
 			[ -n "$targetObjs" ] \
-				|| printErrorAndExit "No target objects for $target"
+				|| printErrorAndExit \
+					"No target objects for $target"
 
 			set --
 			while IFS= read -r objPath || [ -n "$objPath" ]
@@ -384,17 +393,20 @@ $testObjs
 EOF
 
 			printf 'Linking %s...\n' "${testBinPath##*/}"
-			linkBinary "$testBinPath" "$__projDir" "$linkFlags" "$@"
+			linkBinary "$testBinPath" "$__projDir" "$linkFlags" \
+				"$@"
 			continue
 		fi
 
 		if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
 		then
-			targetDir=$( buildTargetDirPath "$buildDir" "$styleName" \
-				"$target" )
-			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
+			targetDir=$( buildTargetDirPath "$buildDir" \
+				"$styleName" "$target" )
+			dynamicPath=$targetDir/${target%.lib}$( \
+				_dynamicLibExtension )
 			[ -f "$dynamicPath" ] \
-				|| printErrorAndExit "Library not found: $dynamicPath"
+				|| printErrorAndExit \
+					"Library not found: $dynamicPath"
 
 			set --
 			while IFS= read -r objPath || [ -n "$objPath" ]
@@ -407,7 +419,8 @@ EOF
 			set -- "$@" "$dynamicPath"
 
 			printf 'Linking %s...\n' "${testBinPath##*/}"
-			linkBinary "$testBinPath" "$__projDir" "$linkFlags" "$@"
+			linkBinary "$testBinPath" "$__projDir" "$linkFlags" \
+				"$@"
 			continue
 		fi
 
@@ -449,7 +462,8 @@ $printedTargets
 $target
 "*) ;;
 			*)
-				printf '\n====== Testing Target %s ======\n\n' "$target"
+			printf '\n%s\n\n' \
+				"====== Testing Target $target ======"
 				printedTargets="$printedTargets
 $target"
 				;;
@@ -457,27 +471,28 @@ $target"
 
 		testsRoot=$__projDir/targets/$target/tests
 		testDir=$testsRoot/$testRel
-		[ -d "$testDir" ] \
-			|| printErrorAndExit "Test not found: $target/$testRel"
+		[ -d "$testDir" ] || printErrorAndExit \
+			"Test not found: $target/$testRel"
 
 		printf '%s\n' "-- $testRel"
 
 		if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
 		then
-			targetDir=$( buildTargetDirPath "$buildDir" "$styleName" \
-				"$target" )
+			targetDir=$( buildTargetDirPath "$buildDir" \
+				"$styleName" "$target" )
 			binPath=$targetDir/$target
-			[ -x "$binPath" ] \
-				|| printErrorAndExit "Binary not found: $binPath"
+			[ -x "$binPath" ] || printErrorAndExit \
+				"Binary not found: $binPath"
 
 			printf 'Running integration scripts...\n'
-			runIntegrationScripts "$testDir" "$binPath" "$target/$testRel"
+			runIntegrationScripts "$testDir" "$binPath" \
+				"$target/$testRel"
 			printf '\n'
 			continue
 		fi
 
-		testOutDir=$( testsTargetBinDirPath "$buildDir" "$styleName" \
-			"$target" )
+		testOutDir=$( testsTargetBinDirPath "$buildDir" \
+			"$styleName" "$target" )
 		testBinPath=$( testBinaryPath "$testOutDir" "$testRel" )
 
 		if [ "$testType" = "ut" ]
@@ -490,11 +505,13 @@ $target"
 
 		if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
 		then
-			targetDir=$( buildTargetDirPath "$buildDir" "$styleName" \
-				"$target" )
-			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
+			targetDir=$( buildTargetDirPath "$buildDir" \
+				"$styleName" "$target" )
+			dynamicPath=$targetDir/${target%.lib}$( \
+				_dynamicLibExtension )
 			[ -f "$dynamicPath" ] \
-				|| printErrorAndExit "Library not found: $dynamicPath"
+				|| printErrorAndExit \
+					"Library not found: $dynamicPath"
 
 			printf 'Running %s...\n' "${testBinPath##*/}"
 			runTestBinary "$testBinPath" "$targetDir"

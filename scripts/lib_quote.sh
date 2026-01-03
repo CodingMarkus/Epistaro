@@ -17,8 +17,8 @@ quote( )
 {
 	assert "[ -n \"${1:-}\" ]" "quote() missing input"
 
-    # Replace each single quote with: '\'' (close, escape, reopen).
-    printf "'%s'" "$( printf "%s" "$1" | sed "s/'/'\\\\''/g" )"
+	# Replace each single quote with: '\'' (close, escape, reopen).
+	printf "'%s'" "$( printf "%s" "$1" | sed "s/'/'\\\\''/g" )"
 }
 
 

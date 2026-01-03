@@ -64,8 +64,7 @@ stripTrailingSlash( )
 {
 	_sts_path=$1
 
-	assert "[ -n \"${_sts_path:-}\" ]" \
-		"stripTrailingSlash() missing path"
+	assert "[ -n \"${_sts_path:-}\" ]" "stripTrailingSlash() missing path"
 
 	case "$_sts_path" in
 		/) printf '%s\n' "$_sts_path" ;;

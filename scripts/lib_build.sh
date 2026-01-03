@@ -87,11 +87,13 @@ _prepareFlags( )
 				*/*) _pf_flags_dir=${_pf_flags_path%/*} ;;
 				*) _pf_flags_dir="." ;;
 			esac
-			_pf_flags_dir_settings=$( readCompileFlags "$_pf_flags_path" )
+			_pf_flags_dir_settings=$( readCompileFlags \
+				"$_pf_flags_path" )
 		fi
 		_pf_flags_sanitize_settings=$( _sanitizeSettingsFromList \
 			"$_pf_flags_dir_settings" )
-		_pf_flags_dir_flags=$( quoteSettings "$_pf_flags_dir_settings" )
+		_pf_flags_dir_flags=$( quoteSettings \
+			"$_pf_flags_dir_settings" )
 		__cached_flags_path=$_pf_flags_path
 		__cached_flags_dir=$_pf_flags_dir
 		__cached_flags_dirFlags=$_pf_flags_dir_flags
@@ -115,8 +117,8 @@ $_pf_flags_path
 		fi
 		if [ -n "$_pf_apply_sanitize" ]
 		then
-			while IFS= read -r _pf_sanitize_flag || \
-				[ -n "$_pf_sanitize_flag" ]
+			while IFS= read -r _pf_sanitize_flag \
+				|| [ -n "$_pf_sanitize_flag" ]
 			do
 				[ -n "$_pf_sanitize_flag" ] || continue
 				_pf_target_sanitize_result=$(
@@ -267,11 +269,13 @@ _syncPublicHeaders( )
 	assert "[ -n \"${target:-}\" ]" "_syncPublicHeaders() missing target"
 	assert "[ -n \"${targetStyleName:-}\" ]" \
 		"_syncPublicHeaders() missing style name"
-	assert "[ -n \"${buildDir:-}\" ]" "_syncPublicHeaders() missing build dir"
+assert "[ -n \"${buildDir:-}\" ]" \
+	"_syncPublicHeaders() missing build dir"
 
 	targetDir=$projectRoot/targets/$target
 	srcInc=$targetDir/inc
-	outInc=$( buildTargetIncDirPath "$buildDir" "$targetStyleName" "$target" )
+outInc=$( buildTargetIncDirPath "$buildDir" \
+	"$targetStyleName" "$target" )
 
 	if [ -d "$srcInc" ]
 	then
@@ -311,7 +315,8 @@ buildTarget( )
 	buildDir=$4
 	targetBuildSettings=$5
 
-	assert "[ -n \"${projectRoot:-}\" ]" "buildTarget() missing project dir"
+assert "[ -n \"${projectRoot:-}\" ]" \
+	"buildTarget() missing project dir"
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
@@ -356,7 +361,8 @@ buildTarget( )
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" "$srcDir" \
+					_prepareFlags "$projectRoot" \
+						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
 						"$targetSanitizeSettings" \
@@ -375,7 +381,8 @@ buildTarget( )
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" "$srcDir" \
+					_prepareFlags "$projectRoot" \
+						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
 						"$targetSanitizeSettings" \
@@ -391,15 +398,18 @@ buildTarget( )
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" "$srcPath" \
+				_buildFileWithOutput "$projectRoot" \
+					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
-					"$_bt_file_flags" _bt_had_output
+					"$_bt_file_flags" \
+					_bt_had_output
 				compileSpacing=$_bt_had_output
 				compiledAny=1
 				continue
 			fi
 
-			# Check if any dependency has been updated or is missing
+				# Check if any dependency has been updated
+				# or is missing.
 			set --
 			while IFS= read -r dep || [ -n "$dep" ]
 			do
@@ -415,7 +425,8 @@ buildTarget( )
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" "$srcDir" \
+					_prepareFlags "$projectRoot" \
+						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
 						"$targetSanitizeSettings" \
@@ -431,9 +442,11 @@ buildTarget( )
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" "$srcPath" \
+				_buildFileWithOutput "$projectRoot" \
+					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
-					"$_bt_file_flags" _bt_had_output
+					"$_bt_file_flags" \
+					_bt_had_output
 				compileSpacing=$_bt_had_output
 				compiledAny=1
 				continue
@@ -443,7 +456,8 @@ buildTarget( )
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" "$srcDir" \
+					_prepareFlags "$projectRoot" \
+						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
 						"$targetSanitizeSettings" \
@@ -459,9 +473,11 @@ buildTarget( )
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" "$srcPath" \
+				_buildFileWithOutput "$projectRoot" \
+					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
-					"$_bt_file_flags" _bt_had_output
+					"$_bt_file_flags" \
+					_bt_had_output
 				compileSpacing=$_bt_had_output
 				compiledAny=1
 			fi
@@ -502,8 +518,10 @@ createStaticLibrary( )
 	flags=$3
 	shift 3
 
-	assert "[ -n \"${outPath:-}\" ]" "createStaticLibrary() missing output path"
-	assert "[ -n \"${workDir:-}\" ]" "createStaticLibrary() missing work dir"
+	assert "[ -n \"${outPath:-}\" ]" \
+		"createStaticLibrary() missing output path"
+	assert "[ -n \"${workDir:-}\" ]" \
+		"createStaticLibrary() missing work dir"
 	assert "[ -n \"${flags:-}\" ]" "createStaticLibrary() missing flags"
 	assert "[ $# -gt 0 ]" "createStaticLibrary() missing object files"
 
@@ -557,8 +575,10 @@ buildTargetOutput( )
 	assert "[ -n \"${buildDir:-}\" ]" \
 		"buildTargetOutput() missing build dir"
 
-	targetDir=$( buildTargetDirPath "$buildDir" "$targetStyleName" "$target" )
-	objDir=$( buildTargetObjDirPath "$buildDir" "$targetStyleName" "$target" )
+	targetDir=$( buildTargetDirPath "$buildDir" \
+		"$targetStyleName" "$target" )
+	objDir=$( buildTargetObjDirPath "$buildDir" \
+		"$targetStyleName" "$target" )
 	objSrcRoot=$( buildTargetObjSrcDirPath "$buildDir" \
 		"$targetStyleName" "$target" )
 
@@ -582,7 +602,8 @@ EOF
 		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
 		if [ -n "$sanitizeFlags" ]
 		then
-			baseLinkFlags=$( appendQuotedSettings "$baseLinkFlags" \
+			baseLinkFlags=$( appendQuotedSettings \
+				"$baseLinkFlags" \
 				"$sanitizeFlags" )
 		fi
 	fi
@@ -593,7 +614,8 @@ EOF
 		if [ -n "$postFlags" ]
 		then
 			postFlagsQuoted=$( quoteSettings "$postFlags" )
-			finalLinkFlags=$( appendQuotedSettings "$finalLinkFlags" \
+			finalLinkFlags=$( appendQuotedSettings \
+				"$finalLinkFlags" \
 				"$postFlagsQuoted" )
 		fi
 	fi
@@ -610,31 +632,34 @@ EOF
 		*.lib)
 			prelinkPath=$objDir/${target%.*}.o
 			staticPath=$targetDir/${target%.*}.a
-			dynamicPath=$targetDir/${target%.lib}$( _dynamicLibExtension )
+			dynamicPath=$targetDir/${target%.lib}$( \
+				_dynamicLibExtension )
 
 			if isOutdated "$prelinkPath" "$@"
 			then
-				if [ "${compiledAny:-0}" -eq 1 ] \
-					&& [ "$majorSpacingDone" -eq 0 ]
-				then
-					printf '\n'
-					majorSpacingDone=1
-				fi
-				printf 'Pre-Linking %s...\n' "${prelinkPath##*/}"
-				prelinkObjects "$prelinkPath" "$projectRoot" \
-					"$baseLinkFlags" "$@"
+			if [ "${compiledAny:-0}" -eq 1 ] \
+				&& [ "$majorSpacingDone" -eq 0 ]
+			then
+				printf '\n'
+				majorSpacingDone=1
+			fi
+			printf 'Pre-Linking %s...\n' \
+				"${prelinkPath##*/}"
+			prelinkObjects "$prelinkPath" "$projectRoot" \
+				"$baseLinkFlags" "$@"
 				printf '\n'
 			fi
 
 			if isOutdated "$staticPath" "$prelinkPath"
 			then
-				if [ "${compiledAny:-0}" -eq 1 ] \
-					&& [ "$majorSpacingDone" -eq 0 ]
-				then
-					printf '\n'
-					majorSpacingDone=1
-				fi
-				printf 'Creating archive %s...\n' "${staticPath##*/}"
+			if [ "${compiledAny:-0}" -eq 1 ] \
+				&& [ "$majorSpacingDone" -eq 0 ]
+			then
+				printf '\n'
+				majorSpacingDone=1
+			fi
+			printf 'Creating archive %s...\n' \
+				"${staticPath##*/}"
 				createStaticLibraryFromObjects "$staticPath" \
 					"$projectRoot" "$prelinkPath"
 				printf '\n'
@@ -642,15 +667,17 @@ EOF
 
 			if isOutdated "$dynamicPath" "$prelinkPath"
 			then
-				if [ "${compiledAny:-0}" -eq 1 ] \
-					&& [ "$majorSpacingDone" -eq 0 ]
-				then
-					printf '\n'
-					majorSpacingDone=1
-				fi
-				printf 'Linking %s...\n' "${dynamicPath##*/}"
-				linkDynamicLibrary "$dynamicPath" "$projectRoot" \
-					"$finalLinkFlags" "$prelinkPath"
+			if [ "${compiledAny:-0}" -eq 1 ] \
+				&& [ "$majorSpacingDone" -eq 0 ]
+			then
+				printf '\n'
+				majorSpacingDone=1
+			fi
+			printf 'Linking %s...\n' \
+				"${dynamicPath##*/}"
+				linkDynamicLibrary "$dynamicPath" \
+					"$projectRoot" "$finalLinkFlags" \
+					"$prelinkPath"
 				printf '\n'
 			fi
 			;;
@@ -659,15 +686,15 @@ EOF
 			binPath=$targetDir/$target
 			if isOutdated "$binPath" "$@"
 			then
-				if [ "${compiledAny:-0}" -eq 1 ] \
-					&& [ "$majorSpacingDone" -eq 0 ]
-				then
-					printf '\n'
-					majorSpacingDone=1
-				fi
-				printf 'Linking %s...\n' "${binPath##*/}"
-				linkBinary "$binPath" "$projectRoot" "$finalLinkFlags" \
-					"$@"
+			if [ "${compiledAny:-0}" -eq 1 ] \
+				&& [ "$majorSpacingDone" -eq 0 ]
+			then
+				printf '\n'
+				majorSpacingDone=1
+			fi
+			printf 'Linking %s...\n' "${binPath##*/}"
+			linkBinary "$binPath" "$projectRoot" \
+				"$finalLinkFlags" "$@"
 				printf '\n'
 			fi
 			;;

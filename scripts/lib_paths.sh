@@ -84,8 +84,7 @@ outRootPath( )
 #
 buildsRootPathFromBuildDir( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"buildsRootPathFromBuildDir() missing build dir"
+	assert "[ -n \"${1:-}\" ]" "buildsRootPathFromBuildDir() missing build dir"
 
 	printf '%s/%s\n' "$1" "$( buildsDirName )"
 }
@@ -109,8 +108,7 @@ buildsRootPath( )
 #
 testsRootPathFromBuildDir( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"testsRootPathFromBuildDir() missing build dir"
+	assert "[ -n \"${1:-}\" ]" "testsRootPathFromBuildDir() missing build dir"
 
 	printf '%s/%s\n' "$1" "$( testsDirName )"
 }
@@ -140,12 +138,9 @@ testsTargetDirPath( )
 #
 testsTargetSrcDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"testsTargetSrcDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"testsTargetSrcDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"testsTargetSrcDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "testsTargetSrcDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "testsTargetSrcDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "testsTargetSrcDirPath() missing target name"
 
 	testsTargetObjDirPath "$1" "$2" "$3"
 }
@@ -159,15 +154,11 @@ testsTargetSrcDirPath( )
 #
 testsTargetObjDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"testsTargetObjDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"testsTargetObjDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"testsTargetObjDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "testsTargetObjDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "testsTargetObjDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "testsTargetObjDirPath() missing target name"
 
-	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" \
-		"$( objDirName )"
+	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "$( objDirName )"
 }
 
 
@@ -182,15 +173,11 @@ testsTargetObjDirPath( )
 #
 testsTargetBinDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"testsTargetBinDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"testsTargetBinDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"testsTargetBinDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "testsTargetBinDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "testsTargetBinDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "testsTargetBinDirPath() missing target name"
 
-	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" \
-		"$( binDirName )"
+	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "$( binDirName )"
 }
 
 
@@ -206,8 +193,7 @@ buildTargetDirPath( )
 
 	if [ -n "${3:-}" ] && [ -z "${2:-}" ]
 	then
-		printErrorAndExit \
-			"Target name requires style name: ${3:-}"
+		printErrorAndExit "Target name requires style name: ${3:-}"
 	fi
 
 	if [ -z "${2:-}" ]
@@ -234,15 +220,11 @@ buildTargetDirPath( )
 #
 buildTargetObjDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"buildTargetObjDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"buildTargetObjDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"buildTargetObjDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "buildTargetObjDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "buildTargetObjDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "buildTargetObjDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" \
-		"$( objDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( objDirName )"
 }
 
 
@@ -254,12 +236,9 @@ buildTargetObjDirPath( )
 #
 buildTargetObjSrcDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"buildTargetObjSrcDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"buildTargetObjSrcDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"buildTargetObjSrcDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "buildTargetObjSrcDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "buildTargetObjSrcDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "buildTargetObjSrcDirPath() missing target name"
 
 	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" )" \
 		"$( objSrcDirName )"
@@ -274,15 +253,11 @@ buildTargetObjSrcDirPath( )
 #
 buildTargetIncDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"buildTargetIncDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" \
-		"buildTargetIncDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" \
-		"buildTargetIncDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "buildTargetIncDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "buildTargetIncDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "buildTargetIncDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" \
-		"$( incDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( incDirName )"
 }
 
 
@@ -341,8 +316,7 @@ resolveTargetName( )
 		[ -d "$_rt_candidate" ] || continue
 		if [ -n "$_rt_resolved" ]
 		then
-			printErrorAndExit \
-				"Target name is ambiguous: $_rt_name"
+			printErrorAndExit "Target name is ambiguous: $_rt_name"
 		fi
 		_rt_resolved=${_rt_candidate##*/}
 	done

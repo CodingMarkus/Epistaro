@@ -40,8 +40,9 @@ fi
 
 if [ "$appendNote" -eq 1 ]
 then
-	printf '\n\n  %s\n' \
-		'Commands can be matched by partial names (up to a single letter).'
+	printf '\n\n  %s%s\n' \
+		'Commands can be matched by partial names (up to a single ' \
+		'letter).'
 fi
 
 exit 0

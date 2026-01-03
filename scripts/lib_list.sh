@@ -16,8 +16,7 @@ __included_lib_list_sh=1
 #
 listTargetsAndExit( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"listTargetsAndExit() missing project dir"
+	assert "[ -n \"${1:-}\" ]" "listTargetsAndExit() missing project dir"
 
 	_lt_root=$1
 	_lt_mode=${2:-}
@@ -68,8 +67,7 @@ listTargetsAndExit( )
 #
 listStylesAndExit( )
 {
-	assert "[ -n \"${1:-}\" ]" \
-		"listStylesAndExit() missing project dir"
+	assert "[ -n \"${1:-}\" ]" "listStylesAndExit() missing project dir"
 
 	_ls_root=$1
 	_ls_mode=${2:-}
@@ -77,8 +75,7 @@ listStylesAndExit( )
 	[ -d "$_ls_root/styles" ] || exit 0
 
 	_ls_styles=$( find "$_ls_root/styles" -maxdepth 1 -type f \
-		-name '*.cfg' -print 2>/dev/null \
-		| sed -e 's#.*/##' -e 's/\.cfg$//' )
+		-name '*.cfg' -print 2>/dev/null | sed -e 's#.*/##' -e 's/\.cfg$//' )
 	[ -n "$_ls_styles" ] || exit 0
 
 	if [ "$_ls_mode" = "plain" ]
@@ -124,17 +121,15 @@ listTestsAndExit( )
 
 		if [ "$_ltt_mode" = "plain" ]
 		then
-			printf '%s\n' "$_ltt_dirs" \
-				| sed "s#^$_ltt_tests/##" \
-				| awk -v prefix="$_ltt_target/" \
-					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
+				printf '%s\n' "$_ltt_dirs" | sed "s#^$_ltt_tests/##" \
+					| awk -v prefix="$_ltt_target/" \
+						'{ path=$0; sub(/\.(ut|it)$/, "", path); '\
+'print prefix path }'
 			exit 0
 		fi
 
 		printf '\nAvailable tests for "%s":\n\n' "$_ltt_target"
-		printf '%s\n' "$_ltt_dirs" \
-			| sed "s#^$_ltt_tests/##" \
-			| awk '
+		printf '%s\n' "$_ltt_dirs" | sed "s#^$_ltt_tests/##" | awk '
 				{
 					orig=$0
 					base=$0
@@ -165,17 +160,15 @@ listTestsAndExit( )
 
 		if [ "$_ltt_mode" = "plain" ]
 		then
-			printf '%s\n' "$_ltt_dirs" \
-				| sed "s#^$_ltt_tests/##" \
-				| awk -v prefix="$_ltt_target/" \
-					'{ path=$0; sub(/\.(ut|it)$/, "", path); print prefix path }'
+				printf '%s\n' "$_ltt_dirs" | sed "s#^$_ltt_tests/##" \
+					| awk -v prefix="$_ltt_target/" \
+						'{ path=$0; sub(/\.(ut|it)$/, "", path); '\
+'print prefix path }'
 			continue
 		fi
 
 		printf '\nAvailable tests for "%s":\n\n' "$_ltt_target"
-		printf '%s\n' "$_ltt_dirs" \
-			| sed "s#^$_ltt_tests/##" \
-			| awk '
+		printf '%s\n' "$_ltt_dirs" | sed "s#^$_ltt_tests/##" | awk '
 				{
 					orig=$0
 					base=$0
