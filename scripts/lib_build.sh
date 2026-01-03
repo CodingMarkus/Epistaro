@@ -15,100 +15,152 @@ __included_lib_build_sh=1
 . lib_quote.sh
 . lib_sanitize.sh
 
+# $1 - Variable name.
+# $2 - Value.
+#
+# Sets a variable to the provided value.
+#
+_setVar( )
+{
+	_sv_name=$1
+	_sv_value=$2
+
+	case "$_sv_name" in
+		''|*[!A-Za-z0-9_]*)
+			printErrorAndExit "Invalid variable name: $_sv_name"
+			;;
+	esac
+
+	if [ -n "$_sv_value" ]
+	then
+		_sv_quoted=$( quote "$_sv_value" )
+		eval "$_sv_name=$_sv_quoted"
+	else
+		eval "$_sv_name="
+	fi
+}
+
+
 # $1 - Project root directory.
 # $2 - Source directory for the file.
 # $3 - Quoted build settings string.
+# $4 - Build sanitizer settings list.
+# $5 - Target sanitizer settings list.
+# $6 - Target sanitizer paths list.
+# $7 - Output variable for work dir.
+# $8 - Output variable for file flags.
+# $9 - Output variable for target sanitizer settings.
+# $10 - Output variable for target sanitizer paths.
 #
-# Sets __workDir and __fileFlags for the file build step.
+# Sets outputs for the file build step and updated sanitizer state.
 #
 _prepareFlags( )
 {
-	_flags_projectRoot=$1
-	_flags_srcDir=$2
-	_flags_buildSettings=$3
-
-	[ "${__fileFlagsReady:-0}" -eq 0 ] || return 0
-	__fileFlagsReady=1
+	_pf_project_root=$1
+	_pf_src_dir=$2
+	_pf_build_settings=$3
+	_pf_build_sanitize=$4
+	_pf_target_sanitize=$5
+	_pf_target_paths=$6
+	_pf_out_work=$7
+	_pf_out_flags=$8
+	_pf_out_target=$9
+	shift 9
+	_pf_out_paths=$1
 
 	# Find any compile_flags.txt and read it
-	_flags_path=$( findCompileFlags "$_flags_srcDir" "$_flags_projectRoot" )
-	_flags_dir=""
-	_flags_dirFlags=""
-	_flags_sanitizeSettings=""
+	_pf_flags_path=$( findCompileFlags "$_pf_src_dir" "$_pf_project_root" )
+	_pf_flags_dir=""
+	_pf_flags_dir_flags=""
+	_pf_flags_sanitize_settings=""
 
-	if [ "${__cached_flags_path:-}" = "$_flags_path" ]
+	if [ "${__cached_flags_path:-}" = "$_pf_flags_path" ]
 	then
-		_flags_dir=${__cached_flags_dir:-}
-		_flags_dirFlags=${__cached_flags_dirFlags:-}
-		_flags_sanitizeSettings=${__cached_sanitizeSettings:-}
+		_pf_flags_dir=${__cached_flags_dir:-}
+		_pf_flags_dir_flags=${__cached_flags_dirFlags:-}
+		_pf_flags_sanitize_settings=${__cached_sanitizeSettings:-}
 	else
-		_flags_dirSettings=""
-		if [ -n "$_flags_path" ]
+		_pf_flags_dir_settings=""
+		if [ -n "$_pf_flags_path" ]
 		then
-			case "$_flags_path" in
-				*/*) _flags_dir=${_flags_path%/*} ;;
-				*) _flags_dir="." ;;
+			case "$_pf_flags_path" in
+				*/*) _pf_flags_dir=${_pf_flags_path%/*} ;;
+				*) _pf_flags_dir="." ;;
 			esac
-			_flags_dirSettings=$( readCompileFlags "$_flags_path" )
+			_pf_flags_dir_settings=$( readCompileFlags "$_pf_flags_path" )
 		fi
-		_flags_sanitizeSettings=$( _sanitizeSettingsFromList "$_flags_dirSettings" )
-		_flags_dirFlags=$( quoteSettings "$_flags_dirSettings" )
-		__cached_flags_path=$_flags_path
-		__cached_flags_dir=$_flags_dir
-		__cached_flags_dirFlags=$_flags_dirFlags
-		__cached_sanitizeSettings=$_flags_sanitizeSettings
+		_pf_flags_sanitize_settings=$( _sanitizeSettingsFromList \
+			"$_pf_flags_dir_settings" )
+		_pf_flags_dir_flags=$( quoteSettings "$_pf_flags_dir_settings" )
+		__cached_flags_path=$_pf_flags_path
+		__cached_flags_dir=$_pf_flags_dir
+		__cached_flags_dirFlags=$_pf_flags_dir_flags
+		__cached_sanitizeSettings=$_pf_flags_sanitize_settings
 	fi
 
-	if [ -n "$_flags_sanitizeSettings" ]
+	_pf_target_sanitize_result=$_pf_target_sanitize
+	_pf_target_paths_result=$_pf_target_paths
+	if [ -n "$_pf_flags_sanitize_settings" ]
 	then
-		_flags_applySanitize=1
-		if [ -n "$_flags_path" ]
+		_pf_apply_sanitize=1
+		if [ -n "$_pf_flags_path" ]
 		then
 			case "
-${__targetSanitizePaths:-}
+$_pf_target_paths_result
 " in
 				*"
-$_flags_path
-"*) _flags_applySanitize= ;;
+$_pf_flags_path
+"*) _pf_apply_sanitize= ;;
 			esac
 		fi
-		if [ -n "$_flags_applySanitize" ]
+		if [ -n "$_pf_apply_sanitize" ]
 		then
-			while IFS= read -r _flags_sanitizeFlag || \
-				[ -n "$_flags_sanitizeFlag" ]
+			while IFS= read -r _pf_sanitize_flag || \
+				[ -n "$_pf_sanitize_flag" ]
 			do
-				[ -n "$_flags_sanitizeFlag" ] || continue
-				_addTargetSanitizeSetting "$_flags_sanitizeFlag"
+				[ -n "$_pf_sanitize_flag" ] || continue
+				_pf_target_sanitize_result=$(
+					_addTargetSanitizeSetting \
+						"$_pf_build_sanitize" \
+						"$_pf_target_sanitize_result" \
+						"$_pf_sanitize_flag"
+				)
 			done <<EOF
-$_flags_sanitizeSettings
+$_pf_flags_sanitize_settings
 EOF
-			if [ -n "$_flags_path" ]
+			if [ -n "$_pf_flags_path" ]
 			then
-				if [ -n "${__targetSanitizePaths:-}" ]
+				if [ -n "$_pf_target_paths_result" ]
 				then
-					__targetSanitizePaths="$__targetSanitizePaths
-$_flags_path"
+					_pf_target_paths_result=\
+"$_pf_target_paths_result
+$_pf_flags_path"
 				else
-					__targetSanitizePaths=$_flags_path
+					_pf_target_paths_result=$_pf_flags_path
 				fi
 			fi
 		fi
 	fi
-	if [ -n "$_flags_dir" ]
+	if [ -n "$_pf_flags_dir" ]
 	then
-		__workDir=$_flags_dir
+		_pf_work_dir=$_pf_flags_dir
 	else
-		__workDir=$_flags_srcDir
+		_pf_work_dir=$_pf_src_dir
 	fi
 
 	# Create final build flags for the file to build
-	__fileFlags=$( appendQuotedSettings "$_flags_buildSettings" \
-		"$_flags_dirFlags" )
+	_pf_file_flags=$( appendQuotedSettings \
+		"$_pf_build_settings" "$_pf_flags_dir_flags" )
 
-	if [ -z "$__fileFlags" ]
+	if [ -z "$_pf_file_flags" ]
 	then
-		__fileFlags="--"
+		_pf_file_flags="--"
 	fi
+
+	_setVar "$_pf_out_work" "$_pf_work_dir"
+	_setVar "$_pf_out_flags" "$_pf_file_flags"
+	_setVar "$_pf_out_target" "$_pf_target_sanitize_result"
+	_setVar "$_pf_out_paths" "$_pf_target_paths_result"
 }
 
 
@@ -131,8 +183,8 @@ _deployPostprocessFlags( )
 # $1 - Project root directory.
 # $2 - Source file path.
 # $3 - Object file output path.
-# $4 - Source directory for the file.
-# $5 - Quoted build settings string.
+# $4 - Work directory for the file.
+# $5 - Quoted file flags string.
 #
 # Prepares flags and compiles the file.
 #
@@ -141,18 +193,19 @@ _buildFile( )
 	_build_projectRoot=$1
 	_build_srcPath=$2
 	_build_objPath=$3
-	_build_srcDir=$4
-	_build_settings=$5
+	_build_workDir=$4
+	_build_fileFlags=$5
 
-	_prepareFlags "$_build_projectRoot" "$_build_srcDir" "$_build_settings"
-	buildFile "$_build_srcPath" "$_build_objPath" "$__workDir" "$__fileFlags"
+	buildFile "$_build_srcPath" "$_build_objPath" \
+		"$_build_workDir" "$_build_fileFlags"
 }
 
 # $1 - Project root directory.
 # $2 - Source file path.
 # $3 - Object file output path.
-# $4 - Source directory for the file.
-# $5 - Quoted build settings string.
+# $4 - Work directory for the file.
+# $5 - Quoted file flags string.
+# $6 - Output variable for compile output flag.
 #
 # Runs a build and captures clang diagnostics to control compile spacing.
 #
@@ -161,14 +214,16 @@ _buildFileWithOutput( )
 	_build_projectRoot=$1
 	_build_srcPath=$2
 	_build_objPath=$3
-	_build_srcDir=$4
-	_build_settings=$5
+	_build_workDir=$4
+	_build_fileFlags=$5
+	_build_out_had_output=$6
 
 	_build_tmpPath=$( mktemp "${TMPDIR:-/tmp}/build.XXXXXX" ) \
 		|| printErrorAndExit "mktemp failed"
 
-	if _buildFile "$_build_projectRoot" "$_build_srcPath" "$_build_objPath" \
-		"$_build_srcDir" "$_build_settings" 2>"$_build_tmpPath"
+	if _buildFile "$_build_projectRoot" "$_build_srcPath" \
+		"$_build_objPath" "$_build_workDir" \
+		"$_build_fileFlags" 2>"$_build_tmpPath"
 	then
 		_build_status=0
 	else
@@ -178,11 +233,13 @@ _buildFileWithOutput( )
 	if [ -s "$_build_tmpPath" ]
 	then
 		cat "$_build_tmpPath" >&2
-		__buildFileHadOutput=1
+		_build_had_output=1
 	else
-		__buildFileHadOutput=0
+		_build_had_output=0
 	fi
 	rm -f "$_build_tmpPath"
+
+	_setVar "$_build_out_had_output" "$_build_had_output"
 
 	if [ "$_build_status" -ne 0 ]
 	then
@@ -258,11 +315,13 @@ buildTarget( )
 
 	targetDir=$projectRoot/targets/$target
 	srcRoot=$targetDir/src
-	objRoot=$( buildTargetObjSrcDirPath "$buildDir" "$targetStyleName" "$target" )
+	objRoot=$( buildTargetObjSrcDirPath "$buildDir" \
+		"$targetStyleName" "$target" )
 
-	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$targetBuildSettings" )
-	__targetSanitizeSettings=""
-	__targetSanitizePaths=""
+	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted \
+		"$targetBuildSettings" )
+	targetSanitizeSettings=""
+	targetSanitizePaths=""
 	compiledAny=0
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
@@ -289,25 +348,53 @@ buildTarget( )
 				*) srcDir="." ;;
 			esac
 
-			__fileFlagsReady=0
+			fileFlagsReady=0
+			_bt_work_dir=""
+			_bt_file_flags=""
 
 			if depFileIsOutdated "$depPath"
 			then
-				_prepareFlags "$projectRoot" "$srcDir" "$targetBuildSettings"
-				generateDepFile "$srcPath" "$depPath" "$__workDir" "$__fileFlags"
+				if [ "$fileFlagsReady" -eq 0 ]
+				then
+					_prepareFlags "$projectRoot" "$srcDir" \
+						"$targetBuildSettings" \
+						"$buildSanitizeSettings" \
+						"$targetSanitizeSettings" \
+						"$targetSanitizePaths" \
+						_bt_work_dir _bt_file_flags \
+						targetSanitizeSettings \
+						targetSanitizePaths
+					fileFlagsReady=1
+				fi
+				generateDepFile "$srcPath" "$depPath" \
+					"$_bt_work_dir" "$_bt_file_flags"
 			fi
 
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
 			then
+				if [ "$fileFlagsReady" -eq 0 ]
+				then
+					_prepareFlags "$projectRoot" "$srcDir" \
+						"$targetBuildSettings" \
+						"$buildSanitizeSettings" \
+						"$targetSanitizeSettings" \
+						"$targetSanitizePaths" \
+						_bt_work_dir _bt_file_flags \
+						targetSanitizeSettings \
+						targetSanitizePaths
+					fileFlagsReady=1
+				fi
 				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
-					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$__buildFileHadOutput
+				_bt_had_output=0
+				_buildFileWithOutput "$projectRoot" "$srcPath" \
+					"$objPath" "$_bt_work_dir" \
+					"$_bt_file_flags" _bt_had_output
+				compileSpacing=$_bt_had_output
 				compiledAny=1
 				continue
 			fi
@@ -326,28 +413,56 @@ buildTarget( )
 
 			if [ "$#" -eq 0 ]
 			then
+				if [ "$fileFlagsReady" -eq 0 ]
+				then
+					_prepareFlags "$projectRoot" "$srcDir" \
+						"$targetBuildSettings" \
+						"$buildSanitizeSettings" \
+						"$targetSanitizeSettings" \
+						"$targetSanitizePaths" \
+						_bt_work_dir _bt_file_flags \
+						targetSanitizeSettings \
+						targetSanitizePaths
+					fileFlagsReady=1
+				fi
 				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
-					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$__buildFileHadOutput
+				_bt_had_output=0
+				_buildFileWithOutput "$projectRoot" "$srcPath" \
+					"$objPath" "$_bt_work_dir" \
+					"$_bt_file_flags" _bt_had_output
+				compileSpacing=$_bt_had_output
 				compiledAny=1
 				continue
 			fi
 
 			if isOutdated "$objPath" "$@"
 			then
+				if [ "$fileFlagsReady" -eq 0 ]
+				then
+					_prepareFlags "$projectRoot" "$srcDir" \
+						"$targetBuildSettings" \
+						"$buildSanitizeSettings" \
+						"$targetSanitizeSettings" \
+						"$targetSanitizePaths" \
+						_bt_work_dir _bt_file_flags \
+						targetSanitizeSettings \
+						targetSanitizePaths
+					fileFlagsReady=1
+				fi
 				if [ "$compileSpacing" -eq 1 ]
 				then
 					printf '\n'
 				fi
 				printf 'Compiling %s...\n' "$relPath"
-				_buildFileWithOutput "$projectRoot" "$srcPath" "$objPath" \
-					"$srcDir" "$targetBuildSettings"
-				compileSpacing=$__buildFileHadOutput
+				_bt_had_output=0
+				_buildFileWithOutput "$projectRoot" "$srcPath" \
+					"$objPath" "$_bt_work_dir" \
+					"$_bt_file_flags" _bt_had_output
+				compileSpacing=$_bt_had_output
 				compiledAny=1
 			fi
 			done <<EOF
@@ -355,8 +470,10 @@ $( find "$srcRoot" -type f -name '*.c' )
 EOF
 		fi
 
-buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
-	"$targetBuildSettings" "$__targetSanitizeSettings" "$compiledAny"
+	buildTargetOutput "$projectRoot" "$target" \
+		"$targetStyleName" "$buildDir" \
+		"$targetBuildSettings" \
+		"$targetSanitizeSettings" "$compiledAny"
 
 	case "$target" in
 		*.lib)
@@ -381,18 +498,18 @@ buildTargetOutput "$projectRoot" "$target" "$targetStyleName" "$buildDir" \
 createStaticLibrary( )
 (
 	outPath=$1
-	__workDir=$2
+	workDir=$2
 	flags=$3
 	shift 3
 
 	assert "[ -n \"${outPath:-}\" ]" "createStaticLibrary() missing output path"
-	assert "[ -n \"${__workDir:-}\" ]" "createStaticLibrary() missing work dir"
+	assert "[ -n \"${workDir:-}\" ]" "createStaticLibrary() missing work dir"
 	assert "[ -n \"${flags:-}\" ]" "createStaticLibrary() missing flags"
 	assert "[ $# -gt 0 ]" "createStaticLibrary() missing object files"
 
 	prelinkPath=$outPath.prelink.o
-	prelinkObjects "$prelinkPath" "$__workDir" "$flags" "$@"
-	createStaticLibraryFromObjects "$outPath" "$__workDir" "$prelinkPath"
+	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
+	createStaticLibraryFromObjects "$outPath" "$workDir" "$prelinkPath"
 )
 
 
@@ -429,7 +546,7 @@ buildTargetOutput( )
 	targetStyleName=$3
 	buildDir=$4
 	targetBuildSettings=$5
-	__targetSanitizeSettings=$6
+	targetSanitizeSettings=$6
 	compiledAny=${7:-0}
 
 	assert "[ -n \"${projectRoot:-}\" ]" \
@@ -460,9 +577,9 @@ EOF
 
 	baseLinkFlags=""
 	majorSpacingDone=0
-	if [ -n "${__targetSanitizeSettings:-}" ]
+	if [ -n "$targetSanitizeSettings" ]
 	then
-		sanitizeFlags=$( quoteSettings "$__targetSanitizeSettings" )
+		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
 		if [ -n "$sanitizeFlags" ]
 		then
 			baseLinkFlags=$( appendQuotedSettings "$baseLinkFlags" \

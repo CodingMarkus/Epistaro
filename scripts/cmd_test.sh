@@ -323,8 +323,10 @@ $target"
 		ensureDir "$testObjRoot"
 		ensureDir "$testOutDir"
 
+		testSanitizeSettings=""
 		if ! buildTestObjects "$__projDir" "$testsRoot" "$testRel" \
-			"$testObjRoot" "$buildSettings"
+			"$testObjRoot" "$buildSettings" \
+			testSanitizeSettings
 		then
 			if [ "$?" -eq 2 ]
 			then
@@ -339,10 +341,11 @@ $target"
 			|| printErrorAndExit "No objects found for test: $target/$testRel"
 
 		linkFlags=$buildSettings
-		if [ -n "${__testSanitizeSettings:-}" ]
+		if [ -n "$testSanitizeSettings" ]
 		then
-			sanitizeFlags=$( quoteSettings "$__testSanitizeSettings" )
-			linkFlags=$( appendQuotedSettings "$linkFlags" "$sanitizeFlags" )
+			sanitizeFlags=$( quoteSettings "$testSanitizeSettings" )
+			linkFlags=$( appendQuotedSettings "$linkFlags" \
+				"$sanitizeFlags" )
 		fi
 		[ -n "$linkFlags" ] || linkFlags="--"
 

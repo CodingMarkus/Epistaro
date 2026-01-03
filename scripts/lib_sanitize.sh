@@ -69,37 +69,44 @@ _sanitizeSettingsFromQuoted( )
 )
 
 
-# $1 - Sanitizer flag.
+# $1 - Build sanitizer settings list.
+# $2 - Target sanitizer settings list.
+# $3 - Sanitizer flag.
 #
-# Adds to target sanitizer list if not already present or in build settings.
+# Prints updated target sanitizer list if not already present or in build
+# settings.
 #
 _addTargetSanitizeSetting( )
 {
-	_ats_flag=$1
+	_ats_build=$1
+	_ats_target=$2
+	_ats_flag=$3
 
-	[ -n "$_ats_flag" ] || return 0
+	[ -n "$_ats_flag" ] || {
+		printf '%s' "$_ats_target"
+		return 0
+	}
 
 	case "
-${__buildSanitizeSettings:-}
+$_ats_build
 " in
 		*"
 $_ats_flag
-"*) return 0 ;;
+"*) printf '%s' "$_ats_target"; return 0 ;;
 	esac
 
 	case "
-${__targetSanitizeSettings:-}
+$_ats_target
 " in
 		*"
 $_ats_flag
-"*) return 0 ;;
+"*) printf '%s' "$_ats_target"; return 0 ;;
 	esac
 
-	if [ -n "${__targetSanitizeSettings:-}" ]
+	if [ -n "$_ats_target" ]
 	then
-		__targetSanitizeSettings="$__targetSanitizeSettings
-$_ats_flag"
+		printf '%s\n%s' "$_ats_target" "$_ats_flag"
 	else
-		__targetSanitizeSettings=$_ats_flag
+		printf '%s' "$_ats_flag"
 	fi
 }

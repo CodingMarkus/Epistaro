@@ -188,6 +188,7 @@ $_ctd_target/$_ctd_sel"
 # $3 - Test path relative to the tests root.
 # $4 - Object output root directory.
 # $5 - Quoted build settings string.
+# $6 - Output variable for sanitizer settings list.
 #
 # Builds objects for a test and updates sanitizer settings.
 #
@@ -198,6 +199,7 @@ buildTestObjects( )
 	_bto_rel=$3
 	_bto_obj_root=$4
 	_bto_settings=$5
+	_bto_out_sanitize=${6:-}
 
 	_bto_src_dir=$_bto_tests/$_bto_rel
 	[ -d "$_bto_src_dir" ] \
@@ -209,13 +211,9 @@ buildTestObjects( )
 		return 2
 	fi
 
-	_bto_old_build_san=${__buildSanitizeSettings:-}
-	_bto_old_target_san=${__targetSanitizeSettings:-}
-	_bto_old_target_paths=${__targetSanitizePaths:-}
-
-	__buildSanitizeSettings=$( _sanitizeSettingsFromQuoted "$_bto_settings" )
-	__targetSanitizeSettings=""
-	__targetSanitizePaths=""
+	_bto_build_sanitize=$( _sanitizeSettingsFromQuoted "$_bto_settings" )
+	_bto_target_sanitize=""
+	_bto_target_paths=""
 
 	_bto_spacing=0
 	_bto_compiled=0
@@ -233,25 +231,52 @@ buildTestObjects( )
 			*) _bto_src_dir="." ;;
 		esac
 
-		__fileFlagsReady=0
+		_bto_flags_ready=0
+		_bto_work_dir=""
+		_bto_file_flags=""
 
 		if depFileIsOutdated "$_bto_dep_path"
 		then
-			_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings"
-			generateDepFile "$_bto_src" "$_bto_dep_path" "$__workDir" \
-				"$__fileFlags"
+			if [ "$_bto_flags_ready" -eq 0 ]
+			then
+				_prepareFlags "$_bto_root" "$_bto_src_dir" \
+					"$_bto_settings" \
+					"$_bto_build_sanitize" \
+					"$_bto_target_sanitize" \
+					"$_bto_target_paths" \
+					_bto_work_dir _bto_file_flags \
+					_bto_target_sanitize \
+					_bto_target_paths
+				_bto_flags_ready=1
+			fi
+			generateDepFile "$_bto_src" "$_bto_dep_path" \
+				"$_bto_work_dir" "$_bto_file_flags"
 		fi
 
 		if isOutdated "$_bto_obj_path" "$_bto_dep_path"
 		then
+			if [ "$_bto_flags_ready" -eq 0 ]
+			then
+				_prepareFlags "$_bto_root" "$_bto_src_dir" \
+					"$_bto_settings" \
+					"$_bto_build_sanitize" \
+					"$_bto_target_sanitize" \
+					"$_bto_target_paths" \
+					_bto_work_dir _bto_file_flags \
+					_bto_target_sanitize \
+					_bto_target_paths
+				_bto_flags_ready=1
+			fi
 			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
-				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
-			_bto_spacing=$__buildFileHadOutput
+				"$_bto_obj_path" "$_bto_work_dir" \
+				"$_bto_file_flags" _bto_had_output
+			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 			continue
 		fi
@@ -269,39 +294,66 @@ buildTestObjects( )
 
 		if [ "$#" -eq 0 ]
 		then
+			if [ "$_bto_flags_ready" -eq 0 ]
+			then
+				_prepareFlags "$_bto_root" "$_bto_src_dir" \
+					"$_bto_settings" \
+					"$_bto_build_sanitize" \
+					"$_bto_target_sanitize" \
+					"$_bto_target_paths" \
+					_bto_work_dir _bto_file_flags \
+					_bto_target_sanitize \
+					_bto_target_paths
+				_bto_flags_ready=1
+			fi
 			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
-				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
-			_bto_spacing=$__buildFileHadOutput
+				"$_bto_obj_path" "$_bto_work_dir" \
+				"$_bto_file_flags" _bto_had_output
+			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 			continue
 		fi
 
 		if isOutdated "$_bto_obj_path" "$@"
 		then
+			if [ "$_bto_flags_ready" -eq 0 ]
+			then
+				_prepareFlags "$_bto_root" "$_bto_src_dir" \
+					"$_bto_settings" \
+					"$_bto_build_sanitize" \
+					"$_bto_target_sanitize" \
+					"$_bto_target_paths" \
+					_bto_work_dir _bto_file_flags \
+					_bto_target_sanitize \
+					_bto_target_paths
+				_bto_flags_ready=1
+			fi
 			if [ "$_bto_spacing" -eq 1 ]
 			then
 				printf '\n'
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
+			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
-				"$_bto_obj_path" "$_bto_src_dir" "$_bto_settings"
-			_bto_spacing=$__buildFileHadOutput
+				"$_bto_obj_path" "$_bto_work_dir" \
+				"$_bto_file_flags" _bto_had_output
+			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 		fi
 	done <<EOF
 $_bto_src_list
 EOF
 
-	__testSanitizeSettings=$__targetSanitizeSettings
-
-	__buildSanitizeSettings=$_bto_old_build_san
-	__targetSanitizeSettings=$_bto_old_target_san
-	__targetSanitizePaths=$_bto_old_target_paths
+	if [ -n "$_bto_out_sanitize" ]
+	then
+		_setVar "$_bto_out_sanitize" "$_bto_target_sanitize"
+	fi
 }
 
 
