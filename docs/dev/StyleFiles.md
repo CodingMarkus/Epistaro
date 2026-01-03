@@ -18,11 +18,11 @@ Style `.cfg` files define build settings (one per line) and directives for inclu
 
 3. Directives
 -------------
-* `$include <path>`
+* `$include<path>`
     * Include another style file. Relative paths are resolved against the
     including file's directory.
 
-* `$include? <path>`
+* `$include?<path>`
     * Optional include. Missing files are ignored.
 
 * `$set <NAME> [VALUE]`
@@ -31,9 +31,10 @@ Style `.cfg` files define build settings (one per line) and directives for inclu
 * `$unset <NAME>`
     * Unset a style variable.
 
-* `$include (condition) <path>` / `$include? (condition) <path>`
+* `$include(condition) <path>` / `$include?(condition) <path>`
     * Conditional include. The condition must be in parentheses and on the same
-    line as the directive.
+    line as the directive. There is no space between `$include`/`$include?` and
+    the opening `(`.
 
 Unknown directives (any other line starting with `$`) are errors.
 
@@ -98,7 +99,7 @@ Example style file:
     $set DEPLOY_PROCESSING
 
     # macOS-only flags
-    $include (if-equal _TARGET_OS "macos") _defaults/macos.cfg
+    $include(if-equal _TARGET_OS "macos") _defaults/macos.cfg
 
     # Optional local overrides
     $include? ../_inc/_default.cfg
