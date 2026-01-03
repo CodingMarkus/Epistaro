@@ -13,6 +13,39 @@ __included_lib_clang_sh=1
 . lib_platform.sh
 
 
+# Selects the compiler binary, preferring CLANG/CC overrides.
+_resolveClangBinary( )
+{
+	platformInitTargetVars
+	case "${__style_set__TARGET_OS:-}" in
+		emscripten)
+			if [ -n "${EMCC:-}" ]
+			then
+				printf '%s\n' "$EMCC"
+				return 0
+			fi
+			;;
+	esac
+
+	if [ -n "${CLANG:-}" ]
+	then
+		printf '%s\n' "$CLANG"
+		return 0
+	fi
+
+	if [ -n "${CC:-}" ]
+	then
+		printf '%s\n' "$CC"
+		return 0
+	fi
+
+	case "${__style_set__TARGET_OS:-}" in
+		emscripten) printf '%s\n' "emcc" ;;
+		*) printf '%s\n' "clang" ;;
+	esac
+}
+
+
 # $1 - C source file path.
 # $2 - Dependency file path to generate (.dep).
 # $3 - Working directory for clang.
@@ -35,7 +68,7 @@ generateDepFile( )
 
 	[ -f "$srcPath" ] || printErrorAndExit "Source file not found: $srcPath"
 
-	clang=${CLANG:-${CC:-clang}}
+	clang=$( _resolveClangBinary )
 	command -v "$clang" >/dev/null 2>&1 \
 		|| printErrorAndExit "clang not found: $clang"
 
@@ -173,7 +206,7 @@ buildFile( )
 
 	[ -f "$srcPath" ] || printErrorAndExit "Source file not found: $srcPath"
 
-	clang=${CLANG:-${CC:-clang}}
+	clang=$( _resolveClangBinary )
 	command -v "$clang" >/dev/null 2>&1 \
 		|| printErrorAndExit "clang not found: $clang"
 
@@ -239,7 +272,7 @@ prelinkObjects( )
 	assert "[ -n \"${flags:-}\" ]" "prelinkObjects() missing flags"
 	assert "[ $# -gt 0 ]" "prelinkObjects() missing object files"
 
-	clang=${CLANG:-${CC:-clang}}
+	clang=$( _resolveClangBinary )
 	command -v "$clang" >/dev/null 2>&1 \
 		|| printErrorAndExit "clang not found: $clang"
 
@@ -282,7 +315,7 @@ linkDynamicLibrary( )
 	assert "[ -n \"${flags:-}\" ]" "linkDynamicLibrary() missing flags"
 	assert "[ $# -gt 0 ]" "linkDynamicLibrary() missing object files"
 
-	clang=${CLANG:-${CC:-clang}}
+	clang=$( _resolveClangBinary )
 	command -v "$clang" >/dev/null 2>&1 \
 		|| printErrorAndExit "clang not found: $clang"
 
@@ -325,7 +358,7 @@ linkBinary( )
 	assert "[ -n \"${flags:-}\" ]" "linkBinary() missing flags"
 	assert "[ $# -gt 0 ]" "linkBinary() missing object files"
 
-	clang=${CLANG:-${CC:-clang}}
+	clang=$( _resolveClangBinary )
 	command -v "$clang" >/dev/null 2>&1 \
 		|| printErrorAndExit "clang not found: $clang"
 
