@@ -145,6 +145,29 @@ _styleEvalCondition( )
 			_sec_val=$( _styleGetVar "$_sec_name" "$_sec_path" )
 			[ "$_sec_val" = "$_sec_exp" ]
 			;;
+		if-not-equal[[:space:]]* )
+			_sec_rest=${_sec_cond#if-not-equal}
+			_sec_split=$( _styleSplitVarAndRest "$_sec_rest" )
+			_sec_oldifs=$IFS
+			IFS='
+'
+			set -- $_sec_split
+			IFS=$_sec_oldifs
+			_sec_name=${1-}
+			_sec_rest=${2-}
+			[ -n "$_sec_name" ] || printErrorAndExit \
+				"Missing var name in $_sec_path"
+			_sec_rest=$( _styleTrimLeft "$_sec_rest" )
+			[ -n "$_sec_rest" ] || printErrorAndExit \
+				"Missing match value in $_sec_path"
+			_sec_exp=$( _styleParseValue "$_sec_rest" "$_sec_path" )
+			if ! _styleVarIsSet "$_sec_name" "$_sec_path"
+			then
+				return 1
+			fi
+			_sec_val=$( _styleGetVar "$_sec_name" "$_sec_path" )
+			[ "$_sec_val" != "$_sec_exp" ]
+			;;
 		*)
 			printErrorAndExit \
 				"Unknown include condition in $_sec_path: $_sec_cond"

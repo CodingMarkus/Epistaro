@@ -48,16 +48,19 @@ Conditions are only valid in `$include`/`$include?` lines:
 * `if-not-set NAME`
     * True if `NAME` is not set.
 
+* `if-equal NAME VALUE`
+    * True if `NAME` is set and equals `VALUE`.
+
+* `if-not-equal NAME VALUE`
+    * True if `NAME` is set and does not equal `VALUE`.
+
 * `if-match NAME /regex/`
     * True if `NAME` is set and its value matches the regex (grep -E syntax).
 
 * `if-not-match NAME /regex/`
     * True if `NAME` is not set or does not match the regex.
 
-* `if-equal NAME VALUE`
-    * True if `NAME` is set and equals `VALUE`.
-
-`VALUE` in `if-equal` is parsed using the same rules as `$set` values.
+`VALUE` in `if-equal` and `if-not-equal` is parsed using the same rules as `$set` values.
 
 
 5. Variables and Values
