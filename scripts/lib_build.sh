@@ -680,8 +680,9 @@ EOF
 			fi
 			printf 'Pre-Linking %s...\n' \
 				"${prelinkPath##*/}"
+			prelinkFlags="--"
 			prelinkObjects "$prelinkPath" "$projectRoot" \
-				"$baseLinkFlags" "$@"
+				"$prelinkFlags" "$@"
 				printf '\n'
 			fi
 
