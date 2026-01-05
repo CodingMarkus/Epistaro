@@ -110,6 +110,8 @@ parseTestLine( )
 }
 
 
+
+
 case "${1:-}" in
 	--help)
 		[ "$#" -eq 1 ] || printHelpAndExit
@@ -347,15 +349,8 @@ $target"
 			|| printErrorAndExit \
 				"No objects found for test: $target/$testRel"
 
-		linkFlags=$buildSettings
-		if [ -n "$testSanitizeSettings" ]
-		then
-			sanitizeFlags=$( quoteSettings \
-				"$testSanitizeSettings" )
-			linkFlags=$( appendQuotedSettings "$linkFlags" \
-				"$sanitizeFlags" )
-		fi
-		[ -n "$linkFlags" ] || linkFlags="--"
+		linkFlags=$( _linkFlagsFromSettings \
+			"$buildSettings" "$testSanitizeSettings" )
 
 		testBinPath=$( testBinaryPath "$testOutDir" "$testRel" )
 		case "$testBinPath" in

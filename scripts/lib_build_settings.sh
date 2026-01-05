@@ -8,9 +8,11 @@ __included_lib_build_settings_sh=1
 
 . lib_assert.sh
 . lib_error.sh
+. lib_build_common.sh
 . lib_fs.sh
 . lib_platform.sh
 . lib_quote.sh
+. lib_sanitize.sh
 . lib_style.sh
 
 
@@ -355,6 +357,131 @@ readCompileFlags( )
 		printf '%s\n' "$trimmed"
 	done < "$flagsPath"
 )
+
+
+# $1 - Project root directory.
+# $2 - Source directory for the file.
+# $3 - Quoted build settings string.
+# $4 - Build sanitizer settings list.
+# $5 - Target sanitizer settings list.
+# $6 - Target sanitizer paths list.
+# $7 - Output variable for work dir.
+# $8 - Output variable for file flags.
+# $9 - Output variable for target sanitizer settings.
+# $10 - Output variable for target sanitizer paths.
+#
+# Sets outputs for the file build step and updated sanitizer state.
+#
+_prepareFlags( )
+{
+	_pf_project_root=$1
+	_pf_src_dir=$2
+	_pf_build_settings=$3
+	_pf_build_sanitize=$4
+	_pf_target_sanitize=$5
+	_pf_target_paths=$6
+	_pf_out_work=$7
+	_pf_out_flags=$8
+	_pf_out_target=$9
+	shift 9
+	_pf_out_paths=$1
+
+	# Find any compile_flags.txt and read it
+	_pf_flags_path=$( findCompileFlags "$_pf_src_dir" "$_pf_project_root" )
+	_pf_flags_dir=""
+	_pf_flags_dir_flags=""
+	_pf_flags_sanitize_settings=""
+
+	if [ "${__cached_flags_path:-}" = "$_pf_flags_path" ]
+	then
+		_pf_flags_dir=${__cached_flags_dir:-}
+		_pf_flags_dir_flags=${__cached_flags_dirFlags:-}
+		_pf_flags_sanitize_settings=${__cached_sanitizeSettings:-}
+	else
+		_pf_flags_dir_settings=""
+		if [ -n "$_pf_flags_path" ]
+		then
+			case "$_pf_flags_path" in
+				*/*) _pf_flags_dir=${_pf_flags_path%/*} ;;
+				*) _pf_flags_dir="." ;;
+			esac
+			_pf_flags_dir_settings=$( readCompileFlags \
+				"$_pf_flags_path" )
+		fi
+		_pf_flags_sanitize_settings=$( _sanitizeSettingsFromList \
+			"$_pf_flags_dir_settings" )
+		_pf_flags_dir_flags=$( quoteSettings \
+			"$_pf_flags_dir_settings" )
+		__cached_flags_path=$_pf_flags_path
+		__cached_flags_dir=$_pf_flags_dir
+		__cached_flags_dirFlags=$_pf_flags_dir_flags
+		__cached_sanitizeSettings=$_pf_flags_sanitize_settings
+	fi
+
+	_pf_target_sanitize_result=$_pf_target_sanitize
+	_pf_target_paths_result=$_pf_target_paths
+	if [ -n "$_pf_flags_sanitize_settings" ]
+	then
+		_pf_apply_sanitize=1
+		if [ -n "$_pf_flags_path" ]
+		then
+			case "
+$_pf_target_paths_result
+" in
+				*"
+$_pf_flags_path
+"*) _pf_apply_sanitize= ;;
+			esac
+		fi
+		if [ -n "$_pf_apply_sanitize" ]
+		then
+			while IFS= read -r _pf_sanitize_flag \
+				|| [ -n "$_pf_sanitize_flag" ]
+			do
+				[ -n "$_pf_sanitize_flag" ] || continue
+				_pf_target_sanitize_result=$(
+					_addTargetSanitizeSetting \
+						"$_pf_build_sanitize" \
+						"$_pf_target_sanitize_result" \
+						"$_pf_sanitize_flag"
+				)
+			done <<EOF
+$_pf_flags_sanitize_settings
+EOF
+			if [ -n "$_pf_flags_path" ]
+			then
+				if [ -n "$_pf_target_paths_result" ]
+				then
+					_pf_target_paths_result=\
+"$_pf_target_paths_result
+$_pf_flags_path"
+				else
+					_pf_target_paths_result=$_pf_flags_path
+				fi
+			fi
+		fi
+	fi
+	if [ -n "$_pf_flags_dir" ]
+	then
+		_pf_work_dir=$_pf_flags_dir
+	else
+		_pf_work_dir=$_pf_src_dir
+	fi
+
+	# Create final build flags for the file to build
+	_pf_file_flags=$( appendQuotedSettings \
+		"$_pf_build_settings" "$_pf_flags_dir_flags" )
+
+	if [ -z "$_pf_file_flags" ]
+	then
+		_pf_file_flags="--"
+	fi
+
+	_setVar "$_pf_out_work" "$_pf_work_dir"
+	_setVar "$_pf_out_flags" "$_pf_file_flags"
+	_setVar "$_pf_out_target" "$_pf_target_sanitize_result"
+	_setVar "$_pf_out_paths" "$_pf_target_paths_result"
+}
 
 
 # Prints hardcoded build settings (one per line).
