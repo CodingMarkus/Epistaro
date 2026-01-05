@@ -182,6 +182,42 @@ _deployPostprocessFlags( )
 }
 
 
+# $1 - Quoted build settings string.
+# $2 - Target sanitizer settings list.
+#
+# Prints quoted sanitizer flags for linking.
+#
+_linkSanitizeFlagsFromSettings( )
+(
+	_lsf_build_settings=$1
+	_lsf_target_sanitize=$2
+
+	_lsf_build_sanitize=$( _sanitizeSettingsFromQuoted \
+		"$_lsf_build_settings" )
+	_lsf_link_sanitize=$_lsf_build_sanitize
+	if [ -n "$_lsf_target_sanitize" ]
+	then
+		while IFS= read -r _lsf_flag || [ -n "$_lsf_flag" ]
+		do
+			[ -n "$_lsf_flag" ] || continue
+			_lsf_link_sanitize=$(
+				_addTargetSanitizeSetting \
+					"$_lsf_build_sanitize" \
+					"$_lsf_link_sanitize" \
+					"$_lsf_flag"
+			)
+		done <<EOF
+$_lsf_target_sanitize
+EOF
+	fi
+
+	if [ -n "$_lsf_link_sanitize" ]
+	then
+		quoteSettings "$_lsf_link_sanitize"
+	fi
+)
+
+
 # $1 - Project root directory.
 # $2 - Source file path.
 # $3 - Object file output path.
@@ -597,15 +633,14 @@ EOF
 
 	baseLinkFlags=""
 	majorSpacingDone=0
-	if [ -n "$targetSanitizeSettings" ]
+	sanitizeFlags=$( _linkSanitizeFlagsFromSettings \
+		"$targetBuildSettings" \
+		"$targetSanitizeSettings" )
+	if [ -n "$sanitizeFlags" ]
 	then
-		sanitizeFlags=$( quoteSettings "$targetSanitizeSettings" )
-		if [ -n "$sanitizeFlags" ]
-		then
-			baseLinkFlags=$( appendQuotedSettings \
-				"$baseLinkFlags" \
-				"$sanitizeFlags" )
-		fi
+		baseLinkFlags=$( appendQuotedSettings \
+			"$baseLinkFlags" \
+			"$sanitizeFlags" )
 	fi
 	finalLinkFlags=$baseLinkFlags
 	if [ -n "${__style_set_DEPLOY_PROCESSING+x}" ]
