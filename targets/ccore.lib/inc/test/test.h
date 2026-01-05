@@ -6,7 +6,7 @@
 begin_header
 // ============================================================================
 
-#define expect( cond, ... )  _expect((cond), ##__VA_ARGS__, NULL)
+#define expect( cond, ... )  _expect((cond), ##__VA_ARGS__, (const char *)NULL)
 
 #define _expect( cond, msg, ... )                                   \
 	({                                                              \
