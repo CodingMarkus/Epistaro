@@ -14,7 +14,6 @@ CompileFlags:
     - -x
     - c
     - -std=gnu11
-    - -fvisibility=hidden
     - -Wall
     - -Wextra
     - -Werror
@@ -27,3 +26,11 @@ CompileFlags:
     - -Wno-error=unused-function
     - -Wno-error=unused-variable
     - -Wno-error=unused-parameter
+
+---
+If:
+  PathMatch: (^|.*/)targets/ccore\.lib/.*
+CompileFlags:
+  Add:
+    - -I
+    - ${workspaceRoot}/targets/ccore.lib/inc

@@ -39,7 +39,7 @@ printHelpAndExit( )
 #
 updateConfig( )
 {
-	_uc_style=$__projDir/styles/_defaults/_default.cfg
+	_uc_style=$__projDir/styles/_defaults/_common/_ide.cfg
 	updateClangd "$__projDir/.clangd" "$_uc_style"
 }
 
