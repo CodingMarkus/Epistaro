@@ -291,7 +291,7 @@ prelinkObjects( )
 	eval "set -- $flags $objArgs"
 	(
 		cd "$workDirAbs"
-		"$clang" -r -o "$outPath" "$@"
+		"$clang" -r -nostdlib -o "$outPath" "$@"
 	)
 )
 

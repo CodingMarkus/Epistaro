@@ -162,6 +162,8 @@ $_ctd_target/$_ctd_sel"
 # $4 - Object output root directory.
 # $5 - Quoted build settings string.
 # $6 - Output variable for sanitizer settings list.
+# ($7) - Optional output variable for compilation flag.
+# ($8) - Optional compile label for the test header.
 #
 # Builds objects for a test and updates sanitizer settings.
 #
@@ -173,6 +175,8 @@ buildTestObjects( )
 	_bto_obj_root=$4
 	_bto_settings=$5
 	_bto_out_sanitize=${6:-}
+	_bto_out_compiled=${7:-}
+	_bto_label=${8:-}
 
 	_bto_src_dir=$_bto_tests/$_bto_rel
 	[ -d "$_bto_src_dir" ] \
@@ -189,6 +193,7 @@ buildTestObjects( )
 	_bto_target_paths=""
 
 	_bto_spacing=0
+	_bto_label_printed=0
 	_bto_compiled=0
 	while IFS= read -r _bto_src || [ -n "$_bto_src" ]
 	do
@@ -236,6 +241,12 @@ buildTestObjects( )
 			then
 				printf '\n'
 			fi
+			if [ -n "$_bto_label" ] \
+				&& [ "$_bto_label_printed" -eq 0 ]
+			then
+				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_label_printed=1
+			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
@@ -272,6 +283,12 @@ buildTestObjects( )
 			then
 				printf '\n'
 			fi
+			if [ -n "$_bto_label" ] \
+				&& [ "$_bto_label_printed" -eq 0 ]
+			then
+				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_label_printed=1
+			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
@@ -297,6 +314,12 @@ buildTestObjects( )
 			then
 				printf '\n'
 			fi
+			if [ -n "$_bto_label" ] \
+				&& [ "$_bto_label_printed" -eq 0 ]
+			then
+				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_label_printed=1
+			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
 			_buildFileWithOutput "$_bto_root" "$_bto_src" \
@@ -313,6 +336,10 @@ EOF
 	if [ -n "$_bto_out_sanitize" ]
 	then
 		_setVar "$_bto_out_sanitize" "$_bto_target_sanitize"
+	fi
+	if [ -n "$_bto_out_compiled" ]
+	then
+		_setVar "$_bto_out_compiled" "$_bto_compiled"
 	fi
 }
 
