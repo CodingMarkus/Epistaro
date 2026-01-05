@@ -341,6 +341,7 @@ EOF
 		printf '\n%s\n\n' "====== Building Tests for Target $target ======"
 		printf 'Using Build Style: %s\n\n' "$styleName"
 		targetHadOutput=0
+		testSpacingPending=0
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
@@ -379,9 +380,15 @@ EOF
 			testCompiled=0
 			testName=${testRel%.*}
 			testLabel="$testName [$testType]"
+			preHeaderSpacing=0
+			if [ "$testSpacingPending" -eq 1 ]
+			then
+				preHeaderSpacing=2
+			fi
 			if ! buildTestObjects "$__projDir" "$testsRoot" \
 				"$testRel" "$testObjRoot" "$buildSettings" \
-				testSanitizeSettings testCompiled "$testLabel"
+				testSanitizeSettings testCompiled "$testLabel" \
+				"$preHeaderSpacing"
 			then
 				if [ "$?" -eq 2 ]
 				then
@@ -394,6 +401,7 @@ EOF
 			if [ "$testCompiled" -eq 1 ]
 			then
 				targetHadOutput=1
+				testSpacingPending=1
 			fi
 
 			testObjs=$( collectTestObjects "$testObjRoot" "$testRel" )
@@ -445,10 +453,13 @@ EOF
 					then
 						printf '\n'
 					fi
-					printf 'Linking %s...\n' "${testBinPath##*/}"
+					testBinName=${testBinPath##*/}
+					printf 'Linking %s [%s]...\n' \
+						"$testBinName" "$testType"
 					linkBinary "$testBinPath" "$__projDir" \
 						"$linkFlags" "$@"
 					targetHadOutput=1
+					testSpacingPending=1
 				fi
 				continue
 			fi
@@ -479,10 +490,13 @@ EOF
 					then
 						printf '\n'
 					fi
-					printf 'Linking %s...\n' "${testBinPath##*/}"
+					testBinName=${testBinPath##*/}
+					printf 'Linking %s [%s]...\n' \
+						"$testBinName" "$testType"
 					linkBinary "$testBinPath" "$__projDir" \
 						"$linkFlags" "$@"
 					targetHadOutput=1
+					testSpacingPending=1
 				fi
 				continue
 			fi

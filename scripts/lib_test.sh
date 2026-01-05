@@ -164,6 +164,7 @@ $_ctd_target/$_ctd_sel"
 # $6 - Output variable for sanitizer settings list.
 # ($7) - Optional output variable for compilation flag.
 # ($8) - Optional compile label for the test header.
+# ($9) - Optional blank lines to print before the test header.
 #
 # Builds objects for a test and updates sanitizer settings.
 #
@@ -177,6 +178,7 @@ buildTestObjects( )
 	_bto_out_sanitize=${6:-}
 	_bto_out_compiled=${7:-}
 	_bto_label=${8:-}
+	_bto_pre_spacing=${9:-0}
 
 	_bto_src_dir=$_bto_tests/$_bto_rel
 	[ -d "$_bto_src_dir" ] \
@@ -244,7 +246,14 @@ buildTestObjects( )
 			if [ -n "$_bto_label" ] \
 				&& [ "$_bto_label_printed" -eq 0 ]
 			then
-				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_spacing_count=$_bto_pre_spacing
+				while [ "$_bto_spacing_count" -gt 0 ]
+				do
+					printf '\n'
+					_bto_spacing_count=$(( _bto_spacing_count - 1 ))
+				done
+				printf 'Compiling %s\n' "$_bto_label"
+				printf '\n'
 				_bto_label_printed=1
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
@@ -286,7 +295,14 @@ buildTestObjects( )
 			if [ -n "$_bto_label" ] \
 				&& [ "$_bto_label_printed" -eq 0 ]
 			then
-				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_spacing_count=$_bto_pre_spacing
+				while [ "$_bto_spacing_count" -gt 0 ]
+				do
+					printf '\n'
+					_bto_spacing_count=$(( _bto_spacing_count - 1 ))
+				done
+				printf 'Compiling %s\n' "$_bto_label"
+				printf '\n'
 				_bto_label_printed=1
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
@@ -317,7 +333,14 @@ buildTestObjects( )
 			if [ -n "$_bto_label" ] \
 				&& [ "$_bto_label_printed" -eq 0 ]
 			then
-				printf 'Compiling %s...\n' "$_bto_label"
+				_bto_spacing_count=$_bto_pre_spacing
+				while [ "$_bto_spacing_count" -gt 0 ]
+				do
+					printf '\n'
+					_bto_spacing_count=$(( _bto_spacing_count - 1 ))
+				done
+				printf 'Compiling %s\n' "$_bto_label"
+				printf '\n'
 				_bto_label_printed=1
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
