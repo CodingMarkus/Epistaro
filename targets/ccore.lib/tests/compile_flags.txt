@@ -1,0 +1,7 @@
+# Always search the shared include path
+-I
+../inc
+
+# Always search the src path
+-I
+../src
