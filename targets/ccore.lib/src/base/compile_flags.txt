@@ -1,3 +1,0 @@
-# Always search the shared include path
--I
-../../inc
