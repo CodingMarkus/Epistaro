@@ -467,13 +467,13 @@ runTestBinary( )
 			_rtb_ld_path="$_rtb_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 			DYLD_LIBRARY_PATH=$_rtb_dyld_path \
 			LD_LIBRARY_PATH=$_rtb_ld_path \
-			"./$_rtb_base"
+			exec "./$_rtb_base"
 		)
 	else
 		(
 			cd "$_rtb_dir"
 			_setupCrashReporterSuppression
-			"./$_rtb_base"
+			exec "./$_rtb_base"
 		)
 	fi
 }

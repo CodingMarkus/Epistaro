@@ -127,7 +127,6 @@ _filterTestErrorOutput( )
 			}
 			return str
 		}
-		/lib_test\.sh: line [0-9]+: [0-9]+ Abort trap:/ { next }
 		{
 			if (proj != "") {
 				$0 = replace_all($0, proj, repl)
