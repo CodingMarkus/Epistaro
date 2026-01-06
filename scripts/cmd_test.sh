@@ -150,18 +150,14 @@ _runTestAndReport( )
 
 	if [ -n "$_rtr_lib" ]
 	then
-		if _rtr_err=$(
-			{ runTestBinary "$_rtr_path" "$_rtr_lib" 2>&1 1>&3; } 3>&1
-		)
+		if _rtr_err=$( runTestBinary "$_rtr_path" "$_rtr_lib" 2>&1 )
 		then
 			_rtr_status=0
 		else
 			_rtr_status=$?
 		fi
 	else
-		if _rtr_err=$(
-			{ runTestBinary "$_rtr_path" 2>&1 1>&3; } 3>&1
-		)
+		if _rtr_err=$( runTestBinary "$_rtr_path" 2>&1 )
 		then
 			_rtr_status=0
 		else
