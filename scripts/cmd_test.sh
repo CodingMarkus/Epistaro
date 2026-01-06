@@ -172,11 +172,15 @@ runTestAndReport( )
 
 	if [ "$_rtr_status" -eq 0 ]
 	then
-		printf 'Testing %s... [PASSED]\n' "$_rtr_label"
+		printf 'Testing %s... [' "$_rtr_label"
+		printTestSuccess "PASSED"
+		printf ']\n'
 		return 0
 	fi
 
-	printf 'Testing %s... [FAILED]\n' "$_rtr_label"
+	printf 'Testing %s... [' "$_rtr_label"
+	printTestFailure "FAILED"
+	printf ']\n'
 	if [ -n "$_rtr_err" ]
 	then
 		printf '%s\n' "$_rtr_err" | _filterTestErrorOutput
@@ -359,7 +363,7 @@ do
 
 	if [ "$multipleStyles" -eq 1 ]
 	then
-		printf '\n====== Building Style %s ======\n\n' "$styleName"
+		printHeader "====== Building Style $styleName ======"
 	fi
 
 	while IFS= read -r target || [ -n "$target" ]
@@ -375,7 +379,7 @@ EOF
 	while IFS= read -r target || [ -n "$target" ]
 	do
 		[ -n "$target" ] || continue
-		printf '\n%s\n\n' "====== Building Tests for Target $target ======"
+		printHeader "====== Building Tests for Target $target ======"
 		printf 'Using Build Style: %s\n\n' "$styleName"
 		targetHadOutput=0
 		testSpacingPending=0
@@ -564,13 +568,13 @@ do
 
 	if [ "$multipleStyles" -eq 1 ]
 	then
-		printf '\n====== Testing Style %s ======\n\n' "$styleName"
+		printHeader "====== Testing Style $styleName ======"
 	fi
 
 	while IFS= read -r target || [ -n "$target" ]
 	do
 		[ -n "$target" ] || continue
-		printf '\n%s\n\n' "====== Running Tests for Target $target ======"
+		printHeader "====== Running Tests for Target $target ======"
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
@@ -657,13 +661,17 @@ EOF
 $styleNames
 EOF
 
-printf '\nTest success rate: %s/%s\n' "$testsFailed" "$testsRun"
+printf '\n%s out of %s tests passed.\n' "$testsFailed" "$testsRun"
+
+
 if [ "$testsFailed" -ne 0 ]
 then
-	printf '\n!!!!!! TEST FAILURES DETECTED !!!!!!\n'
+	printf '\n'
+	printFailure "!!!!!! TEST FAILURES DETECTED !!!!!!"
+	printf '\n'
 fi
 
-printf '\n====== All Done ======\n'
+printHeader "====== All Done ======"
 if [ "$testFailures" -ne 0 ]
 then
 	exit 1

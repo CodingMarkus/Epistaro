@@ -11,6 +11,7 @@ __included_lib_build_settings_sh=1
 . lib_build_common.sh
 . lib_fs.sh
 . lib_platform.sh
+. lib_print.sh
 . lib_quote.sh
 . lib_sanitize.sh
 . lib_style.sh
@@ -492,26 +493,11 @@ hardcodedBuildSettings( )
 }
 
 
-# Returns success if the terminal supports color diagnostics.
-#
-_supportsColorDiagnostics( )
-{
-	[ -t 2 ] || return 1
-	command -v tput >/dev/null 2>&1 || return 1
-
-	_scd_colors=$( tput colors 2>/dev/null || printf '' )
-	case "$_scd_colors" in
-		''|*[!0-9]*) return 1 ;;
-	esac
-	[ "$_scd_colors" -gt 0 ] || return 1
-}
-
-
 # Prints color diagnostic flags when supported.
 #
 colorBuildSettings( )
 {
-	if _supportsColorDiagnostics
+	if supportsColorDiagnostics
 	then
 		printf '%s\n' "-fcolor-diagnostics"
 	fi

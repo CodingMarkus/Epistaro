@@ -139,4 +139,4 @@ do
 		"$buildSettings"
 done
 
-printf '\n====== All Done ======\n'
+printHeader "====== All Done ======"

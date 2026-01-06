@@ -127,10 +127,10 @@ targetDir=$( buildTargetDirPath "$buildDir" "$styleName" "$target" )
 binPath=$targetDir/$target
 [ -x "$binPath" ] || printErrorAndExit "Binary not found: $binPath"
 
-printf '\n====== Running Target %s ======\n\n' "$target"
+printHeader "====== Running Target $target ======"
 (
 	cd "$targetDir"
 	"./$target" "$@"
 )
 
-printf '\n====== All Done ======\n'
+printHeader "====== All Done ======"
