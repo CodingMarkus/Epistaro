@@ -29,13 +29,17 @@ Build output lives under the build root:
 
 - `builds/<style>/<target>/obj/src/` contains objects and `.dep` files.
 
+- `builds/<style>/<target>/obj/<target>.o` is the single-object prelink for `.lib` targets.
+
 - `builds/<style>/<target>/` contains final outputs.
 
-- `.lib` targets produce a static archive (`.a`) and a dynamic library (`.dylib` on Apple platforms, `.dll` on windows, `.so` elsewhere).
+- `.lib` targets produce `builds/<style>/<target>/<target>.a` and `builds/<style>/<target>/<target>.<lib-ext>` (`.dylib` on Apple platforms, `.dll` on windows, `.so` elsewhere).
 
-- `.bin` targets produce an executable named after the target.
+- `.bin` targets produce `builds/<style>/<target>/<target>[.<ext>]` (usually no extension or `.exe` on Windows).
 
 - Library public headers are synced to `builds/<style>/<target>/inc/`.
+
+- `tests/<style>/<target>/target/` contains testable target outputs built with `TESTING`, mirroring `builds/<style>/<target>/` (including `obj/src/` and `inc/`).
 
 - `tests/<style>/<target>/bin/` contains test binaries.
 
@@ -87,11 +91,11 @@ Target names may be passed with or without the `.lib`/`.bin` suffix. If the name
 --------
 Tests live under `targets/<target>/tests/`. Each test directory ends with `.ut` (unit test) or `.it` (integration test). A test selection can point at a test or suite and does not require the `.ut`/`.it` suffix.
 
-- Unit tests link target objects with test objects and execute the result. For `.bin` targets, `main.o` is excluded from the link.
+- Unit tests link target objects from `tests/<style>/<target>/target/` with test objects and execute the result. For `.bin` targets, `main.o` is excluded from the link.
 
-- Integration tests for `.lib` targets build a test binary that links against the target dynamic library, then run it with the library path injected.
+- Integration tests for `.lib` targets build a test binary that links against the target dynamic library from `tests/<style>/<target>/target/`, then run it with the library path injected.
 
-- Integration tests for `.bin` targets are script-only and receive the built binary path as an argument.
+- Integration tests for `.bin` targets are script-only and receive the built binary path from `tests/<style>/<target>/target/` as an argument.
 
 
 8. Update Behavior

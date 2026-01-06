@@ -34,6 +34,14 @@ _testsDirName( )
 }
 
 
+# Prints the name of the tests target outputs directory.
+#
+_testsTargetTargetDirName( )
+{
+	printf '%s\n' "target"
+}
+
+
 # Prints the name of the bin directory.
 #
 _binDirName( )
@@ -134,6 +142,23 @@ _testsTargetDirPath( )
 # $2 - Style name.
 # $3 - Target name.
 #
+# Prints the test target outputs directory.
+#
+testsTargetTargetDirPath( )
+{
+	assert "[ -n \"${1:-}\" ]" "testsTargetTargetDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "testsTargetTargetDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "testsTargetTargetDirPath() missing target name"
+
+	printf '%s/%s\n' "$( _testsTargetDirPath "$1" "$2" "$3" )" \
+		"$( _testsTargetTargetDirName )"
+}
+
+
+# $1 - Build output root directory.
+# $2 - Style name.
+# $3 - Target name.
+#
 # Prints the test source/object directory for a test target.
 #
 _testsTargetSrcDirPath( )
@@ -191,6 +216,12 @@ buildTargetDirPath( )
 {
 	assert "[ -n \"${1:-}\" ]" "buildTargetDirPath() missing build dir"
 
+	if [ -n "${4:-}" ]
+	then
+		printf '%s\n' "$4"
+		return 0
+	fi
+
 	if [ -n "${3:-}" ] && [ -z "${2:-}" ]
 	then
 		printErrorAndExit "Target name requires style name: ${3:-}"
@@ -224,7 +255,8 @@ buildTargetObjDirPath( )
 	assert "[ -n \"${2:-}\" ]" "buildTargetObjDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "buildTargetObjDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( _objDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" "${4:-}" )" \
+		"$( _objDirName )"
 }
 
 
@@ -240,7 +272,7 @@ buildTargetObjSrcDirPath( )
 	assert "[ -n \"${2:-}\" ]" "buildTargetObjSrcDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "buildTargetObjSrcDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" )" \
+	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" "${4:-}" )" \
 		"$( _objSrcDirName )"
 }
 
@@ -257,7 +289,8 @@ buildTargetIncDirPath( )
 	assert "[ -n \"${2:-}\" ]" "buildTargetIncDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "buildTargetIncDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( _incDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" "${4:-}" )" \
+		"$( _incDirName )"
 }
 
 

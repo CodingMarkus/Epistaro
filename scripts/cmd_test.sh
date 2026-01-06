@@ -353,7 +353,7 @@ do
 	[ -n "$styleName" ] || continue
 
 	styleFile=$( _resolveStyleFile "$styleName" )
-	buildSettings=$( resolvedBuildSettings "$styleFile" )
+	buildSettings=$( resolvedBuildSettings "$styleFile" "-DTESTING" )
 	syncStyleSetVars "$styleFile"
 
 	if [ "$multipleStyles" -eq 1 ]
@@ -364,9 +364,11 @@ do
 	while IFS= read -r target || [ -n "$target" ]
 	do
 		[ -n "$target" ] || continue
+		targetOutDir=$( testsTargetTargetDirPath "$buildDir" \
+			"$styleName" "$target" )
 		buildTarget "$__projDir" "$target" \
 			"$styleName" "$buildDir" \
-			"$buildSettings"
+			"$buildSettings" "$targetOutDir"
 	done <<EOF
 $targetsToRun
 EOF
@@ -379,6 +381,8 @@ EOF
 		printf 'Using Build Style: %s\n\n' "$styleName"
 		targetHadOutput=0
 		testSpacingPending=0
+		targetOutDir=$( testsTargetTargetDirPath "$buildDir" \
+			"$styleName" "$target" )
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
@@ -463,7 +467,8 @@ EOF
 				fi
 
 				targetObjs=$( collectTargetObjects "$buildDir" \
-					"$styleName" "$target" "$excludeMain" )
+					"$styleName" "$target" "$excludeMain" \
+					"$targetOutDir" )
 				[ -n "$targetObjs" ] \
 					|| printErrorAndExit \
 						"No target objects for $target"
@@ -503,8 +508,7 @@ EOF
 
 			if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
 			then
-				targetDir=$( buildTargetDirPath "$buildDir" \
-					"$styleName" "$target" )
+				targetDir=$targetOutDir
 				dynamicPath=$targetDir/${target%.lib}$( \
 					dynamicLibExtension )
 				[ -f "$dynamicPath" ] \
@@ -572,6 +576,8 @@ do
 		[ -n "$target" ] || continue
 		targetLabel=$( formatTargetLabel "$target" )
 		printHeader "====== Running Tests for Target $targetLabel ======"
+		targetOutDir=$( testsTargetTargetDirPath "$buildDir" \
+			"$styleName" "$target" )
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
@@ -589,9 +595,8 @@ do
 
 				if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
 				then
-					targetDir=$( buildTargetDirPath "$buildDir" \
-						"$styleName" "$target" )
-				binPath=$targetDir/$target
+					targetDir=$targetOutDir
+					binPath=$targetDir/$target
 					[ -x "$binPath" ] || printErrorAndExit \
 						"Binary not found: $binPath"
 
@@ -624,10 +629,9 @@ do
 
 				if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
 				then
-					targetDir=$( buildTargetDirPath "$buildDir" \
-						"$styleName" "$target" )
-				dynamicPath=$targetDir/${target%.lib}$( \
-					dynamicLibExtension )
+					targetDir=$targetOutDir
+					dynamicPath=$targetDir/${target%.lib}$( \
+						dynamicLibExtension )
 					[ -f "$dynamicPath" ] \
 						|| printErrorAndExit \
 							"Library not found: $dynamicPath"

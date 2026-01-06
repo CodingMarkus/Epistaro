@@ -392,6 +392,7 @@ collectTestObjects( )
 # $3 - Target name.
 #
 # ($4) - Optional flag to exclude main.o.
+# ($5) - Optional target output directory override.
 # Prints target object files.
 #
 collectTargetObjects( )
@@ -400,9 +401,10 @@ collectTargetObjects( )
 	_ctg_style=$2
 	_ctg_target=$3
 	_ctg_exclude=${4:-0}
+	_ctg_out_dir=${5:-}
 
 	_ctg_obj_root=$( buildTargetObjSrcDirPath "$_ctg_build" \
-		"$_ctg_style" "$_ctg_target" )
+		"$_ctg_style" "$_ctg_target" "$_ctg_out_dir" )
 	[ -d "$_ctg_obj_root" ] || return 0
 
 	if [ "$_ctg_exclude" -eq 1 ]
