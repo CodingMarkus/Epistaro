@@ -97,7 +97,8 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
-	printHeader "====== Building Target $target ======"
+	targetLabel=$( formatTargetLabel "$target" )
+	printHeader "====== Building Target $targetLabel ======"
 	printf 'Using Build Style: %s\n\n' "$targetStyleName"
 
 		if [ -d "$srcRoot" ]

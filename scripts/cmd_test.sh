@@ -374,7 +374,8 @@ EOF
 	while IFS= read -r target || [ -n "$target" ]
 	do
 		[ -n "$target" ] || continue
-		printHeader "====== Building Tests for Target $target ======"
+		targetLabel=$( formatTargetLabel "$target" )
+		printHeader "====== Building Tests for Target $targetLabel ======"
 		printf 'Using Build Style: %s\n\n' "$styleName"
 		targetHadOutput=0
 		testSpacingPending=0
@@ -569,7 +570,8 @@ do
 	while IFS= read -r target || [ -n "$target" ]
 	do
 		[ -n "$target" ] || continue
-		printHeader "====== Running Tests for Target $target ======"
+		targetLabel=$( formatTargetLabel "$target" )
+		printHeader "====== Running Tests for Target $targetLabel ======"
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do

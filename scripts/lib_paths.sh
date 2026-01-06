@@ -329,3 +329,20 @@ resolveTargetName( )
 
 	printErrorAndExit "Target not found: $_rt_name"
 }
+
+
+# $1 - Target name.
+#
+# Formats a target name for display (e.g. ccore.lib -> ccore [lib]).
+#
+formatTargetLabel( )
+{
+	assert "[ -n \"${1:-}\" ]" "formatTargetLabel() missing target name"
+
+	_ftl_target=$1
+	case "$_ftl_target" in
+		*.lib) printf '%s [lib]\n' "${_ftl_target%.lib}" ;;
+		*.bin) printf '%s [bin]\n' "${_ftl_target%.bin}" ;;
+		*) printf '%s\n' "$_ftl_target" ;;
+	esac
+}
