@@ -16,7 +16,7 @@ int32e hashFletcher32( const void * data, size_t len )
 
 
 static
-void test_fletcher32Vectors( void )
+void test_vectors( void )
 {
 	const char * quick = "The quick brown fox jumps over the lazy dog";
 
@@ -27,7 +27,7 @@ void test_fletcher32Vectors( void )
 
 
 static
-void test_fletcher32Streaming( void )
+void test_streaming( void )
 {
 	const char * quick = "The quick brown fox jumps over the lazy dog";
 	const size_t len = strlen(quick);
@@ -42,8 +42,8 @@ void test_fletcher32Streaming( void )
 public
 void runAllTests_fletcher32( void )
 {
-	test_fletcher32Vectors();
-	test_fletcher32Streaming();
+	test_vectors();
+	test_streaming();
 }
 
 // ============================================================================

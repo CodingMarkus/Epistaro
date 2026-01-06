@@ -7,7 +7,7 @@ begin_impl
 // ============================================================================
 
 static
-void test_xxh32BasicVectors( void )
+void test_vectors( void )
 {
 	const char * quick = "The quick brown fox jumps over the lazy dog";
 
@@ -19,7 +19,7 @@ void test_xxh32BasicVectors( void )
 
 
 static
-void test_xxh32Streaming( void )
+void test_streaming( void )
 {
 	const char * quick = "The quick brown fox jumps over the lazy dog";
 	const size_t len = strlen(quick);
@@ -41,8 +41,8 @@ void test_xxh32Streaming( void )
 public
 void runAllTests_xxh32( void )
 {
-	test_xxh32BasicVectors();
-	test_xxh32Streaming();
+	test_vectors();
+	test_streaming();
 }
 
 // ============================================================================

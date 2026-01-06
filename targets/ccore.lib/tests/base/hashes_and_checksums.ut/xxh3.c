@@ -7,7 +7,7 @@ begin_impl
 // ============================================================================
 
 static
-void test_xxh3_64Vectors( void )
+void test_64Vectors( void )
 {
 	const char * longer =
 		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -20,7 +20,7 @@ void test_xxh3_64Vectors( void )
 
 
 static
-void test_xxh3_128Vectors( void )
+void test_128Vectors( void )
 {
 	const char * longer =
 		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -41,7 +41,7 @@ void test_xxh3_128Vectors( void )
 
 
 static
-void test_xxh3_64Streaming( void )
+void test_64Streaming( void )
 {
 	const char * hello = "hello";
 
@@ -60,7 +60,7 @@ void test_xxh3_64Streaming( void )
 
 
 static
-void test_xxh3_128Streaming( void )
+void test_128Streaming( void )
 {
 	const char * longer =
 		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -86,10 +86,10 @@ void test_xxh3_128Streaming( void )
 public
 void runAllTests_xxh3( void )
 {
-	test_xxh3_64Vectors();
-	test_xxh3_128Vectors();
-	test_xxh3_64Streaming();
-	test_xxh3_128Streaming();
+	test_64Vectors();
+	test_128Vectors();
+	test_64Streaming();
+	test_128Streaming();
 }
 
 // ============================================================================
