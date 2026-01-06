@@ -90,10 +90,12 @@ int32e calcChecksum(
 static inline
 const struct ValueFooter * getFooter( const struct ValueHeader * header )
 {
-	def alignment = alignof(struct ValueHeader);
+	def alignment = alignof(struct ValueFooter);
 	def size = (intS)header->size;
-	def alignedSize = (size + alignment - 1) & ~(alignment - 1);
-	return (struct ValueFooter *)((const int8e *)header + alignedSize);
+	def footerOffset =
+		(sizeof(struct ValueHeader) + size + alignment - 1)
+		& ~(alignment - 1);
+	return (struct ValueFooter *)((const int8e *)header + footerOffset);
 }
 
 
@@ -435,13 +437,11 @@ NativeValue * create_NativeValue(
 	uint16_t size,
 	const struct TypeDescriptor_NativeValue * const typeDesc )
 {
-	assert(size >= sizeof(struct Value *));
-	def valueAlignment = alignof(struct ValueHeader);
-	def alignedSize =
-		(size + valueAlignment - 1) & ~(valueAlignment - 1);
-	def totalSize = alignedSize
-		+ sizeof(struct ValueHeader)
-		+ sizeof(struct ValueFooter);
+	def footerAlignment = alignof(struct ValueFooter);
+	def footerOffset =
+		(sizeof(struct ValueHeader) + size + footerAlignment - 1)
+		& ~(footerAlignment - 1);
+	def totalSize = footerOffset + sizeof(struct ValueFooter);
 
 	def result = calloc(1, totalSize);
 	def header = (struct ValueHeader *)result;
@@ -455,7 +455,7 @@ NativeValue * create_NativeValue(
 	def footer = (struct ValueFooter *)getFooter(result);
 	footer->typeDesc = typeDesc;
 
-#if LIGHT_CHECKS_ENABLED
+#if ANY_CHECKS_ENABLED
 	footer->checksum = calcChecksum(header, footer);
 #endif
 
