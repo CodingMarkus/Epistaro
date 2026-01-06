@@ -87,7 +87,7 @@ eval \
 
 			\$set[[:space:]]* )
 				_exp_set_line=${_exp_trim#"\$set"}
-				_exp_split=$( _styleSplitVarAndRest \
+				_exp_split=$( styleSplitVarAndRest \
 					"$_exp_set_line" )
 				case "$_exp_split" in
 					*"
@@ -106,14 +106,14 @@ eval \
 					printErrorAndExit \
 						"\$set missing name in "\
 "$_exp_path_for_messages"
-				_exp_value=$( _styleParseValue "$_exp_rest" \
+				_exp_value=$( styleParseValue "$_exp_rest" \
 					"$_exp_path_for_messages" )
-				_styleSetVar "$_exp_name" "$_exp_value" \
+				styleSetVar "$_exp_name" "$_exp_value" \
 					"$_exp_path_for_messages"
 				;;
 			\$unset[[:space:]]* )
 				_exp_unset_line=${_exp_trim#"\$unset"}
-				_exp_split=$( _styleSplitVarAndRest \
+				_exp_split=$( styleSplitVarAndRest \
 					"$_exp_unset_line" )
 				case "$_exp_split" in
 					*"
@@ -131,11 +131,11 @@ eval \
 				[ -n "$_exp_name" ] || printErrorAndExit \
 					"\$unset missing name in "\
 "$_exp_path_for_messages"
-				_exp_rest=$( _styleTrim "$_exp_rest" )
+				_exp_rest=$( styleTrim "$_exp_rest" )
 				[ -z "$_exp_rest" ] || printErrorAndExit \
 					"Unexpected text in "\
 "$_exp_path_for_messages: $_exp_trim"
-				_styleUnsetVar "$_exp_name" \
+				styleUnsetVar "$_exp_name" \
 					"$_exp_path_for_messages"
 				;;
 			\$include\?[[:space:]]*|\
@@ -161,7 +161,7 @@ ${_exp_inc_line#"\$include"}
 				then
 					_exp_inc_dir="\$include?"
 				fi
-				_exp_inc_line=$( _styleTrimLeft \
+				_exp_inc_line=$( styleTrimLeft \
 					"$_exp_inc_line" )
 				_exp_inc_ok=1
 				case "$_exp_inc_line" in
@@ -182,7 +182,7 @@ ${_exp_after#"$_exp_cond"}
 									_exp_after=\
 ${_exp_after#\)}
 									_exp_inc_line=$( \
-										_styleTrimLeft "$_exp_after" )
+										styleTrimLeft "$_exp_after" )
 									;;
 								*)
 									printErrorAndExit \
@@ -190,7 +190,7 @@ ${_exp_after#\)}
 "condition in $_exp_path_for_messages"
 									;;
 							esac
-							if _styleEvalCondition \
+							if styleEvalCondition \
 								"$_exp_cond" \
 								"$_exp_path_for_messages"
 							then
@@ -200,7 +200,7 @@ ${_exp_after#\)}
 						fi
 						;;
 				esac
-				_exp_inc_name=$( _styleTrim "$_exp_inc_line" )
+				_exp_inc_name=$( styleTrim "$_exp_inc_line" )
 					if [ -z "$_exp_inc_name" ]
 					then
 						printErrorAndExit \
@@ -250,7 +250,7 @@ ${_exp_after#\)}
 
 	if [ "$_exp_depth" -eq 1 ] && [ -n "${__style_emit_exports:-}" ]
 	then
-		_styleExportCapsVars "$_exp_path"
+		styleExportCapsVars "$_exp_path"
 	fi
 
 	eval "_exp_path=\${__style_saved_stylePath_$_exp_depth-}"
@@ -281,14 +281,14 @@ eval "unset __style_saved_includeStack_$_exp_depth"
 # Prints the path to the nearest compile_flags.txt, searching parent
 # directories up to the project root.
 #
-findCompileFlags( )
+_findCompileFlags( )
 (
 	srcDir=$1
 	projectRoot=$2
 
-	assert "[ -n \"${srcDir:-}\" ]" "findCompileFlags() missing source dir"
+	assert "[ -n \"${srcDir:-}\" ]" "_findCompileFlags() missing source dir"
 	assert "[ -n \"${projectRoot:-}\" ]" \
-		"findCompileFlags() missing project root dir"
+		"_findCompileFlags() missing project root dir"
 
 	case "$projectRoot" in
 		/*) ;;
@@ -337,12 +337,12 @@ findCompileFlags( )
 # Prints compile flags (one per line). Format matches expandStyle() parsing
 # rules but without directives.
 #
-readCompileFlags( )
+_readCompileFlags( )
 (
 	flagsPath=$1
 
 	assert "[ -n \"${flagsPath:-}\" ]" \
-		"readCompileFlags() missing flags path"
+		"_readCompileFlags() missing flags path"
 	assert "[ -f \"$flagsPath\" ]" \
 		"compile_flags.txt not found: $flagsPath"
 
@@ -373,7 +373,7 @@ readCompileFlags( )
 #
 # Sets outputs for the file build step and updated sanitizer state.
 #
-_prepareFlags( )
+prepareFlags( )
 {
 	_pf_project_root=$1
 	_pf_src_dir=$2
@@ -388,7 +388,7 @@ _prepareFlags( )
 	_pf_out_paths=$1
 
 	# Find any compile_flags.txt and read it
-	_pf_flags_path=$( findCompileFlags "$_pf_src_dir" "$_pf_project_root" )
+	_pf_flags_path=$( _findCompileFlags "$_pf_src_dir" "$_pf_project_root" )
 	_pf_flags_dir=""
 	_pf_flags_dir_flags=""
 	_pf_flags_sanitize_settings=""
@@ -406,10 +406,10 @@ _prepareFlags( )
 				*/*) _pf_flags_dir=${_pf_flags_path%/*} ;;
 				*) _pf_flags_dir="." ;;
 			esac
-			_pf_flags_dir_settings=$( readCompileFlags \
+			_pf_flags_dir_settings=$( _readCompileFlags \
 				"$_pf_flags_path" )
 		fi
-		_pf_flags_sanitize_settings=$( _sanitizeSettingsFromList \
+		_pf_flags_sanitize_settings=$( sanitizeSettingsFromList \
 			"$_pf_flags_dir_settings" )
 		_pf_flags_dir_flags=$( quoteSettings \
 			"$_pf_flags_dir_settings" )
@@ -441,7 +441,7 @@ $_pf_flags_path
 			do
 				[ -n "$_pf_sanitize_flag" ] || continue
 				_pf_target_sanitize_result=$(
-					_addTargetSanitizeSetting \
+					addTargetSanitizeSetting \
 						"$_pf_build_sanitize" \
 						"$_pf_target_sanitize_result" \
 						"$_pf_sanitize_flag"
@@ -478,16 +478,16 @@ $_pf_flags_path"
 		_pf_file_flags="--"
 	fi
 
-	_setVar "$_pf_out_work" "$_pf_work_dir"
-	_setVar "$_pf_out_flags" "$_pf_file_flags"
-	_setVar "$_pf_out_target" "$_pf_target_sanitize_result"
-	_setVar "$_pf_out_paths" "$_pf_target_paths_result"
+	setVar "$_pf_out_work" "$_pf_work_dir"
+	setVar "$_pf_out_flags" "$_pf_file_flags"
+	setVar "$_pf_out_target" "$_pf_target_sanitize_result"
+	setVar "$_pf_out_paths" "$_pf_target_paths_result"
 }
 
 
 # Prints hardcoded build settings (one per line).
 #
-hardcodedBuildSettings( )
+_hardcodedBuildSettings( )
 {
 	printf '%s\n' "-flto=thin"
 }
@@ -495,7 +495,7 @@ hardcodedBuildSettings( )
 
 # Prints color diagnostic flags when supported.
 #
-colorBuildSettings( )
+_colorBuildSettings( )
 {
 	if supportsColorDiagnostics
 	then
@@ -508,12 +508,12 @@ colorBuildSettings( )
 #
 # Prints the quoted build settings string for the style.
 #
-buildSettingsForStyle( )
+_buildSettingsForStyle( )
 (
 	stylePath=$1
 
 	assert "[ -n \"${stylePath:-}\" ]" \
-		"buildSettingsForStyle() missing path"
+		"_buildSettingsForStyle() missing path"
 
 	styleSettings=$( expandStyle "$stylePath" )
 
@@ -525,12 +525,12 @@ buildSettingsForStyle( )
 #
 # Prints export/unset commands for all-caps style variables.
 #
-styleExportsForStyle( )
+_styleExportsForStyle( )
 (
 	stylePath=$1
 
 	assert "[ -n \"${stylePath:-}\" ]" \
-		"styleExportsForStyle() missing path"
+		"_styleExportsForStyle() missing path"
 
 	__style_emit_settings=0
 	__style_emit_exports=1
@@ -551,7 +551,7 @@ syncStyleSetVars( )
 	assert "[ -n \"${_ssv_path:-}\" ]" \
 		"syncStyleSetVars() missing path"
 
-	_ssv_lines=$( styleExportsForStyle "$_ssv_path" )
+	_ssv_lines=$( _styleExportsForStyle "$_ssv_path" )
 	[ -n "$_ssv_lines" ] || return 0
 
 	while IFS= read -r _ssv_line || [ -n "$_ssv_line" ]
@@ -578,9 +578,9 @@ resolvedBuildSettings( )
 	assert "[ -n \"${stylePath:-}\" ]" \
 		"resolvedBuildSettings() missing path"
 
-	styleSettings=$( buildSettingsForStyle "$stylePath" )
-	hardcodedSettings=$( hardcodedBuildSettings )
-	colorSettings=$( colorBuildSettings )
+	styleSettings=$( _buildSettingsForStyle "$stylePath" )
+	hardcodedSettings=$( _hardcodedBuildSettings )
+	colorSettings=$( _colorBuildSettings )
 	extraQuoted=$( quoteSettings "$extraSettings" )
 
 	if [ -n "$hardcodedSettings" ]

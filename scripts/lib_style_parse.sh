@@ -13,7 +13,7 @@ __included_lib_style_parse_sh=1
 #
 # Prints the input without leading whitespace.
 #
-_styleTrimLeft( )
+styleTrimLeft( )
 {
 	printf '%s' "$1" | sed 's/^[[:space:]]*//'
 }
@@ -23,7 +23,7 @@ _styleTrimLeft( )
 #
 # Prints the input without leading or trailing whitespace.
 #
-_styleTrim( )
+styleTrim( )
 {
 	printf '%s' "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }
@@ -33,11 +33,11 @@ _styleTrim( )
 #
 # Prints the variable name on the first line and the remainder on the second.
 #
-_styleSplitVarAndRest( )
+styleSplitVarAndRest( )
 (
 	line=$1
 
-	line=$( _styleTrimLeft "$line" )
+	line=$( styleTrimLeft "$line" )
 	varName=${line%%[[:space:]]*}
 	if [ "$line" = "$varName" ]
 	then
@@ -142,12 +142,12 @@ BEGIN { ORS=""; }
 #
 # Prints the parsed value.
 #
-_styleParseValue( )
+styleParseValue( )
 (
 	valueLine=$1
 	stylePath=$2
 
-	valueLine=$( _styleTrimLeft "$valueLine" )
+	valueLine=$( styleTrimLeft "$valueLine" )
 	if [ -z "$valueLine" ]
 	then
 		printf '%s' ""
@@ -171,7 +171,7 @@ _styleParseValue( )
 					leftover=
 					;;
 			esac
-			leftover=$( _styleTrim "$leftover" )
+			leftover=$( styleTrim "$leftover" )
 			if [ -n "$leftover" ]
 			then
 				printErrorAndExit \
@@ -180,7 +180,7 @@ _styleParseValue( )
 			_styleUnescapeQuoted "$rawValue"
 			;;
 		*)
-			printf '%s' "$( _styleTrim "$valueLine" )"
+			printf '%s' "$( styleTrim "$valueLine" )"
 			;;
 	esac
 )

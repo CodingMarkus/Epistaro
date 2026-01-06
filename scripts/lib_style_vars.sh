@@ -130,7 +130,7 @@ _styleExternalVarGet( )
 #
 # Sets a style variable and marks it as present.
 #
-_styleSetVar( )
+styleSetVar( )
 {
 	_ssv_name=$1
 	_ssv_value=${2-}
@@ -152,7 +152,7 @@ _styleSetVar( )
 #
 # Unsets a style variable and clears its presence marker.
 #
-_styleUnsetVar( )
+styleUnsetVar( )
 {
 	_suv_name=$1
 	_suv_path=$2
@@ -173,7 +173,7 @@ _styleUnsetVar( )
 #
 # Returns success if the variable has been set.
 #
-_styleVarIsSet( )
+styleVarIsSet( )
 {
 	_svis_name=$1
 	_svis_path=$2
@@ -196,7 +196,7 @@ _styleVarIsSet( )
 #
 # Prints the variable value (empty if unset).
 #
-_styleGetVar( )
+styleGetVar( )
 {
 	_sgv_name=$1
 	_sgv_path=$2
@@ -231,7 +231,7 @@ _styleGetVar( )
 #
 # Prints export/unset commands for tracked all-caps variables.
 #
-_styleExportCapsVars( )
+styleExportCapsVars( )
 {
 	_secv_path=$1
 
@@ -243,9 +243,9 @@ _styleExportCapsVars( )
 	while IFS= read -r _secv_name || [ -n "$_secv_name" ]
 	do
 		[ -n "$_secv_name" ] || continue
-		if _styleVarIsSet "$_secv_name" "$_secv_path"
+		if styleVarIsSet "$_secv_name" "$_secv_path"
 		then
-			_secv_value=$( _styleGetVar "$_secv_name" "$_secv_path" )
+			_secv_value=$( styleGetVar "$_secv_name" "$_secv_path" )
 			printf 'export %s=%s\n' "__style_set_$_secv_name" \
 				"$(_styleQuoteEval "$_secv_value")"
 		else

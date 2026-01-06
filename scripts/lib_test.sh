@@ -190,7 +190,7 @@ buildTestObjects( )
 		return 2
 	fi
 
-	_bto_build_sanitize=$( _sanitizeSettingsFromQuoted "$_bto_settings" )
+	_bto_build_sanitize=$( sanitizeSettingsFromQuoted "$_bto_settings" )
 	_bto_target_sanitize=""
 	_bto_target_paths=""
 
@@ -219,7 +219,7 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
 					"$_bto_build_sanitize" "$_bto_target_sanitize" \
 					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
 					_bto_target_sanitize _bto_target_paths
@@ -233,7 +233,7 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
 					"$_bto_build_sanitize" "$_bto_target_sanitize" \
 					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
 					_bto_target_sanitize _bto_target_paths
@@ -258,7 +258,7 @@ buildTestObjects( )
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
-			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+			buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
 				"$_bto_file_flags" \
 				_bto_had_output
@@ -282,7 +282,7 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
 					"$_bto_build_sanitize" "$_bto_target_sanitize" \
 					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
 					_bto_target_sanitize _bto_target_paths
@@ -307,7 +307,7 @@ buildTestObjects( )
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
-			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+			buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
 				"$_bto_file_flags" \
 				_bto_had_output
@@ -320,7 +320,7 @@ buildTestObjects( )
 		then
 			if [ "$_bto_flags_ready" -eq 0 ]
 			then
-				_prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
+				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
 					"$_bto_build_sanitize" "$_bto_target_sanitize" \
 					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
 					_bto_target_sanitize _bto_target_paths
@@ -345,7 +345,7 @@ buildTestObjects( )
 			fi
 			printf 'Compiling %s...\n' "$_bto_rel_path"
 			_bto_had_output=0
-			_buildFileWithOutput "$_bto_root" "$_bto_src" \
+			buildFileWithOutput "$_bto_root" "$_bto_src" \
 				"$_bto_obj_path" "$_bto_work_dir" \
 				"$_bto_file_flags" \
 				_bto_had_output
@@ -358,11 +358,11 @@ EOF
 
 	if [ -n "$_bto_out_sanitize" ]
 	then
-		_setVar "$_bto_out_sanitize" "$_bto_target_sanitize"
+		setVar "$_bto_out_sanitize" "$_bto_target_sanitize"
 	fi
 	if [ -n "$_bto_out_compiled" ]
 	then
-		_setVar "$_bto_out_compiled" "$_bto_compiled"
+		setVar "$_bto_out_compiled" "$_bto_compiled"
 	fi
 }
 

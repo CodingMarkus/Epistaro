@@ -11,9 +11,9 @@ __included_lib_error_sh=1
 
 # $1 - The error text to print.
 #
-printError( )
+_printError( )
 {
-	assert "[ -n \"${1:-}\" ]" "printError() missing message"
+	assert "[ -n \"${1:-}\" ]" "_printError() missing message"
 
 	printf 'Error: %s\n' "$1" >&2
 }
@@ -25,6 +25,6 @@ printErrorAndExit( )
 {
 	assert "[ -n \"${1:-}\" ]" "printErrorAndExit() missing message"
 
-	printError "$1"
+	_printError "$1"
 	exit 1
 }

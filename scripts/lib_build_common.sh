@@ -16,7 +16,7 @@ __included_lib_build_common_sh=1
 #
 # Sets a variable to the provided value.
 #
-_setVar( )
+setVar( )
 {
 	_sv_name=$1
 	_sv_value=$2
@@ -66,7 +66,7 @@ _buildFile( )
 #
 # Runs a build and captures clang diagnostics to control compile spacing.
 #
-_buildFileWithOutput( )
+buildFileWithOutput( )
 {
 	_build_projectRoot=$1
 	_build_srcPath=$2
@@ -96,7 +96,7 @@ _buildFileWithOutput( )
 	fi
 	rm -f "$_build_tmpPath"
 
-	_setVar "$_build_out_had_output" "$_build_had_output"
+	setVar "$_build_out_had_output" "$_build_had_output"
 
 	if [ "$_build_status" -ne 0 ]
 	then

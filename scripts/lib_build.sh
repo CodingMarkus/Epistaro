@@ -89,7 +89,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 	objRoot=$( buildTargetObjSrcDirPath "$buildDir" \
 		"$targetStyleName" "$target" )
 
-	buildSanitizeSettings=$( _sanitizeSettingsFromQuoted \
+	buildSanitizeSettings=$( sanitizeSettingsFromQuoted \
 		"$targetBuildSettings" )
 	targetSanitizeSettings=""
 	targetSanitizePaths=""
@@ -127,7 +127,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" \
+					prepareFlags "$projectRoot" \
 						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
@@ -147,7 +147,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" \
+					prepareFlags "$projectRoot" \
 						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
@@ -164,7 +164,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" \
+				buildFileWithOutput "$projectRoot" \
 					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
 					"$_bt_file_flags" \
@@ -191,7 +191,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" \
+					prepareFlags "$projectRoot" \
 						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
@@ -208,7 +208,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" \
+				buildFileWithOutput "$projectRoot" \
 					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
 					"$_bt_file_flags" \
@@ -222,7 +222,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 			then
 				if [ "$fileFlagsReady" -eq 0 ]
 				then
-					_prepareFlags "$projectRoot" \
+					prepareFlags "$projectRoot" \
 						"$srcDir" \
 						"$targetBuildSettings" \
 						"$buildSanitizeSettings" \
@@ -239,7 +239,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 				fi
 				printf 'Compiling %s...\n' "$relPath"
 				_bt_had_output=0
-				_buildFileWithOutput "$projectRoot" \
+				buildFileWithOutput "$projectRoot" \
 					"$srcPath" \
 					"$objPath" "$_bt_work_dir" \
 					"$_bt_file_flags" \
@@ -252,7 +252,7 @@ $( find "$srcRoot" -type f -name '*.c' )
 EOF
 		fi
 
-	buildTargetOutput "$projectRoot" "$target" \
+	_buildTargetOutput "$projectRoot" "$target" \
 		"$targetStyleName" "$buildDir" \
 		"$targetBuildSettings" \
 		"$targetSanitizeSettings" "$compiledAny"
@@ -277,7 +277,7 @@ EOF
 #
 # Pre-links objects into a single object file, then archives it.
 #
-createStaticLibrary( )
+_createStaticLibrary( )
 (
 	outPath=$1
 	workDir=$2
@@ -285,11 +285,11 @@ createStaticLibrary( )
 	shift 3
 
 	assert "[ -n \"${outPath:-}\" ]" \
-		"createStaticLibrary() missing output path"
+		"_createStaticLibrary() missing output path"
 	assert "[ -n \"${workDir:-}\" ]" \
-		"createStaticLibrary() missing work dir"
-	assert "[ -n \"${flags:-}\" ]" "createStaticLibrary() missing flags"
-	assert "[ $# -gt 0 ]" "createStaticLibrary() missing object files"
+		"_createStaticLibrary() missing work dir"
+	assert "[ -n \"${flags:-}\" ]" "_createStaticLibrary() missing flags"
+	assert "[ $# -gt 0 ]" "_createStaticLibrary() missing object files"
 
 	prelinkPath=$outPath.prelink.o
 	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
@@ -307,7 +307,7 @@ createStaticLibrary( )
 #
 # Links final target outputs based on target name extension.
 #
-buildTargetOutput( )
+_buildTargetOutput( )
 (
 	projectRoot=$1
 	target=$2
@@ -318,12 +318,12 @@ buildTargetOutput( )
 	compiledAny=${7:-0}
 
 	assert "[ -n \"${projectRoot:-}\" ]" \
-		"buildTargetOutput() missing project dir"
-	assert "[ -n \"${target:-}\" ]" "buildTargetOutput() missing target"
+		"_buildTargetOutput() missing project dir"
+	assert "[ -n \"${target:-}\" ]" "_buildTargetOutput() missing target"
 	assert "[ -n \"${targetStyleName:-}\" ]" \
-		"buildTargetOutput() missing style name"
+		"_buildTargetOutput() missing style name"
 	assert "[ -n \"${buildDir:-}\" ]" \
-		"buildTargetOutput() missing build dir"
+		"_buildTargetOutput() missing build dir"
 
 	targetDir=$( buildTargetDirPath "$buildDir" \
 		"$targetStyleName" "$target" )
@@ -346,7 +346,7 @@ EOF
 	[ $# -gt 0 ] || return 0
 
 	majorSpacingDone=0
-	finalLinkFlags=$( _linkFlagsFromSettings \
+	finalLinkFlags=$( linkFlagsFromSettings \
 		"$targetBuildSettings" "$targetSanitizeSettings" 1 )
 
 	case "$target" in
@@ -354,7 +354,7 @@ EOF
 			prelinkPath=$objDir/${target%.*}.o
 			staticPath=$targetDir/${target%.*}.a
 			dynamicPath=$targetDir/${target%.lib}$( \
-				_dynamicLibExtension )
+				dynamicLibExtension )
 
 			if isOutdated "$prelinkPath" "$@"
 			then

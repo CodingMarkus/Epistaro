@@ -37,7 +37,7 @@ printHelpAndExit( )
 
 # Updates build configuration files for the project.
 #
-updateConfig( )
+_updateConfig( )
 {
 	_uc_style=$__projDir/styles/_defaults/_common/_ide.cfg
 	updateClangd "$__projDir/.clangd" "$_uc_style"
@@ -46,9 +46,9 @@ updateConfig( )
 
 # Updates all generated configuration files.
 #
-updateAll( )
+_updateAll( )
 {
-	updateConfig
+	_updateConfig
 }
 
 
@@ -60,13 +60,13 @@ case "${1:-}" in
 		;;
 
 	"")
-		updateAll
+		_updateAll
 		exit 0
 		;;
 
 	c|config)
 		[ "$#" -eq 1 ] || printHelpAndExit
-		updateConfig
+		_updateConfig
 		exit 0
 		;;
 

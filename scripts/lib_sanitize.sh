@@ -10,7 +10,7 @@ __included_lib_sanitize_sh=1
 #
 # Prints sanitizer flags (one per line), normalized to -fsanitize=<list>.
 #
-_sanitizeSettingsFromList( )
+sanitizeSettingsFromList( )
 (
 	settings=$1
 	prev=""
@@ -43,7 +43,7 @@ _sanitizeSettingsFromList( )
 #
 # Prints sanitizer flags (one per line), normalized to -fsanitize=<list>.
 #
-_sanitizeSettingsFromQuoted( )
+sanitizeSettingsFromQuoted( )
 (
 	settings=$1
 	prev=""
@@ -76,7 +76,7 @@ _sanitizeSettingsFromQuoted( )
 # Prints updated target sanitizer list if not already present or in build
 # settings.
 #
-_addTargetSanitizeSetting( )
+addTargetSanitizeSetting( )
 {
 	_ats_build=$1
 	_ats_target=$2

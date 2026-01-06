@@ -40,7 +40,7 @@ printHelpAndExit( )
 #
 # Appends the style name to the style list.
 #
-appendStyleName( )
+_appendStyleName( )
 {
 	_asn_style=$1
 
@@ -58,7 +58,7 @@ $_asn_style"
 #
 # Resolves a style file path and ensures it exists.
 #
-resolveStyleFile( )
+_resolveStyleFile( )
 {
 	_rsf_style=$1
 	_rsf_file=$_rsf_style
@@ -83,7 +83,7 @@ resolveStyleFile( )
 # Sets test parsing globals: _pt_target, _pt_rel, _pt_test_type,
 # _pt_target_type
 #
-parseTestLine( )
+_parseTestLine( )
 {
 	_pt_line=$1
 	_pt_target=${_pt_line%%|*}
@@ -143,7 +143,7 @@ _filterTestErrorOutput( )
 #
 # Runs a test binary and prints status, emitting captured stderr on failure.
 #
-runTestAndReport( )
+_runTestAndReport( )
 {
 	_rtr_path=$1
 	_rtr_label=$2
@@ -216,7 +216,7 @@ do
 				[ "$#" -gt 0 ] || printHelpAndExit
 				styleName=$1
 				ensureValidStyleName "$styleName"
-				appendStyleName "$styleName"
+				_appendStyleName "$styleName"
 				shift
 				continue
 			fi
@@ -357,7 +357,7 @@ while IFS= read -r styleName || [ -n "$styleName" ]
 do
 	[ -n "$styleName" ] || continue
 
-	styleFile=$( resolveStyleFile "$styleName" )
+	styleFile=$( _resolveStyleFile "$styleName" )
 	buildSettings=$( resolvedBuildSettings "$styleFile" )
 	syncStyleSetVars "$styleFile"
 
@@ -387,7 +387,7 @@ EOF
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
 			[ -n "$testLine" ] || continue
-			parseTestLine "$testLine"
+			_parseTestLine "$testLine"
 			[ "$_pt_target" = "$target" ] || continue
 			testRel=$_pt_rel
 			testType=$_pt_test_type
@@ -450,7 +450,7 @@ EOF
 				|| printErrorAndExit \
 					"No objects found for test: $target/$testRel"
 
-			linkFlags=$( _linkFlagsFromSettings \
+			linkFlags=$( linkFlagsFromSettings \
 				"$buildSettings" "$testSanitizeSettings" )
 
 			testBinPath=$( testBinaryPath "$testOutDir" "$testRel" )
@@ -510,7 +510,7 @@ EOF
 				targetDir=$( buildTargetDirPath "$buildDir" \
 					"$styleName" "$target" )
 				dynamicPath=$targetDir/${target%.lib}$( \
-					_dynamicLibExtension )
+					dynamicLibExtension )
 				[ -f "$dynamicPath" ] \
 					|| printErrorAndExit \
 						"Library not found: $dynamicPath"
@@ -563,7 +563,7 @@ while IFS= read -r styleName || [ -n "$styleName" ]
 do
 	[ -n "$styleName" ] || continue
 
-	styleFile=$( resolveStyleFile "$styleName" )
+	styleFile=$( _resolveStyleFile "$styleName" )
 	syncStyleSetVars "$styleFile"
 
 	if [ "$multipleStyles" -eq 1 ]
@@ -579,7 +579,7 @@ do
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
 			[ -n "$testLine" ] || continue
-			parseTestLine "$testLine"
+			_parseTestLine "$testLine"
 			[ "$_pt_target" = "$target" ] || continue
 			testRel=$_pt_rel
 			testType=$_pt_test_type
@@ -618,7 +618,7 @@ do
 				if [ "$testType" = "ut" ]
 				then
 					testsRun=$((testsRun + 1))
-					if ! runTestAndReport "$testBinPath" "$testName"
+					if ! _runTestAndReport "$testBinPath" "$testName"
 					then
 						testFailures=1
 						testsFailed=$((testsFailed + 1))
@@ -632,13 +632,13 @@ do
 					targetDir=$( buildTargetDirPath "$buildDir" \
 						"$styleName" "$target" )
 				dynamicPath=$targetDir/${target%.lib}$( \
-					_dynamicLibExtension )
+					dynamicLibExtension )
 					[ -f "$dynamicPath" ] \
 						|| printErrorAndExit \
 							"Library not found: $dynamicPath"
 
 					testsRun=$((testsRun + 1))
-					if ! runTestAndReport "$testBinPath" "$testName" \
+					if ! _runTestAndReport "$testBinPath" "$testName" \
 						"$targetDir"
 					then
 						testFailures=1

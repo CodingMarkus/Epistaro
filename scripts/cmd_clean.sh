@@ -51,7 +51,7 @@ isStyleFlag( )
 #
 # Prints targets, one per line, with list formatting.
 #
-printTargetsList( )
+_printTargetsList( )
 {
 	_ptl_list=$1
 
@@ -152,9 +152,9 @@ then
 elif [ -z "$styleName" ] && [ -n "$targetsList" ]
 then
 	printf 'All cleaned for targets:\n\n'
-	printTargetsList "$targetsList"
+	_printTargetsList "$targetsList"
 else
 	printf 'All cleaned for style %s and targets:\n\n' "$styleName"
-	printTargetsList "$targetsList"
+	_printTargetsList "$targetsList"
 fi
 exit 0

@@ -13,7 +13,7 @@ __included_lib_link_sh=1
 
 # Prints the dynamic library extension for the current platform.
 #
-_dynamicLibExtension( )
+dynamicLibExtension( )
 {
 	if platformTargetIsApple
 	then
@@ -53,7 +53,7 @@ _linkSanitizeFlagsFromSettings( )
 	_lsf_build_settings=$1
 	_lsf_target_sanitize=$2
 
-	_lsf_build_sanitize=$( _sanitizeSettingsFromQuoted \
+	_lsf_build_sanitize=$( sanitizeSettingsFromQuoted \
 		"$_lsf_build_settings" )
 	_lsf_link_sanitize=$_lsf_build_sanitize
 	if [ -n "$_lsf_target_sanitize" ]
@@ -62,7 +62,7 @@ _linkSanitizeFlagsFromSettings( )
 		do
 			[ -n "$_lsf_flag" ] || continue
 			_lsf_link_sanitize=$(
-				_addTargetSanitizeSetting \
+				addTargetSanitizeSetting \
 					"$_lsf_build_sanitize" \
 					"$_lsf_link_sanitize" \
 					"$_lsf_flag"
@@ -85,7 +85,7 @@ EOF
 #
 # Prints quoted link flags.
 #
-_linkFlagsFromSettings( )
+linkFlagsFromSettings( )
 (
 	_lf_settings=$1
 	_lf_target_sanitize=$2

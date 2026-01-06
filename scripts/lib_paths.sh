@@ -12,7 +12,7 @@ __included_lib_paths_sh=1
 
 # Prints the name of the build output directory.
 #
-buildOutputDirName( )
+_buildOutputDirName( )
 {
 	printf '%s\n' ".out"
 }
@@ -20,7 +20,7 @@ buildOutputDirName( )
 
 # Prints the name of the builds directory.
 #
-buildsDirName( )
+_buildsDirName( )
 {
 	printf '%s\n' "builds"
 }
@@ -28,7 +28,7 @@ buildsDirName( )
 
 # Prints the name of the tests directory.
 #
-testsDirName( )
+_testsDirName( )
 {
 	printf '%s\n' "tests"
 }
@@ -36,7 +36,7 @@ testsDirName( )
 
 # Prints the name of the bin directory.
 #
-binDirName( )
+_binDirName( )
 {
 	printf '%s\n' "bin"
 }
@@ -44,7 +44,7 @@ binDirName( )
 
 # Prints the name of the object directory.
 #
-objDirName( )
+_objDirName( )
 {
 	printf '%s\n' "obj"
 }
@@ -52,7 +52,7 @@ objDirName( )
 
 # Prints the name of the object source subdirectory.
 #
-objSrcDirName( )
+_objSrcDirName( )
 {
 	printf '%s\n' "src"
 }
@@ -60,7 +60,7 @@ objSrcDirName( )
 
 # Prints the name of the include directory.
 #
-incDirName( )
+_incDirName( )
 {
 	printf '%s\n' "inc"
 }
@@ -74,7 +74,7 @@ outRootPath( )
 {
 	assert "[ -n \"${1:-}\" ]" "outRootPath() missing project dir"
 
-	printf '%s/%s\n' "$1" "$( buildOutputDirName )"
+	printf '%s/%s\n' "$1" "$( _buildOutputDirName )"
 }
 
 
@@ -86,7 +86,7 @@ buildsRootPathFromBuildDir( )
 {
 	assert "[ -n \"${1:-}\" ]" "buildsRootPathFromBuildDir() missing build dir"
 
-	printf '%s/%s\n' "$1" "$( buildsDirName )"
+	printf '%s/%s\n' "$1" "$( _buildsDirName )"
 }
 
 
@@ -94,9 +94,9 @@ buildsRootPathFromBuildDir( )
 #
 # Prints the builds root path.
 #
-buildsRootPath( )
+_buildsRootPath( )
 {
-	assert "[ -n \"${1:-}\" ]" "buildsRootPath() missing project dir"
+	assert "[ -n \"${1:-}\" ]" "_buildsRootPath() missing project dir"
 
 	buildsRootPathFromBuildDir "$( outRootPath "$1" )"
 }
@@ -110,7 +110,7 @@ testsRootPathFromBuildDir( )
 {
 	assert "[ -n \"${1:-}\" ]" "testsRootPathFromBuildDir() missing build dir"
 
-	printf '%s/%s\n' "$1" "$( testsDirName )"
+	printf '%s/%s\n' "$1" "$( _testsDirName )"
 }
 
 
@@ -120,11 +120,11 @@ testsRootPathFromBuildDir( )
 #
 # Prints the test target directory.
 #
-testsTargetDirPath( )
+_testsTargetDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" "testsTargetDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" "testsTargetDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" "testsTargetDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "_testsTargetDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "_testsTargetDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "_testsTargetDirPath() missing target name"
 
 	printf '%s/%s/%s\n' "$( testsRootPathFromBuildDir "$1" )" "$2" "$3"
 }
@@ -136,11 +136,11 @@ testsTargetDirPath( )
 #
 # Prints the test source/object directory for a test target.
 #
-testsTargetSrcDirPath( )
+_testsTargetSrcDirPath( )
 {
-	assert "[ -n \"${1:-}\" ]" "testsTargetSrcDirPath() missing build dir"
-	assert "[ -n \"${2:-}\" ]" "testsTargetSrcDirPath() missing style name"
-	assert "[ -n \"${3:-}\" ]" "testsTargetSrcDirPath() missing target name"
+	assert "[ -n \"${1:-}\" ]" "_testsTargetSrcDirPath() missing build dir"
+	assert "[ -n \"${2:-}\" ]" "_testsTargetSrcDirPath() missing style name"
+	assert "[ -n \"${3:-}\" ]" "_testsTargetSrcDirPath() missing target name"
 
 	testsTargetObjDirPath "$1" "$2" "$3"
 }
@@ -158,7 +158,7 @@ testsTargetObjDirPath( )
 	assert "[ -n \"${2:-}\" ]" "testsTargetObjDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "testsTargetObjDirPath() missing target name"
 
-	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "$( objDirName )"
+	printf '%s/%s\n' "$( _testsTargetDirPath "$1" "$2" "$3" )" "$( _objDirName )"
 }
 
 
@@ -177,7 +177,7 @@ testsTargetBinDirPath( )
 	assert "[ -n \"${2:-}\" ]" "testsTargetBinDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "testsTargetBinDirPath() missing target name"
 
-	printf '%s/%s\n' "$( testsTargetDirPath "$1" "$2" "$3" )" "$( binDirName )"
+	printf '%s/%s\n' "$( _testsTargetDirPath "$1" "$2" "$3" )" "$( _binDirName )"
 }
 
 
@@ -224,7 +224,7 @@ buildTargetObjDirPath( )
 	assert "[ -n \"${2:-}\" ]" "buildTargetObjDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "buildTargetObjDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( objDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( _objDirName )"
 }
 
 
@@ -241,7 +241,7 @@ buildTargetObjSrcDirPath( )
 	assert "[ -n \"${3:-}\" ]" "buildTargetObjSrcDirPath() missing target name"
 
 	printf '%s/%s\n' "$( buildTargetObjDirPath "$1" "$2" "$3" )" \
-		"$( objSrcDirName )"
+		"$( _objSrcDirName )"
 }
 
 
@@ -257,7 +257,7 @@ buildTargetIncDirPath( )
 	assert "[ -n \"${2:-}\" ]" "buildTargetIncDirPath() missing style name"
 	assert "[ -n \"${3:-}\" ]" "buildTargetIncDirPath() missing target name"
 
-	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( incDirName )"
+	printf '%s/%s\n' "$( buildTargetDirPath "$1" "$2" "$3" )" "$( _incDirName )"
 }
 
 
@@ -279,9 +279,9 @@ ensureValidStyleName( )
 #
 # Ensures target name is valid.
 #
-ensureValidTargetName( )
+_ensureValidTargetName( )
 {
-	assert "[ -n \"${1:-}\" ]" "ensureValidTargetName() missing target name"
+	assert "[ -n \"${1:-}\" ]" "_ensureValidTargetName() missing target name"
 
 	case "$1" in
 		*/*) printErrorAndExit "Target name must not contain '/': $1" ;;
@@ -302,7 +302,7 @@ resolveTargetName( )
 	_rt_root=$1
 	_rt_name=$2
 
-	ensureValidTargetName "$_rt_name"
+	_ensureValidTargetName "$_rt_name"
 
 	if [ -d "$_rt_root/targets/$_rt_name" ]
 	then

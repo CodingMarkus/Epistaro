@@ -11,7 +11,7 @@ __included_lib_platform_sh=1
 
 # Prints the host OS name mapped to supported TARGET values.
 #
-platformDetectHostOs( )
+_platformDetectHostOs( )
 {
 	if command -v uname >/dev/null 2>&1
 	then
@@ -34,7 +34,7 @@ platformDetectHostOs( )
 
 # Prints the host CPU name mapped to supported TARGET values.
 #
-platformDetectHostCpu( )
+_platformDetectHostCpu( )
 {
 	if command -v uname >/dev/null 2>&1
 	then
@@ -65,8 +65,8 @@ platformInitTargetVars( )
 	then
 		__style_set__TARGET=$TARGET
 	else
-		__style_set__TARGET_OS=$( platformDetectHostOs )
-		__style_set__TARGET_CPU=$( platformDetectHostCpu )
+		__style_set__TARGET_OS=$( _platformDetectHostOs )
+		__style_set__TARGET_CPU=$( _platformDetectHostCpu )
 		if [ -n "${__style_set__TARGET_OS:-}" ]
 		then
 			if [ -n "${__style_set__TARGET_CPU:-}" ]
@@ -135,7 +135,7 @@ platformTargetIsWindows( )
 
 # Returns success if the target CPU is supported or unspecified.
 #
-platformTargetCpuIsSupported( )
+_platformTargetCpuIsSupported( )
 {
 	platformInitTargetVars
 	case "${__style_set__TARGET_CPU:-}" in
@@ -147,7 +147,7 @@ platformTargetCpuIsSupported( )
 
 # Returns success if the target OS is supported.
 #
-platformTargetIsSupported( )
+_platformTargetIsSupported( )
 {
 	platformInitTargetVars
 	case "${__style_set__TARGET_OS:-}" in
@@ -156,7 +156,7 @@ platformTargetIsSupported( )
 			;;
 		*) return 1 ;;
 	esac
-	platformTargetCpuIsSupported
+	_platformTargetCpuIsSupported
 }
 
 
@@ -189,7 +189,7 @@ platformRequireSupportedTarget( )
 			;;
 	esac
 
-	if ! platformTargetCpuIsSupported
+	if ! _platformTargetCpuIsSupported
 	then
 		printErrorAndExit \
 			"Unsupported target CPU: ${__style_set__TARGET_CPU}. "\
