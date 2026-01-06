@@ -44,7 +44,7 @@ printHelpAndExit( )
 isStyleFlag( )
 {
 	case "${1:-}" in
-		-s|-st|-sty|-styl|-style) return 0 ;;
+		-s|-style) return 0 ;;
 		*) return 1 ;;
 	esac
 }

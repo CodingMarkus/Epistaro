@@ -11,9 +11,9 @@ __included_lib_clean_sh=1
 
 # $1 - Project root directory.
 #
-# ($2) - Optional style name.
-# ($3) - Optional target name.
-# Cleans build output for all builds, or a style/target subset.
+# $2 - Optional style name (empty for all styles).
+# ($3..n) - Optional target names.
+# Cleans build and test output for all builds, or a style/target subset.
 #
 cleanBuilds( )
 (
@@ -21,30 +21,94 @@ cleanBuilds( )
 	shift
 
 	cleanStyle=${1:-}
-	cleanTarget=
+	shift
 
 	if [ -n "$cleanStyle" ]
 	then
 		ensureValidStyleName "$cleanStyle"
-		shift
-		cleanTarget=${1:-}
-		if [ -n "$cleanTarget" ]
-		then
-			cleanTarget=$( resolveTargetName "$projectRoot" "$cleanTarget" )
-			shift
-		fi
 	fi
 
-	if [ "$#" -ne 0 ]
-	then
-		return 2
-	fi
+	cleanTargets=""
+	while [ "$#" -gt 0 ]
+	do
+		cleanTarget=$( resolveTargetName "$projectRoot" "$1" )
+		if [ -n "$cleanTargets" ]
+		then
+			cleanTargets="$cleanTargets
+$cleanTarget"
+		else
+			cleanTargets=$cleanTarget
+		fi
+		shift
+	done
+
+	cleanTargets=$( printf '%s\n' "$cleanTargets" \
+		| awk 'NF && !seen[$0]++' )
 
 	buildDir=$( outRootPath "$projectRoot" )
-	cleanPath=$( buildTargetDirPath "$buildDir" "$cleanStyle" "$cleanTarget" )
+	buildsRoot=$( buildsRootPathFromBuildDir "$buildDir" )
+	testsRoot=$( testsRootPathFromBuildDir "$buildDir" )
 
-	if [ -d "$cleanPath" ]
+	if [ -n "$cleanStyle" ]
 	then
-		rm -rf "$cleanPath"
+		if [ -z "$cleanTargets" ]
+		then
+			rm -rf "$buildsRoot/$cleanStyle"
+			rm -rf "$testsRoot/$cleanStyle"
+			return 0
+		fi
+
+		while IFS= read -r cleanTarget || [ -n "$cleanTarget" ]
+		do
+			[ -n "$cleanTarget" ] || continue
+			rm -rf "$buildsRoot/$cleanStyle/$cleanTarget"
+			rm -rf "$testsRoot/$cleanStyle/$cleanTarget"
+		done <<EOF
+$cleanTargets
+EOF
+		return 0
 	fi
+
+	if [ -z "$cleanTargets" ]
+	then
+		rm -rf "$buildsRoot"
+		rm -rf "$testsRoot"
+		return 0
+	fi
+
+	cleanStyles=""
+	for root in "$buildsRoot" "$testsRoot"
+	do
+		[ -d "$root" ] || continue
+		for styleDir in "$root"/*
+		do
+			[ -d "$styleDir" ] || continue
+			styleName=${styleDir##*/}
+			if [ -n "$cleanStyles" ]
+			then
+				cleanStyles="$cleanStyles
+$styleName"
+			else
+				cleanStyles=$styleName
+			fi
+		done
+	done
+
+	cleanStyles=$( printf '%s\n' "$cleanStyles" \
+		| awk 'NF && !seen[$0]++' )
+
+	while IFS= read -r styleName || [ -n "$styleName" ]
+	do
+		[ -n "$styleName" ] || continue
+		while IFS= read -r cleanTarget || [ -n "$cleanTarget" ]
+		do
+			[ -n "$cleanTarget" ] || continue
+			rm -rf "$buildsRoot/$styleName/$cleanTarget"
+			rm -rf "$testsRoot/$styleName/$cleanTarget"
+		done <<EOF
+$cleanTargets
+EOF
+	done <<EOF
+$cleanStyles
+EOF
 )

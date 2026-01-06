@@ -111,6 +111,34 @@ parseTestLine( )
 
 # $1 - Test binary path.
 # $2 - Test label.
+# $1 - Error output path.
+#
+# Prints filtered error output for test failures.
+#
+_filterTestErrorOutput( )
+{
+	_fte_path=${1:-}
+	_fte_targets_root=${__projDir%/}/targets/
+	awk -v proj="$_fte_targets_root" -v repl="targets/" '
+		function replace_all(str, needle, repl,    pos) {
+			while ((pos = index(str, needle)) > 0) {
+				str = substr(str, 1, pos - 1) repl \
+					substr(str, pos + length(needle))
+			}
+			return str
+		}
+		/lib_test\.sh: line [0-9]+: [0-9]+ Abort trap:/ { next }
+		{
+			if (proj != "") {
+				$0 = replace_all($0, proj, repl)
+			}
+			print
+		}
+	' ${_fte_path:+"$_fte_path"}
+}
+
+# $1 - Test binary path.
+# $2 - Test label.
 # ($3) - Optional dynamic library directory.
 #
 # Runs a test binary and prints status, emitting captured stderr on failure.
@@ -121,33 +149,38 @@ runTestAndReport( )
 	_rtr_label=$2
 	_rtr_lib=${3:-}
 
-	_rtr_err=$( mktemp "${TMPDIR:-/tmp}/test.err.XXXXXX" ) \
-		|| printErrorAndExit "mktemp failed"
-
 	if [ -n "$_rtr_lib" ]
 	then
-		if runTestBinary "$_rtr_path" "$_rtr_lib" 2>"$_rtr_err"
+		if _rtr_err=$(
+			{ runTestBinary "$_rtr_path" "$_rtr_lib" 2>&1 1>&3; } 3>&1
+		)
 		then
-			printf 'Testing %s... [PASSED]\n' "$_rtr_label"
-			rm -f "$_rtr_err"
-			return 0
+			_rtr_status=0
+		else
+			_rtr_status=$?
 		fi
 	else
-		if runTestBinary "$_rtr_path" 2>"$_rtr_err"
+		if _rtr_err=$(
+			{ runTestBinary "$_rtr_path" 2>&1 1>&3; } 3>&1
+		)
 		then
-			printf 'Testing %s... [PASSED]\n' "$_rtr_label"
-			rm -f "$_rtr_err"
-			return 0
+			_rtr_status=0
+		else
+			_rtr_status=$?
 		fi
 	fi
 
-	_rtr_status=$?
-	printf 'Testing %s... [FAILED]\n' "$_rtr_label"
-	if [ -s "$_rtr_err" ]
+	if [ "$_rtr_status" -eq 0 ]
 	then
-		cat "$_rtr_err"
+		printf 'Testing %s... [PASSED]\n' "$_rtr_label"
+		return 0
 	fi
-	rm -f "$_rtr_err"
+
+	printf 'Testing %s... [FAILED]\n' "$_rtr_label"
+	if [ -n "$_rtr_err" ]
+	then
+		printf '%s\n' "$_rtr_err" | _filterTestErrorOutput
+	fi
 	return "$_rtr_status"
 }
 
@@ -197,6 +230,7 @@ then
 fi
 
 platformRequireSupportedTarget
+export __style_set__TARGET __style_set__TARGET_OS __style_set__TARGET_CPU
 
 selections=""
 if [ "$#" -eq 0 ]
@@ -312,6 +346,9 @@ case "$styleNames" in
 "*) multipleStyles=1 ;;
 esac
 
+testFailures=0
+testsRun=0
+testsFailed=0
 while IFS= read -r styleName || [ -n "$styleName" ]
 do
 	[ -n "$styleName" ] || continue
@@ -549,48 +586,63 @@ do
 			[ -d "$testDir" ] || printErrorAndExit \
 				"Test not found: $target/$testRel"
 
-			if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
-			then
-				targetDir=$( buildTargetDirPath "$buildDir" \
-					"$styleName" "$target" )
+				if [ "$testType" = "it" ] && [ "$targetType" = "bin" ]
+				then
+					targetDir=$( buildTargetDirPath "$buildDir" \
+						"$styleName" "$target" )
 				binPath=$targetDir/$target
-				[ -x "$binPath" ] || printErrorAndExit \
-					"Binary not found: $binPath"
+					[ -x "$binPath" ] || printErrorAndExit \
+						"Binary not found: $binPath"
 
-				printf 'Running integration scripts...\n'
-				runIntegrationScripts "$testDir" "$binPath" \
-					"$target/$testRel"
-				printf '\n'
-				continue
-			fi
+					printf 'Running integration scripts...\n'
+					testsRun=$((testsRun + 1))
+					if ! runIntegrationScripts "$testDir" "$binPath" \
+						"$target/$testRel"
+					then
+						testFailures=1
+						testsFailed=$((testsFailed + 1))
+					fi
+					printf '\n'
+					continue
+				fi
 
 			testOutDir=$( testsTargetBinDirPath "$buildDir" \
 				"$styleName" "$target" )
 			testBinPath=$( testBinaryPath "$testOutDir" "$testRel" )
 			testName=${testBinPath##*/}
 
-			if [ "$testType" = "ut" ]
-			then
-				runTestAndReport "$testBinPath" "$testName"
-				printf '\n'
-				continue
-			fi
+				if [ "$testType" = "ut" ]
+				then
+					testsRun=$((testsRun + 1))
+					if ! runTestAndReport "$testBinPath" "$testName"
+					then
+						testFailures=1
+						testsFailed=$((testsFailed + 1))
+					fi
+					printf '\n'
+					continue
+				fi
 
-			if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
-			then
-				targetDir=$( buildTargetDirPath "$buildDir" \
-					"$styleName" "$target" )
+				if [ "$testType" = "it" ] && [ "$targetType" = "lib" ]
+				then
+					targetDir=$( buildTargetDirPath "$buildDir" \
+						"$styleName" "$target" )
 				dynamicPath=$targetDir/${target%.lib}$( \
 					_dynamicLibExtension )
-				[ -f "$dynamicPath" ] \
-					|| printErrorAndExit \
-						"Library not found: $dynamicPath"
+					[ -f "$dynamicPath" ] \
+						|| printErrorAndExit \
+							"Library not found: $dynamicPath"
 
-				runTestAndReport "$testBinPath" "$testName" \
-					"$targetDir"
-				printf '\n'
-				continue
-			fi
+					testsRun=$((testsRun + 1))
+					if ! runTestAndReport "$testBinPath" "$testName" \
+						"$targetDir"
+					then
+						testFailures=1
+						testsFailed=$((testsFailed + 1))
+					fi
+					printf '\n'
+					continue
+				fi
 
 			printErrorAndExit \
 				"Unsupported test type: $target/$testRel"
@@ -601,8 +653,18 @@ EOF
 	done <<EOF
 $targetsToRun
 EOF
-done <<EOF
+	done <<EOF
 $styleNames
 EOF
 
+printf '\nTest success rate: %s/%s\n' "$testsFailed" "$testsRun"
+if [ "$testsFailed" -ne 0 ]
+then
+	printf '\n!!!!!! TEST FAILURES DETECTED !!!!!!\n'
+fi
+
 printf '\n====== All Done ======\n'
+if [ "$testFailures" -ne 0 ]
+then
+	exit 1
+fi
