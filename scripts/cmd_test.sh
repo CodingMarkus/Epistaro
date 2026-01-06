@@ -603,7 +603,6 @@ do
 						testFailures=1
 						testsFailed=$((testsFailed + 1))
 					fi
-					printf '\n'
 					continue
 				fi
 
@@ -620,7 +619,6 @@ do
 						testFailures=1
 						testsFailed=$((testsFailed + 1))
 					fi
-					printf '\n'
 					continue
 				fi
 
@@ -641,7 +639,6 @@ do
 						testFailures=1
 						testsFailed=$((testsFailed + 1))
 					fi
-					printf '\n'
 					continue
 				fi
 
