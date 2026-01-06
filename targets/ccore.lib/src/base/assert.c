@@ -47,7 +47,7 @@ void _assertionHasFailed(
 	va_list args;
     fprintf(stderr, "Assertion failed: %s\n", expr);
     if (msg) {
-		fprintf(stderr, "Message: ");
+		fprintf(stderr, "--> ");
 		va_start(args, msg);
 		vfprintf(stderr, msg, args);
 		va_end(args);

@@ -434,22 +434,6 @@ testBinaryPath( )
 }
 
 
-# $1 - Test binary path.
-#
-# ($2) - Optional dynamic library directory.
-# Runs a test binary with optional library path injection.
-#
-_setupCrashReporterSuppression( )
-{
-	case "${__style_set__TARGET_OS:-}" in
-		macos)
-			CRASH_REPORTER_NO_GUI=1
-			CRASH_REPORTER_NO_NOTIFICATION=1
-			export CRASH_REPORTER_NO_GUI CRASH_REPORTER_NO_NOTIFICATION
-			;;
-	esac
-}
-
 runTestBinary( )
 {
 	_rtb_path=$1
@@ -462,7 +446,6 @@ runTestBinary( )
 	then
 		(
 			cd "$_rtb_dir"
-			_setupCrashReporterSuppression
 			_rtb_dyld_path="$_rtb_lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 			_rtb_ld_path="$_rtb_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 			DYLD_LIBRARY_PATH=$_rtb_dyld_path \
@@ -472,7 +455,6 @@ runTestBinary( )
 	else
 		(
 			cd "$_rtb_dir"
-			_setupCrashReporterSuppression
 			exec "./$_rtb_base"
 		)
 	fi

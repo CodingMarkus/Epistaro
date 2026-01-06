@@ -2,7 +2,6 @@
 
 // ============================================================================
 
-__attribute__((visibility("default")))
 void _assertionHasFailed(
 	const char * expr,
 	const char * file,
