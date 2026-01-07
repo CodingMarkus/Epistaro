@@ -11,6 +11,16 @@ void _requirementHasFailed(
 	...
 );
 
+#if TESTING
+
+__attribute__((visibility("default")))
+int _armRequireTrap( const char * expectedExpr );
+
+__attribute__((visibility("default")))
+void _disarmRequireTrap( void );
+
+#endif // TESTING
+
 // ============================================================================
 
 #ifdef NDEBUG

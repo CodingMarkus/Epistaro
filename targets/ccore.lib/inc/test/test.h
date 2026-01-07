@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "../base/implementation/assert.h" // IWYU pragma: keep
+#include "../base/implementation/require.h" // IWYU pragma: keep
 
 #include "../base/begin_header.h"
 begin_header
@@ -119,6 +120,39 @@ void _expectationHasFailed(
 
 #define expect_assert( ... ) \
 	_expect_assert_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+
+// ----------------------------------------------------------------------------
+
+#define _expect_require_1( codeBlock )                        \
+	({                                                        \
+		if (_armRequireTrap(NULL) == 0) {                     \
+			codeBlock;                                        \
+			fprintf(                                          \
+				stderr,                                       \
+				"Expected a requirement, but none happened\n" \
+			);                                                \
+			abort();                                          \
+		}                                                     \
+	})
+
+#define _expect_require_2( exprString, codeBlock )              \
+	({                                                          \
+		if (_armRequireTrap((exprString)) == 0) {               \
+			codeBlock;                                          \
+			fprintf(                                            \
+				stderr,                                         \
+				"Expected requirement was not triggered: %s\n", \
+				exprString                                      \
+			);                                                  \
+			abort();                                            \
+		}                                                       \
+	})
+
+#define _expect_require_expand( count, ... ) \
+	CONCAT(_expect_require_, count)(__VA_ARGS__)
+
+#define expect_require( ... ) \
+	_expect_require_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
 
 // ============================================================================
 end_header
