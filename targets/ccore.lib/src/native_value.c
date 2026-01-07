@@ -100,21 +100,21 @@ const struct ValueFooter * getFooter( const struct ValueHeader * header )
 
 
 static inline
-Opt(const struct ValueFooter *) assertIsValue( const NativeValue * value )
+Opt(const struct ValueFooter *) requireToBeValue( const NativeValue * value )
 {
-#if ANY_CHECKS_ENABLED
 	def header = (struct ValueHeader *)value;
 	def type = (enum BaseType)header->typeHdr.type;
-	assert(type == BaseType_Value_Native);
+	require(type == BaseType_Value_Native);
 
+#if ANY_CHECKS_ENABLED
 	def footer = getFooter(header);
-	assert(calcChecksum(header, footer) == footer->checksum);
+	require(calcChecksum(header, footer) == footer->checksum);
 
 	if (likely_true(!header->threadSafeFlag)) {
-		assert(header->refCount > 0);
+		require(header->refCount > 0);
 	} else {
 		def count = atomic_load(&header->atomicRefCount);
-		assert(count > 0);
+		require(count > 0);
 	}
 	return footer;
 #else
@@ -124,10 +124,10 @@ Opt(const struct ValueFooter *) assertIsValue( const NativeValue * value )
 
 
 static inline
-const struct ValueFooter * assertIsValueAndGetFooter(
+const struct ValueFooter * requireToBeValueAndGetFooter(
 	const NativeValue * value )
 {
-	return assertIsValue(value) ?: getFooter((struct ValueHeader *)value);
+	return requireToBeValue(value) ?: getFooter((struct ValueHeader *)value);
 }
 
 
@@ -135,14 +135,14 @@ static inline
 struct ValueHeader * incRefCount( struct ValueHeader * header )
 {
 	if (likely_true(!header->threadSafeFlag)) {
-		assert(header->refCount > 0);
-		assert(header->refCount < UINT32_MAX);
+		require(header->refCount > 0);
+		require(header->refCount < UINT32_MAX);
 		header->refCount++;
 		return header;
 	}
 	def oldCount = atomic_fetch_add(&header->atomicRefCount, 1);
-	assert(oldCount > 0);
-	assert(oldCount < UINT32_MAX);
+	require(oldCount > 0);
+	require(oldCount < UINT32_MAX);
 	return header;
 }
 
@@ -151,11 +151,11 @@ static inline
 bool decRefCount( struct ValueHeader * header )
 {
 	if (likely_true(!header->threadSafeFlag)) {
-		assert(header->refCount > 0);
+		require(header->refCount > 0);
 		return (--header->refCount != 0);
 	}
 	uint_fast32_t oldCount = atomic_fetch_sub(&header->atomicRefCount, 1);
-	assert(oldCount > 0);
+	require(oldCount > 0);
 	return (oldCount != 1);
 }
 
@@ -177,7 +177,7 @@ void decRefCountAndFree(
 public
 NativeValue * retain_NativeValue( NativeValue * value )
 {
-	assertIsValue(value);
+	requireToBeValue(value);
 	def header = (struct ValueHeader *)value;
 	incRefCount(header);
 	return value;
@@ -188,7 +188,7 @@ public
 void discard_NativeValue( Opt(NativeValue *) optValue )
 {
 	return_unless(no_value, value, optValue);
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 	decRefCountAndFree(header, footer);
 }
@@ -198,7 +198,7 @@ public
 const char * getName_NativeValue( Opt(NativeValue *) optValue )
 {
 	return_unless(strdup("<nil>"), value, optValue);
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	return footer->typeDesc->name;
 }
 
@@ -207,7 +207,7 @@ public
 const char * createDescription_NativeValue( Opt(NativeValue *) optValue )
 {
 	return_unless(strdup("<nil>"), value, optValue);
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	return footer->typeDesc->createDescFunc(value);
 }
 
@@ -216,7 +216,7 @@ public
 HashValue_Hasher hash_NativeValue( Opt(const NativeValue *) optValue )
 {
 	return_unless(0, value, optValue);
-	assertIsValue(value);
+	requireToBeValue(value);
 	const HasherInterface * hashIntf;
 #if CPU_IS_64_BIT
 	hashIntf = geHasherInterface_XXH3();
@@ -239,7 +239,7 @@ void hashWithHasher_NativeValue(
 {
 	return_unless(no_value, value, optValue);
 	assert(hashIntf);
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	footer->typeDesc->hashFunc(value, hasher, *hashIntf);
 }
 
@@ -247,7 +247,7 @@ void hashWithHasher_NativeValue(
 public
 NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep )
 {
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
 	if (header->immutableFlag) {
@@ -266,8 +266,8 @@ bool isEqual_NativeValue(
 {
 	return_unless(false, value1, optValue);
 	return_unless(false, value2, optOtherValue);
-	def footer1 = assertIsValueAndGetFooter(value1);
-	def footer2 = assertIsValueAndGetFooter(value2);
+	def footer1 = requireToBeValueAndGetFooter(value1);
+	def footer2 = requireToBeValueAndGetFooter(value2);
 	if (footer1->typeDesc != footer2->typeDesc) return false;
 
 #if ANY_CHECKS_ENABLED
@@ -287,7 +287,7 @@ bool isEqual_NativeValue(
 public
 NativeValue * freeze_NativeValue( NativeValue * value )
 {
-	assertIsValue(value);
+	requireToBeValue(value);
 	def header = (struct ValueHeader *)value;
 
 	// Requires no freezing?
@@ -330,7 +330,7 @@ NativeValue * freeze_NativeValue( NativeValue * value )
 public
 NativeValue * unfreeze_NativeValue( NativeValue * value )
 {
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
 	if (!header->frozenFlag) {
@@ -352,7 +352,7 @@ NativeValue * unfreeze_NativeValue( NativeValue * value )
 public
 bool set_NativeValue( OutPtr(NativeValue *) valuePtr, NativeValue * newValue )
 {
-	assertIsValue(newValue);
+	requireToBeValue(newValue);
 	def oldValue = *valuePtr;
 	if (oldValue == newValue) return false;
 
@@ -367,7 +367,7 @@ public
 bool setOpt_NativeValue(
 	OutPtrOpt(NativeValue *) valuePtr, Opt(NativeValue *) newValue )
 {
-	if (newValue) assertIsValue((NativeValue *)newValue);
+	if (newValue) requireToBeValue((NativeValue *)newValue);
 	def oldValue = *valuePtr;
 	if (oldValue == newValue) return false;
 
@@ -384,7 +384,7 @@ public
 bool unfreezeInPlace_NativeValue( OutPtr(NativeValue *) valuePtr )
 {
 	def value = *valuePtr;
-	def footer = assertIsValueAndGetFooter(value);
+	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
 	if (!header->frozenFlag) return false;
@@ -409,7 +409,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) optValuePtr )
 	if (!*optValuePtr) return false;
 	def value = (NativeValue *)*optValuePtr;
 
-	assertIsValue(value);
+	requireToBeValue(value);
 	def header = (struct ValueHeader *)value;
 	if (!header->frozenFlag) return false;
 
