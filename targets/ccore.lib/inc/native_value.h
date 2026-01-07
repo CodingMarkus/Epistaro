@@ -157,7 +157,7 @@ NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep );
 /**
 	Test two values for equality.
 
-	@return `true` only if they are fully functionally equivalent. All
+	@returns `true` only if they are fully functionally equivalent. All
 	observable behavior and referenced state must match exactly. Always
 	`false` if either value is `nil`!
 */
@@ -245,9 +245,9 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) valuePtr );
 		any struct padding.
 	@param typeDesc Pointer to the value's type descriptor.
 
-	@return Pointer to the newly allocated value.
+	@returns Pointer to the newly allocated value.
 
-	```
+	@code
 	typedef NativeValue StringStorage;
 
 	struct StringStorage {
@@ -257,7 +257,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) valuePtr );
 	StringStorage * str = create_NativeValue(
 		false, sizeof(struct StringStorage), &StringStorageType
 	);
-	```
+	@endcode
 
 	@note
 	All fields are zero-initialized (0, false, nil, etc.).
