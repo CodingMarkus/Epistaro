@@ -15,7 +15,6 @@ __included_lib_build_sh=1
 . lib_paths.sh
 
 
-
 # $1 - Project root directory.
 # $2 - Target name.
 # $3 - Style name.
