@@ -16,6 +16,7 @@
 #include "implementation/builtin.h"         // IWYU pragma: keep
 #include "implementation/continue_unless.h" // IWYU pragma: keep
 #include "implementation/guard.h"           // IWYU pragma: keep
+#include "implementation/require.h"         // IWYU pragma: keep
 #include "implementation/return_unless.h"   // IWYU pragma: keep
 #include "implementation/ptr.h"             // IWYU pragma: keep
 
