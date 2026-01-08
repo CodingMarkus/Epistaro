@@ -18,6 +18,16 @@ void _expectationHasFailed(
 	...
 );
 
+#if TESTING
+
+void _testFailExpectedAssertion( void );
+void _testVerifyAssertionExpr( const char * expectedExpr );
+
+void _testFailExpectedRequirement( void );
+void _testVerifyRequirementExpr( const char * expectedExpr );
+
+#endif // TESTING
+
 // ----------------------------------------------------------------------------
 
 #define _expect_1( cond )                        \
@@ -92,48 +102,22 @@ void _expectationHasFailed(
 
 // ----------------------------------------------------------------------------
 
-#define _expect_assert_1( codeBlock )                        \
-	({                                                       \
-		if (_armAssertTrap() == 0) {                         \
-			codeBlock;                                       \
-			fprintf(                                         \
-				stderr,                                      \
-				"Expected an assertion, but none happened\n" \
-			);                                               \
-			exit(EXIT_FAILURE);                              \
-		}                                                    \
+#define _expect_assert_1( codeBlock ) \
+	({                                \
+		if (_armAssertTrap() == 0) {   \
+			codeBlock;                  \
+			_testFailExpectedAssertion(); \
+		}                             \
 	})
 
-#define _expect_assert_2( exprString, codeBlock )               \
-	({                                                          \
-		if (_armAssertTrap() == 0) {                            \
-			codeBlock;                                          \
-			fprintf(                                            \
-				stderr,                                         \
-				"Expected assertion was not triggered: %s\n",   \
-				exprString                                      \
-			);                                                  \
-			exit(EXIT_FAILURE);                                 \
-		} else {                                                \
-			const char * _actualExpr = _getLastAssertionExpr(); \
-			if (!_actualExpr                                    \
-				|| strcmp(_actualExpr, exprString) != 0)        \
-			{                                                   \
-				fprintf(                                        \
-					stderr,                                     \
-					"Expected assertion: %s\n",                 \
-					exprString                                  \
-				);                                              \
-				if (_actualExpr) {                              \
-					fprintf(                                    \
-						stderr,                                 \
-						"Actual assertion: %s\n",               \
-						_actualExpr                             \
-					);                                          \
-				}                                               \
-				exit(EXIT_FAILURE);                             \
-			}                                                   \
-		}                                                       \
+#define _expect_assert_2( exprString, codeBlock ) \
+	({                                             \
+		if (_armAssertTrap() == 0) {                \
+			codeBlock;                               \
+			_testFailExpectedAssertion();            \
+		} else {                                   \
+			_testVerifyAssertionExpr(exprString);    \
+		}                                         \
 	})
 
 #define _expect_assert_expand( count, ... ) \
@@ -144,48 +128,22 @@ void _expectationHasFailed(
 
 // ----------------------------------------------------------------------------
 
-#define _expect_require_1( codeBlock )                        \
-	({                                                        \
-		if (_armRequireTrap() == 0) {                         \
-			codeBlock;                                        \
-			fprintf(                                          \
-				stderr,                                       \
-				"Expected a requirement, but none happened\n" \
-			);                                                \
-			exit(EXIT_FAILURE);                               \
-		}                                                     \
+#define _expect_require_1( codeBlock ) \
+	({                                  \
+		if (_armRequireTrap() == 0) {    \
+			codeBlock;                    \
+			_testFailExpectedRequirement(); \
+		}                               \
 	})
 
-#define _expect_require_2( exprString, codeBlock )                \
-	({                                                            \
-		if (_armRequireTrap() == 0) {                             \
-			codeBlock;                                            \
-			fprintf(                                              \
-				stderr,                                           \
-				"Expected requirement was not triggered: %s\n",   \
-				exprString                                        \
-			);                                                    \
-			exit(EXIT_FAILURE);                                   \
-		} else {                                                  \
-			const char * _actualExpr = _getLastRequirementExpr(); \
-			if (!_actualExpr                                      \
-				|| strcmp(_actualExpr, exprString) != 0)          \
-			{                                                     \
-				fprintf(                                          \
-					stderr,                                       \
-					"Expected requirement: %s\n",                 \
-					exprString                                    \
-				);                                                \
-				if (_actualExpr) {                                \
-					fprintf(                                      \
-						stderr,                                   \
-						"Actual requirement: %s\n",               \
-						_actualExpr                               \
-					);                                            \
-				}                                                 \
-				exit(EXIT_FAILURE);                               \
-			}                                                     \
-		}                                                         \
+#define _expect_require_2( exprString, codeBlock ) \
+	({                                               \
+		if (_armRequireTrap() == 0) {                  \
+			codeBlock;                                  \
+			_testFailExpectedRequirement();             \
+		} else {                                      \
+			_testVerifyRequirementExpr(exprString);     \
+		}                                            \
 	})
 
 #define _expect_require_expand( count, ... ) \

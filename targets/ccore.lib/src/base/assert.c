@@ -16,6 +16,8 @@ struct {
 	jmp_buf env;
 } assertionTrap;
 
+// ---------------------------------------------------------
+
 __attribute__((visibility("default")))
 int _armAssertTrap( void )
 {
@@ -32,9 +34,43 @@ void _disarmAssertTrap( void )
 }
 
 __attribute__((visibility("default")))
-const char * _getLastAssertionExpr( void )
+void _testFailExpectedAssertion( void )
 {
-	return assertionTrap.lastExpr;
+	fprintf(
+		stderr,
+		"Expected an assertion, but none happened\n"
+	);
+	exit(EXIT_FAILURE);
+}
+
+__attribute__((visibility("default")))
+void _testVerifyAssertionExpr( const char * expectedExpr )
+{
+	const char * actualExpr;
+
+	actualExpr = assertionTrap.lastExpr;
+	if (!actualExpr
+		|| strcmp(actualExpr, expectedExpr) != 0)
+	{
+		fprintf(
+			stderr,
+			"Expected assertion was not triggered: %s\n",
+			expectedExpr
+		);
+		fprintf(
+			stderr,
+			"Expected assertion: %s\n",
+			expectedExpr
+		);
+		if (actualExpr) {
+			fprintf(
+				stderr,
+				"Actual assertion: %s\n",
+				actualExpr
+			);
+		}
+		exit(EXIT_FAILURE);
+	}
 }
 
 #endif // TESTING
@@ -51,15 +87,16 @@ void _assertionHasFailed(
 	... )
 {
 	va_list args;
-    fprintf(stderr, "Assertion failed: %s\n", expr);
-    if (msg) {
+
+	fprintf(stderr, "Assertion failed: %s\n", expr);
+	if (msg) {
 		fprintf(stderr, "--> ");
 		va_start(args, msg);
 		vfprintf(stderr, msg, args);
 		va_end(args);
 		fputc('\n', stderr);
 	}
-    fprintf(stderr, "Location: %s:%d (%s)\n", file, line, func);
+	fprintf(stderr, "Location: %s:%d (%s)\n", file, line, func);
 
 #if TESTING
 	if (assertionTrap.armed) {

@@ -161,8 +161,4 @@ int _armAssertTrap( void );
 __attribute__((visibility("default")))
 void _disarmAssertTrap( void );
 
-__attribute__((visibility("default")))
-const char * _getLastAssertionExpr( void );
-
-
 #endif // TESTING

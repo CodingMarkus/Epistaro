@@ -16,6 +16,8 @@ struct {
 	jmp_buf env;
 } requirementTrap;
 
+// ---------------------------------------------------------
+
 __attribute__((visibility("default")))
 int _armRequireTrap( void )
 {
@@ -32,9 +34,43 @@ void _disarmRequireTrap( void )
 }
 
 __attribute__((visibility("default")))
-const char * _getLastRequirementExpr( void )
+void _testFailExpectedRequirement( void )
 {
-	return requirementTrap.lastExpr;
+	fprintf(
+		stderr,
+		"Expected a requirement, but none happened\n"
+	);
+	exit(EXIT_FAILURE);
+}
+
+__attribute__((visibility("default")))
+void _testVerifyRequirementExpr( const char * expectedExpr )
+{
+	const char * actualExpr;
+
+	actualExpr = requirementTrap.lastExpr;
+	if (!actualExpr
+		|| strcmp(actualExpr, expectedExpr) != 0)
+	{
+		fprintf(
+			stderr,
+			"Expected requirement was not triggered: %s\n",
+			expectedExpr
+		);
+		fprintf(
+			stderr,
+			"Expected requirement: %s\n",
+			expectedExpr
+		);
+		if (actualExpr) {
+			fprintf(
+				stderr,
+				"Actual requirement: %s\n",
+				actualExpr
+			);
+		}
+		exit(EXIT_FAILURE);
+	}
 }
 
 #endif // TESTING
@@ -51,6 +87,7 @@ void _requirementHasFailed(
 	... )
 {
 	va_list args;
+
 	fprintf(stderr, "Requirement failed: %s\n", expr);
 	if (msg) {
 		fprintf(stderr, "--> ");
