@@ -238,7 +238,7 @@ void test_hashAndEqual( void )
 static
 void test_copyAndFreeze( void )
 {
-	def value = createTestValue(100, true);
+	def value = createTestValue(100, false);
 
 	def shallow = copy_NativeValue(value, false);
 	expect(shallow != value);
@@ -259,12 +259,12 @@ void test_copyAndFreeze( void )
 	expect(unfrozen != value);
 	expect(isEqual_NativeValue(value, unfrozen));
 
-	init slot = createTestValue(200, true);
+	init slot = createTestValue(200, false);
 	freeze_NativeValue(slot);
 	expect(unfreezeInPlace_NativeValue(&slot));
 	discard_NativeValue(slot);
 
-	def retainable = createTestValue(300, true);
+	def retainable = createTestValue(300, false);
 	def retained = unfreeze_NativeValue(retainable);
 	expect(retained == retainable);
 	discard_NativeValue(retained);
