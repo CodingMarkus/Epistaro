@@ -333,7 +333,7 @@ NativeValue * unfreeze_NativeValue( NativeValue * value )
 	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
-	if (!header->frozenFlag) {
+	if (header->immutableFlag || !header->frozenFlag) {
 		incRefCount(header);
 		return value;
 	}
@@ -387,7 +387,7 @@ bool unfreezeInPlace_NativeValue( OutPtr(NativeValue *) valuePtr )
 	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
-	if (!header->frozenFlag) return false;
+	if (header->immutableFlag || !header->frozenFlag) return false;
 
 #if HEAVY_CHECKS_ENABLED
 	def currentHash = hash_NativeValue(value);
@@ -411,7 +411,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) optValuePtr )
 
 	requireToBeValue(value);
 	def header = (struct ValueHeader *)value;
-	if (!header->frozenFlag) return false;
+	if (header->immutableFlag || !header->frozenFlag) return false;
 
 	def footer = getFooter(header);
 
