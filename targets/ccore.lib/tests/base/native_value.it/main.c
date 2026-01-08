@@ -168,10 +168,10 @@ static const struct TypeDescriptor_NativeValue TestValueType = {
 
 
 static
-NativeValue * createTestValue( int32e number, bool mutable )
+NativeValue * createTestValue( int32e number, bool immutable )
 {
 	def value = create_NativeValue(
-		mutable, sizeof(struct TestValuePayload), &TestValueType);
+		immutable, sizeof(struct TestValuePayload), &TestValueType);
 	expect(value, "create_NativeValue failed");
 	expect(addState(value, number), "Test value capacity exceeded");
 	return value;

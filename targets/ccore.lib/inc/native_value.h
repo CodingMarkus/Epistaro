@@ -255,7 +255,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) valuePtr );
 	};
 
 	StringStorage * str = create_NativeValue(
-		false, sizeof(struct StringStorage), &StringStorageType
+		true, sizeof(struct StringStorage), &StringStorageType
 	);
 	@endcode
 
@@ -268,7 +268,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) valuePtr );
 	runtime size of that array in `size`.
 */
 NativeValue * create_NativeValue(
-	bool mutable,
+	bool immutable,
 	uint16_t size,
 	const struct TypeDescriptor_NativeValue * const typeDesc
 );

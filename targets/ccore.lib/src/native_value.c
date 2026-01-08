@@ -433,7 +433,7 @@ bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) optValuePtr )
 
 public
 NativeValue * create_NativeValue(
-	bool mutable,
+	bool immutable,
 	uint16_t size,
 	const struct TypeDescriptor_NativeValue * const typeDesc )
 {
@@ -449,8 +449,8 @@ NativeValue * create_NativeValue(
 	header->typeHdr.type = BaseType_Value_Native;
 	header->refCount = 1;
 	header->size = size;
-	header->frozenFlag = !mutable;
-	header->immutableFlag = !mutable;
+	header->frozenFlag = immutable;
+	header->immutableFlag = immutable;
 
 	def footer = (struct ValueFooter *)getFooter(result);
 	footer->typeDesc = typeDesc;
