@@ -172,6 +172,16 @@ void decRefCountAndFree(
 	}
 }
 
+
+static inline
+void discardValue( Opt(NativeValue *) optValue )
+{
+	return_unless(no_value, value, optValue);
+	def footer = requireToBeValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+	decRefCountAndFree(header, footer);
+}
+
 // // ----------------------------------------------------------------------------
 
 public
@@ -187,10 +197,7 @@ NativeValue * retain_NativeValue( NativeValue * value )
 public
 void discard_NativeValue( Opt(NativeValue *) optValue )
 {
-	return_unless(no_value, value, optValue);
-	def footer = requireToBeValueAndGetFooter(value);
-	def header = (struct ValueHeader *)value;
-	decRefCountAndFree(header, footer);
+	discardValue(optValue);
 }
 
 
@@ -358,7 +365,7 @@ bool set_NativeValue( OutPtr(NativeValue *) valuePtr, NativeValue * newValue )
 
 	*valuePtr = (struct NativeValue *)incRefCount(
 		(struct ValueHeader *)newValue);
-	discard_NativeValue(oldValue);
+	discardValue(oldValue);
 	return true;
 }
 
@@ -375,7 +382,7 @@ bool setOpt_NativeValue(
 		(struct NativeValue *)incRefCount((struct ValueHeader *)newValue)
 		: nil
 	);
-	if (oldValue) discard_NativeValue(oldValue);
+	if (oldValue) discardValue(oldValue);
 	return true;
 }
 
