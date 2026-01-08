@@ -12,15 +12,15 @@
 static
 struct {
 	bool armed;
-	const char * expectedExpr;
+	const char * lastExpr;
 	jmp_buf env;
 } requirementTrap;
 
 __attribute__((visibility("default")))
-int _armRequireTrap( const char * expectedExpr )
+int _armRequireTrap( void )
 {
 	requirementTrap.armed = true;
-	requirementTrap.expectedExpr = expectedExpr;
+	requirementTrap.lastExpr = NULL;
 	return setjmp(requirementTrap.env);
 }
 
@@ -28,7 +28,13 @@ __attribute__((visibility("default")))
 void _disarmRequireTrap( void )
 {
 	requirementTrap.armed = false;
-	requirementTrap.expectedExpr = NULL;
+	requirementTrap.lastExpr = NULL;
+}
+
+__attribute__((visibility("default")))
+const char * _getLastRequirementExpr( void )
+{
+	return requirementTrap.lastExpr;
 }
 
 #endif // TESTING
@@ -58,19 +64,9 @@ void _requirementHasFailed(
 	}
 #if TESTING
 	if (requirementTrap.armed) {
-		if (!requirementTrap.expectedExpr
-			|| strcmp(requirementTrap.expectedExpr, expr) == 0)
-		{
-			requirementTrap.armed = false;
-			longjmp(requirementTrap.env, 1);
-		}
-
-		fprintf(
-			stderr, "Expected requirement: %s\n",
-			(requirementTrap.expectedExpr ?
-				requirementTrap.expectedExpr : "(any)"
-			)
-		);
+		requirementTrap.lastExpr = expr;
+		requirementTrap.armed = false;
+		longjmp(requirementTrap.env, 1);
 	}
 #endif
 	abort();

@@ -156,10 +156,13 @@ void _assertionHasFailed(
 #if TESTING
 
 __attribute__((visibility("default")))
-int _armAssertTrap( const char * expectedExpr );
+int _armAssertTrap( void );
 
 __attribute__((visibility("default")))
 void _disarmAssertTrap( void );
+
+__attribute__((visibility("default")))
+const char * _getLastAssertionExpr( void );
 
 
 #endif // TESTING

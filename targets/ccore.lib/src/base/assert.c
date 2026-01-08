@@ -12,15 +12,15 @@
 static
 struct {
 	bool armed;
-	const char * expectedExpr;
+	const char * lastExpr;
 	jmp_buf env;
 } assertionTrap;
 
 __attribute__((visibility("default")))
-int _armAssertTrap( const char * expectedExpr )
+int _armAssertTrap( void )
 {
 	assertionTrap.armed = true;
-	assertionTrap.expectedExpr = expectedExpr;
+	assertionTrap.lastExpr = NULL;
 	return setjmp(assertionTrap.env);
 }
 
@@ -28,7 +28,13 @@ __attribute__((visibility("default")))
 void _disarmAssertTrap( void )
 {
 	assertionTrap.armed = false;
-	assertionTrap.expectedExpr = NULL;
+	assertionTrap.lastExpr = NULL;
+}
+
+__attribute__((visibility("default")))
+const char * _getLastAssertionExpr( void )
+{
+	return assertionTrap.lastExpr;
 }
 
 #endif // TESTING
@@ -57,20 +63,9 @@ void _assertionHasFailed(
 
 #if TESTING
 	if (assertionTrap.armed) {
-		if (!assertionTrap.expectedExpr
-			|| strcmp(assertionTrap.expectedExpr, expr) == 0)
-		{
-			assertionTrap.armed = false;
-			longjmp(assertionTrap.env, 1);
-		}
-
-		// Wrong assertion while a trap is armed, fail hard
-		fprintf(
-			stderr, "Expected assertion: %s\n",
-			(assertionTrap.expectedExpr ?
-				assertionTrap.expectedExpr : "(any)"
-			)
-		);
+		assertionTrap.lastExpr = expr;
+		assertionTrap.armed = false;
+		longjmp(assertionTrap.env, 1);
 	}
 
 	// No trap armed, treat as unexpected assertion

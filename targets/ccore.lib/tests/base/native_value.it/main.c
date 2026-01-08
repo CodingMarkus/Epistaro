@@ -22,7 +22,7 @@ struct TestValueState {
 };
 
 struct TestValuePayload {
-	int32e unused;
+	int32e payloadValue;
 };
 
 static struct TestValueState g_test_values[kMaxTestValues];
@@ -115,6 +115,52 @@ void freezeTestValue( Opt(NativeValue *) value )
 }
 
 
+static
+bool markStorageCalled(
+	const void * storage, intS size, void * context )
+{
+	(void)storage;
+	(void)size;
+	def called = (bool *)context;
+	*called = true;
+	return true;
+}
+
+
+static
+bool markMutableStorageCalled(
+	void * storage, intS size, void * context )
+{
+	(void)storage;
+	(void)size;
+	def called = (bool *)context;
+	*called = true;
+	return true;
+}
+
+
+static
+bool writeStoragePayload(
+	void * storage, intS size, void * context )
+{
+	expect(size == (intS)sizeof(struct TestValuePayload));
+	def payload = (struct TestValuePayload *)storage;
+	payload->payloadValue = *(int32e *)context;
+	return true;
+}
+
+
+static
+bool readStoragePayload(
+	const void * storage, intS size, void * context )
+{
+	expect(size == (intS)sizeof(struct TestValuePayload));
+	def payload = (const struct TestValuePayload *)storage;
+	*(int32e *)context = payload->payloadValue;
+	return true;
+}
+
+
 static const struct TypeDescriptor_NativeValue TestValueType;
 
 static
@@ -123,7 +169,7 @@ void * copyTestValue(
 {
 	def state = requireState(value);
 	def copy = create_NativeValue(
-		true, sizeof(struct TestValuePayload), &TestValueType);
+		false, sizeof(struct TestValuePayload), &TestValueType);
 	expect(copy, "create_NativeValue failed in copy");
 	def copyState = addState(copy, state->number);
 	expect(copyState, "Test value capacity exceeded");
@@ -317,6 +363,62 @@ void test_setters( void )
 }
 
 
+static
+void test_storageAccess( void )
+{
+	init called = false;
+	expect(!withStorage_NativeValue(nil, markStorageCalled, &called));
+	expect(!called);
+
+	init value = createTestValue(10, false);
+	init writeValue = 123;
+	expect(withMutableStorage_NativeValue(
+		&value, writeStoragePayload, &writeValue));
+
+	init readValue = 0;
+	expect(withStorage_NativeValue(value, readStoragePayload, &readValue));
+	expect(readValue == writeValue);
+
+	init optValue = (NativeValue *)nil;
+	called = false;
+	expect(!withMutableStorageOpt_NativeValue(
+		&optValue, markMutableStorageCalled, &called));
+	expect(!called);
+	expect(!optValue);
+
+	freeze_NativeValue(value);
+	def frozenValue = value;
+	writeValue = 456;
+	expect(withMutableStorage_NativeValue(
+		&value, writeStoragePayload, &writeValue));
+	expect(value != frozenValue);
+	readValue = 0;
+	expect(withStorage_NativeValue(value, readStoragePayload, &readValue));
+	expect(readValue == writeValue);
+
+	optValue = createTestValue(20, false);
+	freeze_NativeValue(optValue);
+	def frozenOpt = optValue;
+	writeValue = 789;
+	expect(withMutableStorageOpt_NativeValue(
+		&optValue, writeStoragePayload, &writeValue));
+	expect(optValue != frozenOpt);
+	readValue = 0;
+	expect(withStorage_NativeValue(optValue, readStoragePayload, &readValue));
+	expect(readValue == writeValue);
+
+	init immutable = createTestValue(30, true);
+	expect_require("!header->immutableFlag", {
+		withMutableStorage_NativeValue(
+			&immutable, writeStoragePayload, &writeValue);
+	});
+
+	discard_NativeValue(value);
+	discard_NativeValue(optValue);
+	discard_NativeValue(immutable);
+}
+
+
 int main( void )
 {
 	test_basics();
@@ -324,6 +426,7 @@ int main( void )
 	test_copyAndFreeze();
 	test_retainAndDiscard();
 	test_setters();
+	test_storageAccess();
 
 	expect(countStates() == 0, "Leaked test values");
 	return 0;

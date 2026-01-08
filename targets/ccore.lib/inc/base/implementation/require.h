@@ -14,10 +14,13 @@ void _requirementHasFailed(
 #if TESTING
 
 __attribute__((visibility("default")))
-int _armRequireTrap( const char * expectedExpr );
+int _armRequireTrap( void );
 
 __attribute__((visibility("default")))
 void _disarmRequireTrap( void );
+
+__attribute__((visibility("default")))
+const char * _getLastRequirementExpr( void );
 
 #endif // TESTING
 
