@@ -132,6 +132,19 @@ const struct ValueFooter * requireToBeValueAndGetFooter(
 
 
 static inline
+void * getPayloadPtr( struct ValueHeader * header )
+{
+	return (void *)((int8e *)header + sizeof(struct ValueHeader));
+}
+
+
+static inline
+const void * getPayloadPtrConst( const struct ValueHeader * header )
+{
+	return (const void *)((const int8e *)header + sizeof(struct ValueHeader));
+}
+
+static inline
 struct ValueHeader * incRefCount( struct ValueHeader * header )
 {
 	if (likely_true(!header->threadSafeFlag)) {
@@ -182,6 +195,64 @@ void discardValue( Opt(NativeValue *) optValue )
 	decRefCountAndFree(header, footer);
 }
 
+
+static inline
+bool unfreezeInPlace( NativeValue ** valuePtr, bool allowNil )
+{
+	def value = *valuePtr;
+	if (allowNil && !value) return false;
+
+	def footer = requireToBeValueAndGetFooter(value);
+	def header = (struct ValueHeader *)value;
+
+	if (header->immutableFlag || !header->frozenFlag) return false;
+
+#if HEAVY_CHECKS_ENABLED
+	def currentHash = hash_NativeValue(value);
+	assert(
+		currentHash == footer->hash,
+		"Frozen value was modified after freezing."
+	);
+#endif
+
+	*valuePtr = footer->typeDesc->copyFunc(value, false);
+	decRefCountAndFree(header, footer);
+	return true;
+}
+
+
+static inline
+bool withMutableStorage(
+	NativeValue ** valuePtr,
+	bool allowNil,
+	WithMutableStorageFunc_NativeValue * func,
+	void * context )
+{
+	init value = *valuePtr;
+	if (allowNil && !value) return false;
+
+	requireToBeValue(value);
+	init header = (struct ValueHeader *)value;
+	require(!header->immutableFlag,
+		"Cannot access mutable storage on immutable value.");
+
+	if (header->frozenFlag) {
+		unfreezeInPlace(valuePtr, allowNil);
+		value = *valuePtr;
+		if (allowNil && !value) return false;
+		requireToBeValue(value);
+		header = (struct ValueHeader *)value;
+		require(!header->frozenFlag,
+			"Failed to unfreeze value for mutable storage access.");
+	}
+
+	return func(
+		getPayloadPtr(header),
+		(intS)header->size,
+		context
+	);
+}
+
 // // ----------------------------------------------------------------------------
 
 public
@@ -216,6 +287,43 @@ const char * createDescription_NativeValue( Opt(NativeValue *) optValue )
 	return_unless(strdup("<nil>"), value, optValue);
 	def footer = requireToBeValueAndGetFooter(value);
 	return footer->typeDesc->createDescFunc(value);
+}
+
+
+public
+bool withStorage_NativeValue(
+	Opt(const NativeValue *) optValue,
+	WithStorageFunc_NativeValue * func,
+	void * context )
+{
+	return_unless(false, value, optValue);
+	requireToBeValue(value);
+	def header = (const struct ValueHeader *)value;
+	return func(
+		getPayloadPtrConst(header),
+		(intS)header->size,
+		context
+	);
+}
+
+
+public
+bool withMutableStorage_NativeValue(
+	OutPtr(NativeValue *) valuePtr,
+	WithMutableStorageFunc_NativeValue * func,
+	void * context )
+{
+	return withMutableStorage(valuePtr, false, func, context);
+}
+
+
+public
+bool withMutableStorageOpt_NativeValue(
+	OutPtrOpt(NativeValue *) valuePtr,
+	WithMutableStorageFunc_NativeValue * func,
+	void * context )
+{
+	return withMutableStorage(valuePtr, true, func, context);
 }
 
 
@@ -390,49 +498,14 @@ bool setOpt_NativeValue(
 public
 bool unfreezeInPlace_NativeValue( OutPtr(NativeValue *) valuePtr )
 {
-	def value = *valuePtr;
-	def footer = requireToBeValueAndGetFooter(value);
-	def header = (struct ValueHeader *)value;
-
-	if (header->immutableFlag || !header->frozenFlag) return false;
-
-#if HEAVY_CHECKS_ENABLED
-	def currentHash = hash_NativeValue(value);
-	assert(
-		currentHash == footer->hash,
-		"Frozen value was modified after freezing."
-	);
-#endif
-
-	*valuePtr = footer->typeDesc->copyFunc(value, false);
-	discard_NativeValue(value);
-	return true;
+	return unfreezeInPlace(valuePtr, false);
 }
 
 
 public
 bool unfreezeInPlaceOpt_NativeValue( OutPtrOpt(NativeValue *) optValuePtr )
 {
-	if (!*optValuePtr) return false;
-	def value = (NativeValue *)*optValuePtr;
-
-	requireToBeValue(value);
-	def header = (struct ValueHeader *)value;
-	if (header->immutableFlag || !header->frozenFlag) return false;
-
-	def footer = getFooter(header);
-
-#if HEAVY_CHECKS_ENABLED
-	def currentHash = hash_NativeValue(value);
-	assert(
-		currentHash == footer->hash,
-		"Frozen value was modified after freezing."
-	);
-#endif
-
-	*optValuePtr = footer->typeDesc->copyFunc(value, false);
-	discard_NativeValue(value);
-	return true;
+	return unfreezeInPlace(optValuePtr, true);
 }
 
 

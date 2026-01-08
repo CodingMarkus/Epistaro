@@ -67,6 +67,22 @@ typedef char * (CreateDescFunc_NativeValue)( const NativeValue * value );
 
 
 /**
+	Callback for read-only access to native storage.
+*/
+typedef bool (WithStorageFunc_NativeValue)(
+	const void * storage, intS size, void * context
+);
+
+
+/**
+	Callback for mutable access to native storage.
+*/
+typedef bool (WithMutableStorageFunc_NativeValue)(
+	void * storage, intS size, void * context
+);
+
+
+/**
 	@param name Printable type name. For a given type, the pointer identity
 		must be stable across instances (`==` must hold).
 	@param hashFunc Function to compute a value's hash. See
@@ -123,6 +139,51 @@ const char * getName_NativeValue( Opt(NativeValue *) optValue );
 	Caller must free description using `free()`.
 */
 const char * createDescription_NativeValue( Opt(NativeValue *) value );
+
+
+/**
+	Call `func` with a read-only pointer to the value's native storage.
+
+	The storage pointer is only valid for the duration of the callback.
+	If `value` is `nil`, the callback is not called.
+
+	@returns Result of the callback, or `false` if `value` is `nil`.
+*/
+bool withStorage_NativeValue(
+	Opt(const NativeValue *) value,
+	WithStorageFunc_NativeValue * func,
+	void * context
+);
+
+
+/**
+	Call `func` with a mutable pointer to the value's native storage.
+
+	The storage pointer is only valid for the duration of the callback.
+	If the value is frozen, it is unfrozen in place and `valuePtr` may change.
+	Immutable values are not allowed.
+
+	@returns Result of the callback.
+*/
+bool withMutableStorage_NativeValue(
+	OutPtr(NativeValue *) valuePtr,
+	WithMutableStorageFunc_NativeValue * func,
+	void * context
+);
+
+
+/**
+	Like `withMutableStorage_NativeValue()` but `valuePtr` may point to `nil`.
+
+	If `*valuePtr` is `nil`, the callback is not called.
+
+	@returns Result of the callback, or `false` if `*valuePtr` is `nil`.
+*/
+bool withMutableStorageOpt_NativeValue(
+	OutPtrOpt(NativeValue *) valuePtr,
+	WithMutableStorageFunc_NativeValue * func,
+	void * context
+);
 
 
 /**
