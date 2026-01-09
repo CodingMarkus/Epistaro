@@ -4,7 +4,8 @@
 
 #include "../base/implementation/assert.h" // IWYU pragma: keep
 #include "../base/implementation/require.h" // IWYU pragma: keep
-#include <setjmp.h>
+
+#include <setjmp.h> // IWYU pragma: keep
 
 #include "../base/begin_header.h"
 begin_header
