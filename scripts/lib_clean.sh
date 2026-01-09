@@ -9,6 +9,58 @@ __included_lib_clean_sh=1
 . lib_paths.sh
 
 
+# $1 - Source root directory.
+# $2 - Object root directory.
+#
+# Removes stale objects/dep files and prunes empty directories.
+#
+pruneObjectTree( )
+(
+	srcRoot=$1
+	objRoot=$2
+
+	[ -d "$objRoot" ] || return 0
+	[ -d "$srcRoot" ] || return 0
+
+	while IFS= read -r objPath || [ -n "$objPath" ]
+	do
+		[ -n "$objPath" ] || continue
+		relPath=${objPath#"$objRoot"/}
+		relPath=${relPath%.o}
+		srcPath=$srcRoot/$relPath.c
+		if [ ! -f "$srcPath" ]
+		then
+			rm -f "$objPath" "$objRoot/$relPath.dep"
+		fi
+	done <<EOF
+$( find "$objRoot" -type f -name '*.o' -print )
+EOF
+
+	while IFS= read -r depPath || [ -n "$depPath" ]
+	do
+		[ -n "$depPath" ] || continue
+		relPath=${depPath#"$objRoot"/}
+		relPath=${relPath%.dep}
+		objPath=$objRoot/$relPath.o
+		srcPath=$srcRoot/$relPath.c
+		if [ ! -f "$objPath" ] || [ ! -f "$srcPath" ]
+		then
+			rm -f "$depPath"
+		fi
+	done <<EOF
+$( find "$objRoot" -type f -name '*.dep' -print )
+EOF
+
+	while IFS= read -r dirPath || [ -n "$dirPath" ]
+	do
+		[ -n "$dirPath" ] || continue
+		rmdir "$dirPath" 2>/dev/null || true
+	done <<EOF
+$( find "$objRoot" -type d -empty ! -path "$objRoot" -print )
+EOF
+)
+
+
 # $1 - Project root directory.
 #
 # $2 - Optional style name (empty for all styles).

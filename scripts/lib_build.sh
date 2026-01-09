@@ -10,6 +10,7 @@ __included_lib_build_sh=1
 . lib_build_common.sh
 . lib_build_settings.sh
 . lib_clang.sh
+. lib_clean.sh
 . lib_link.sh
 . lib_outdated.sh
 . lib_paths.sh
@@ -99,6 +100,8 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 	compiledAny=0
 
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
+
+	pruneObjectTree "$srcRoot" "$objRoot"
 
 	targetLabel=$( formatTargetLabel "$target" )
 	printHeader "====== Building Target $targetLabel ======"

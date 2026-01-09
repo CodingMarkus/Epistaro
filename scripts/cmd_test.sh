@@ -8,6 +8,7 @@ initCmdPaths "$__scriptDir"
 
 
 . lib_test.sh
+. lib_clean.sh
 
 
 # Prints command usage information.
@@ -383,6 +384,14 @@ EOF
 		testSpacingPending=0
 		targetOutDir=$( testsTargetTargetDirPath "$buildDir" \
 			"$styleName" "$target" )
+		testsRoot=$__projDir/targets/$target/tests
+		testObjRoot=$( testsTargetObjDirPath "$buildDir" \
+			"$styleName" "$target" )
+		testOutDir=$( testsTargetBinDirPath "$buildDir" \
+			"$styleName" "$target" )
+		ensureDir "$testObjRoot"
+		ensureDir "$testOutDir"
+		pruneObjectTree "$testsRoot" "$testObjRoot"
 
 		while IFS= read -r testLine || [ -n "$testLine" ]
 		do
@@ -393,7 +402,6 @@ EOF
 			testType=$_pt_test_type
 			targetType=$_pt_target_type
 
-			testsRoot=$__projDir/targets/$target/tests
 			testDir=$testsRoot/$testRel
 			[ -d "$testDir" ] || printErrorAndExit \
 				"Test not found: $target/$testRel"
@@ -409,13 +417,6 @@ EOF
 				fi
 				continue
 			fi
-
-			testObjRoot=$( testsTargetObjDirPath "$buildDir" \
-				"$styleName" "$target" )
-			testOutDir=$( testsTargetBinDirPath "$buildDir" \
-				"$styleName" "$target" )
-			ensureDir "$testObjRoot"
-			ensureDir "$testOutDir"
 
 			testSanitizeSettings=""
 			testCompiled=0
