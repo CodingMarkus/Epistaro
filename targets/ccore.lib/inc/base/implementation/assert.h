@@ -2,6 +2,20 @@
 
 // ============================================================================
 
+#ifdef assert
+	#undef assert
+#endif
+
+#ifdef TESTING
+	#ifdef NDEBUG
+		#undef NDEBUG
+	#endif
+#endif
+
+// ============================================================================
+
+#ifndef NDEBUG
+
 void _assertionHasFailed(
 	const char * expr,
 	const char * file,
@@ -11,7 +25,7 @@ void _assertionHasFailed(
 	...
 );
 
-// ============================================================================
+// ----------------------------------------------------------------------------
 
 // Single argument: assert(cond)
 #define _assert_1( cond )                        \
@@ -88,26 +102,19 @@ void _assertionHasFailed(
 #define _assert_expand( count, ... ) \
 	CONCAT(_assert_, count)(__VA_ARGS__)
 
-#ifdef assert
-	#undef assert
-#endif
 
-#ifdef NDEBUG
-	#define assert( ... )  (void)0
-#else
-	/**
-		@fn void assert(...)
-		`assert` aborts if `cond` is false.
+/**
+	@fn void assert(...)
+	`assert` aborts if `cond` is false.
 
-		- `assert(cond)` triggers on false `cond`.
-		- `assert(cond, msg)` prints a static message.
-		- `assert(cond, format, ...)` prints a formatted message.
-	*/
-	#define assert( ... ) \
-		_assert_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
-#endif
+	- `assert(cond)` triggers on false `cond`.
+	- `assert(cond, msg)` prints a static message.
+	- `assert(cond, format, ...)` prints a formatted message.
+*/
+#define assert( ... ) \
+	_assert_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
 
-// ============================================================================
+// ----------------------------------------------------------------------------
 
 #define _assertFail_0( ) \
 	assert(false)
@@ -136,20 +143,24 @@ void _assertionHasFailed(
 #define _assertFail_expand( count, ... ) \
 	CONCAT(_assertFail_, count)(__VA_ARGS__)
 
-#ifdef NDEBUG
-	#define assertFail( ... )  (void)0
-#else
-	/**
-		@fn void assertFail(...)
-		`assertFail` is a convenience wrapper around `assert(false, ...)`.
+/**
+	@fn void assertFail(...)
+	`assertFail` is a convenience wrapper around `assert(false, ...)`.
 
-		- `assertFail()` triggers without a message.
-		- `assertFail(msg)` prints a static message.
-		- `assertFail(format, ...)` prints a formatted message.
-	*/
-	#define assertFail( ... ) \
-		_assertFail_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
-#endif
+	- `assertFail()` triggers without a message.
+	- `assertFail(msg)` prints a static message.
+	- `assertFail(format, ...)` prints a formatted message.
+*/
+#define assertFail( ... ) \
+	_assertFail_expand(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+
+
+#else // ifndef NDEBUG
+
+	#define assertFail( ... )  (void)0
+	#define assert( ... )  (void)0
+
+#endif // ifndef NDEBUG
 
 // ============================================================================
 
