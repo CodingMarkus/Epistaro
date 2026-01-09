@@ -166,8 +166,10 @@ void _assertionHasFailed(
 
 #if TESTING
 
+#include <setjmp.h>
+
 __attribute__((visibility("default")))
-int _armAssertTrap( void );
+void _armAssertTrap( jmp_buf *env );
 
 __attribute__((visibility("default")))
 void _disarmAssertTrap( void );

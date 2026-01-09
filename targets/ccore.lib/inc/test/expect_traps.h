@@ -4,6 +4,7 @@
 
 #include "../base/implementation/assert.h" // IWYU pragma: keep
 #include "../base/implementation/require.h" // IWYU pragma: keep
+#include <setjmp.h>
 
 #include "../base/begin_header.h"
 begin_header
@@ -15,7 +16,9 @@ void _testVerifyAssertionExpr( const char * expectedExpr );
 
 #define _expect_assert_1( codeBlock )     \
 	({                                    \
-		if (_armAssertTrap() == 0) {      \
+		jmp_buf _env;                     \
+		_armAssertTrap(&_env);            \
+		if (setjmp(_env) == 0) {          \
 			codeBlock;                    \
 			_testFailExpectedAssertion(); \
 		}                                 \
@@ -23,7 +26,9 @@ void _testVerifyAssertionExpr( const char * expectedExpr );
 
 #define _expect_assert_2( exprString, codeBlock ) \
 	({                                            \
-		if (_armAssertTrap() == 0) {              \
+		jmp_buf _env;                             \
+		_armAssertTrap(&_env);                    \
+		if (setjmp(_env) == 0) {                  \
 			codeBlock;                            \
 			_testFailExpectedAssertion();         \
 		} else {                                  \
@@ -46,7 +51,9 @@ void _testVerifyRequirementExpr( const char * expectedExpr );
 
 #define _expect_require_1( codeBlock )      \
 	({                                      \
-		if (_armRequireTrap() == 0) {       \
+		jmp_buf _env;                       \
+		_armRequireTrap(&_env);             \
+		if (setjmp(_env) == 0) {            \
 			codeBlock;                      \
 			_testFailExpectedRequirement(); \
 		}                                   \
@@ -54,7 +61,9 @@ void _testVerifyRequirementExpr( const char * expectedExpr );
 
 #define _expect_require_2( exprString, codeBlock )  \
 	({                                              \
-		if (_armRequireTrap() == 0) {               \
+		jmp_buf _env;                               \
+		_armRequireTrap(&_env);                     \
+		if (setjmp(_env) == 0) {                    \
 			codeBlock;                              \
 			_testFailExpectedRequirement();         \
 		} else {                                    \

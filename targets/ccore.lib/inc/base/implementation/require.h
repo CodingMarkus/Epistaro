@@ -2,6 +2,10 @@
 
 // ============================================================================
 
+#if TESTING
+#include <setjmp.h>
+#endif
+
 void _requirementHasFailed(
 	const char * expr,
 	const char * file,
@@ -13,8 +17,8 @@ void _requirementHasFailed(
 
 #if TESTING
 
-__attribute__((visibility("default"), returns_twice))
-int _armRequireTrap( void );
+__attribute__((visibility("default")))
+void _armRequireTrap( jmp_buf *env );
 
 __attribute__((visibility("default")))
 void _disarmRequireTrap( void );

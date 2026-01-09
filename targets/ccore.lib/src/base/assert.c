@@ -13,17 +13,17 @@ static
 struct {
 	bool armed;
 	const char * lastExpr;
-	jmp_buf env;
+	jmp_buf *env;
 } assertionTrap;
 
 // ---------------------------------------------------------
 
 __attribute__((visibility("default")))
-int _armAssertTrap( void )
+void _armAssertTrap( jmp_buf *env )
 {
 	assertionTrap.armed = true;
 	assertionTrap.lastExpr = NULL;
-	return setjmp(assertionTrap.env);
+	assertionTrap.env = env;
 }
 
 __attribute__((visibility("default")))
@@ -31,6 +31,7 @@ void _disarmAssertTrap( void )
 {
 	assertionTrap.armed = false;
 	assertionTrap.lastExpr = NULL;
+	assertionTrap.env = NULL;
 }
 
 __attribute__((visibility("default")))
@@ -99,10 +100,10 @@ void _assertionHasFailed(
 	fprintf(stderr, "Location: %s:%d (%s)\n", file, line, func);
 
 #if TESTING
-	if (assertionTrap.armed) {
+	if (assertionTrap.armed && assertionTrap.env) {
 		assertionTrap.lastExpr = expr;
 		assertionTrap.armed = false;
-		longjmp(assertionTrap.env, 1);
+		longjmp(*assertionTrap.env, 1);
 	}
 
 	// No trap armed, treat as unexpected assertion

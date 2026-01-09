@@ -13,17 +13,17 @@ static
 struct {
 	bool armed;
 	const char * lastExpr;
-	jmp_buf env;
+	jmp_buf *env;
 } requirementTrap;
 
 // ---------------------------------------------------------
 
 __attribute__((visibility("default")))
-int _armRequireTrap( void )
+void _armRequireTrap( jmp_buf *env )
 {
 	requirementTrap.armed = true;
 	requirementTrap.lastExpr = NULL;
-	return setjmp(requirementTrap.env);
+	requirementTrap.env = env;
 }
 
 __attribute__((visibility("default")))
@@ -31,6 +31,7 @@ void _disarmRequireTrap( void )
 {
 	requirementTrap.armed = false;
 	requirementTrap.lastExpr = NULL;
+	requirementTrap.env = NULL;
 }
 
 __attribute__((visibility("default")))
@@ -100,10 +101,10 @@ void _requirementHasFailed(
 		fprintf(stderr, "Location: %s:%d (%s)\n", file, line, func);
 	}
 #if TESTING
-	if (requirementTrap.armed) {
+	if (requirementTrap.armed && requirementTrap.env) {
 		requirementTrap.lastExpr = expr;
 		requirementTrap.armed = false;
-		longjmp(requirementTrap.env, 1);
+		longjmp(*requirementTrap.env, 1);
 	}
 #endif
 	abort();
