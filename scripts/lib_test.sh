@@ -27,6 +27,647 @@ isStyleFlag( )
 }
 
 
+# $1 - Style name.
+#
+# Appends the style name to the style list stored in styleNames.
+#
+appendStyleName( )
+{
+	_asn_style=$1
+
+	if [ -n "$styleNames" ]
+	then
+		styleNames="$styleNames
+$_asn_style"
+	else
+		styleNames=$_asn_style
+	fi
+}
+
+
+# $1 - Project root directory.
+# $2 - Style name.
+#
+# Resolves a style file path and ensures it exists.
+#
+resolveTestStyleFile( )
+{
+	_rsf_root=$1
+	_rsf_style=$2
+	_rsf_file=$_rsf_style
+
+	case "$_rsf_file" in
+		/*) ;;
+		*/*.cfg|*/*) _rsf_file="$_rsf_root/$_rsf_file" ;;
+		*.cfg) _rsf_file="$_rsf_root/styles/$_rsf_file" ;;
+		*) _rsf_file="$_rsf_root/styles/$_rsf_style.cfg" ;;
+	esac
+
+	if [ ! -f "$_rsf_file" ]
+	then
+		printErrorAndExit "Style not found: $_rsf_file"
+	fi
+
+	printf '%s\n' "$_rsf_file"
+}
+
+
+# $1 - Test line (target|test path).
+#
+# Sets test parsing globals: _pt_target, _pt_rel, _pt_test_type,
+# _pt_target_type.
+#
+parseTestLine( )
+{
+	_pt_line=$1
+	_pt_target=${_pt_line%%|*}
+	_pt_rel=${_pt_line#*|}
+	if [ "$_pt_rel" = "$_pt_line" ]
+	then
+		printErrorAndExit "Invalid test selection: $_pt_line"
+	fi
+
+	case "$_pt_rel" in
+		*.ut) _pt_test_type=ut ;;
+		*.it) _pt_test_type=it ;;
+		*)
+			printErrorAndExit \
+				"Invalid test name: $_pt_target/$_pt_rel"
+			;;
+	esac
+
+	case "$_pt_target" in
+		*.lib) _pt_target_type=lib ;;
+		*.bin) _pt_target_type=bin ;;
+		*) printErrorAndExit "Unknown target type: $_pt_target" ;;
+	esac
+}
+
+
+# $1 - Test binary path.
+# $2 - Test label.
+# $1 - Error output path.
+#
+# Prints filtered error output for test failures.
+#
+filterTestErrorOutput( )
+{
+	_fte_path=${1:-}
+	_fte_targets_root=${__projDir%/}/targets/
+	awk -v proj="$_fte_targets_root" -v repl="targets/" '
+		function replace_all(str, needle, repl,    pos) {
+			while ((pos = index(str, needle)) > 0) {
+				str = substr(str, 1, pos - 1) repl \
+					substr(str, pos + length(needle))
+			}
+			return str
+		}
+		{
+			if (proj != "") {
+				$0 = replace_all($0, proj, repl)
+			}
+			print
+		}
+	' ${_fte_path:+"$_fte_path"}
+}
+
+
+# $1 - Test binary path.
+# $2 - Test label.
+# ($3) - Optional dynamic library directory.
+#
+# Runs a test binary and prints status, emitting captured stderr on failure.
+#
+runTestAndReport( )
+{
+	_rtr_path=$1
+	_rtr_label=$2
+	_rtr_lib=${3:-}
+
+	if [ -n "$_rtr_lib" ]
+	then
+		if _rtr_err=$( runTestBinary "$_rtr_path" "$_rtr_lib" 2>&1 )
+		then
+			_rtr_status=0
+		else
+			_rtr_status=$?
+		fi
+	else
+		if _rtr_err=$( runTestBinary "$_rtr_path" 2>&1 )
+		then
+			_rtr_status=0
+		else
+			_rtr_status=$?
+		fi
+	fi
+
+	if [ "$_rtr_status" -eq 0 ]
+	then
+		printf 'Testing %s... [' "$_rtr_label"
+		printTestSuccess "PASSED"
+		printf ']\n'
+		return 0
+	fi
+
+	printf 'Testing %s... [' "$_rtr_label"
+	printTestFailure "FAILED"
+	printf ']\n'
+	if [ -n "$_rtr_err" ]
+	then
+		printf '%s\n' "$_rtr_err" | filterTestErrorOutput
+	fi
+	return "$_rtr_status"
+}
+
+
+# $1 - Project root directory.
+# $2 - Original working directory.
+# $3 - Style names list, separated by newlines.
+# $4.. - Target/test spec list.
+#
+# Builds and runs tests for the selected targets and styles.
+#
+runTests( )
+{
+	_rt_root=$1
+	_rt_orig=$2
+	_rt_style_names=$3
+	shift 3
+
+	platformRequireSupportedTarget
+	export __style_set__TARGET __style_set__TARGET_OS __style_set__TARGET_CPU
+
+	_rt_selections=""
+	if [ "$#" -eq 0 ]
+	then
+		for _rt_target_dir in "$_rt_root"/targets/*
+		do
+			[ -d "$_rt_target_dir" ] || continue
+			_rt_target=$( basename -- "$_rt_target_dir" )
+			if [ -n "$_rt_selections" ]
+			then
+				_rt_selections="$_rt_selections
+$_rt_target|"
+			else
+				_rt_selections="$_rt_target|"
+			fi
+		done
+		if [ -z "$_rt_selections" ]
+		then
+			printErrorAndExit "No targets found"
+		fi
+	else
+		for _rt_spec in "$@"
+		do
+			case "$_rt_spec" in
+				*/*)
+					_rt_target_part=${_rt_spec%%/*}
+					_rt_selection=${_rt_spec#*/}
+					[ -n "$_rt_selection" ] || printErrorAndExit \
+						"Invalid test path: $_rt_spec"
+					;;
+				*)
+					_rt_target_part=$_rt_spec
+					_rt_selection=
+					;;
+			esac
+
+			_rt_target=$( resolveTargetName "$_rt_root" \
+				"$_rt_target_part" )
+
+			if [ -n "$_rt_selections" ]
+			then
+				_rt_selections="$_rt_selections
+$_rt_target|$_rt_selection"
+			else
+				_rt_selections="$_rt_target|$_rt_selection"
+			fi
+		done
+	fi
+
+	_rt_tests_to_run=""
+
+	_rt_tmp_path=$( mktemp "${TMPDIR:-/tmp}/tests.XXXXXX" ) \
+		|| printErrorAndExit "mktemp failed"
+
+	while IFS= read -r _rt_selection_line \
+		|| [ -n "$_rt_selection_line" ]
+	do
+		[ -n "$_rt_selection_line" ] || continue
+		_rt_target=${_rt_selection_line%%|*}
+		_rt_selection=${_rt_selection_line#*|}
+		if [ "$_rt_selection" = "$_rt_selection_line" ]
+		then
+			_rt_selection=
+		fi
+
+		: > "$_rt_tmp_path"
+		collectTestDirs "$_rt_root" "$_rt_target" \
+			"$_rt_selection" > "$_rt_tmp_path"
+
+		if [ ! -s "$_rt_tmp_path" ]
+		then
+			if [ -n "$_rt_selection" ]
+			then
+				printErrorAndExit \
+					"No tests found for $_rt_target/$_rt_selection"
+			fi
+			continue
+		fi
+
+		while IFS= read -r _rt_test_rel || [ -n "$_rt_test_rel" ]
+		do
+			[ -n "$_rt_test_rel" ] || continue
+			_rt_entry=$_rt_target\|$_rt_test_rel
+			if [ -n "$_rt_tests_to_run" ]
+			then
+				_rt_tests_to_run="$_rt_tests_to_run
+$_rt_entry"
+			else
+				_rt_tests_to_run=$_rt_entry
+			fi
+		done < "$_rt_tmp_path"
+	done <<EOF
+$_rt_selections
+EOF
+
+	rm -f "$_rt_tmp_path"
+
+	_rt_tests_to_run=$( printf '%s\n' "$_rt_tests_to_run" \
+		| awk 'NF && !seen[$0]++' )
+	_rt_targets_to_run=$( printf '%s\n' "$_rt_tests_to_run" \
+		| awk -F'|' 'NF && !seen[$1]++ { print $1 }' )
+
+	if [ -z "$_rt_tests_to_run" ]
+	then
+		printf '\nNo tests found.\n'
+		return 0
+	fi
+
+	case "$_rt_orig" in
+		"$_rt_root"/*|"$_rt_root") _rt_build_dir=$( outRootPath "$_rt_root" ) ;;
+		*) _rt_build_dir="$_rt_orig" ;;
+	esac
+
+	_rt_multiple_styles=0
+	case "$_rt_style_names" in
+		*"
+"*) _rt_multiple_styles=1 ;;
+	esac
+
+	_rt_test_failures=0
+	_rt_tests_run=0
+	_rt_tests_failed=0
+	while IFS= read -r _rt_style_name || [ -n "$_rt_style_name" ]
+	do
+		[ -n "$_rt_style_name" ] || continue
+
+		_rt_style_file=$( resolveTestStyleFile "$_rt_root" \
+			"$_rt_style_name" )
+		_rt_build_settings=$( resolvedBuildSettings "$_rt_style_file" \
+			"-DTESTING" )
+		syncStyleSetVars "$_rt_style_file"
+
+		if [ "$_rt_multiple_styles" -eq 1 ]
+		then
+			printHeader "====== Building Style $_rt_style_name ======"
+		fi
+
+		while IFS= read -r _rt_target || [ -n "$_rt_target" ]
+		do
+			[ -n "$_rt_target" ] || continue
+			_rt_target_out_dir=$( testsTargetTargetDirPath "$_rt_build_dir" \
+				"$_rt_style_name" "$_rt_target" )
+			buildTarget "$_rt_root" "$_rt_target" \
+				"$_rt_style_name" "$_rt_build_dir" \
+				"$_rt_build_settings" "$_rt_target_out_dir"
+		done <<EOF
+$_rt_targets_to_run
+EOF
+
+		while IFS= read -r _rt_target || [ -n "$_rt_target" ]
+		do
+			[ -n "$_rt_target" ] || continue
+			_rt_target_label=$( formatTargetLabel "$_rt_target" )
+			printHeader "====== Building Tests for Target $_rt_target_label ======"
+			printf 'Using Build Style: %s\n\n' "$_rt_style_name"
+			_rt_target_had_output=0
+			_rt_test_spacing_pending=0
+			_rt_target_out_dir=$( testsTargetTargetDirPath "$_rt_build_dir" \
+				"$_rt_style_name" "$_rt_target" )
+			_rt_tests_root=$_rt_root/targets/$_rt_target/tests
+			_rt_test_obj_root=$( testsTargetObjDirPath "$_rt_build_dir" \
+				"$_rt_style_name" "$_rt_target" )
+			_rt_test_out_dir=$( testsTargetBinDirPath "$_rt_build_dir" \
+				"$_rt_style_name" "$_rt_target" )
+			ensureDir "$_rt_test_obj_root"
+			ensureDir "$_rt_test_out_dir"
+			pruneObjectTree "$_rt_tests_root" "$_rt_test_obj_root"
+
+			while IFS= read -r _rt_test_line || [ -n "$_rt_test_line" ]
+			do
+				[ -n "$_rt_test_line" ] || continue
+				parseTestLine "$_rt_test_line"
+				[ "$_pt_target" = "$_rt_target" ] || continue
+				_rt_test_rel=$_pt_rel
+				_rt_test_type=$_pt_test_type
+				_rt_target_type=$_pt_target_type
+
+				_rt_test_dir=$_rt_tests_root/$_rt_test_rel
+				[ -d "$_rt_test_dir" ] || printErrorAndExit \
+					"Test not found: $_rt_target/$_rt_test_rel"
+
+				if [ "$_rt_test_type" = "it" ] \
+					&& [ "$_rt_target_type" = "bin" ]
+				then
+					if find "$_rt_test_dir" -type f -name '*.c' \
+						-print -quit | grep -q .
+					then
+						_err_msg="Integration test must be "
+						_err_msg="${_err_msg}scripts only: "
+						_err_msg="${_err_msg}$_rt_target/$_rt_test_rel"
+						printErrorAndExit "$_err_msg"
+					fi
+					continue
+				fi
+
+				_rt_test_sanitize_settings=""
+				_rt_test_compiled=0
+				_rt_test_name=${_rt_test_rel%.*}
+				_rt_test_label="$_rt_test_name [$_rt_test_type]"
+				_rt_pre_header_spacing=0
+				if [ "$_rt_test_spacing_pending" -eq 1 ]
+				then
+					_rt_pre_header_spacing=2
+				fi
+				if ! buildTestObjects "$_rt_root" "$_rt_tests_root" \
+					"$_rt_test_rel" "$_rt_test_obj_root" \
+					"$_rt_build_settings" _rt_test_sanitize_settings \
+					_rt_test_compiled "$_rt_test_label" \
+					"$_rt_pre_header_spacing"
+				then
+					if [ "$?" -eq 2 ]
+					then
+						_err_msg="No C sources found for "
+						_err_msg="${_err_msg}test: "
+						_err_msg="${_err_msg}$_rt_target/$_rt_test_rel"
+						printErrorAndExit "$_err_msg"
+					fi
+					return 1
+				fi
+				if [ "$_rt_test_compiled" -eq 1 ]
+				then
+					_rt_target_had_output=1
+					_rt_test_spacing_pending=1
+				fi
+
+				_rt_test_objs=$( collectTestObjects \
+					"$_rt_test_obj_root" "$_rt_test_rel" )
+				[ -n "$_rt_test_objs" ] \
+					|| printErrorAndExit \
+						"No objects found for test: $_rt_target/$_rt_test_rel"
+
+				_rt_link_flags=$( linkFlagsFromSettings \
+					"$_rt_build_settings" "$_rt_test_sanitize_settings" )
+
+				_rt_test_bin_path=$( testBinaryPath "$_rt_test_out_dir" \
+					"$_rt_test_rel" )
+				case "$_rt_test_bin_path" in
+					*/*) ensureDir "${_rt_test_bin_path%/*}" ;;
+				esac
+
+				if [ "$_rt_test_type" = "ut" ]
+				then
+					_rt_exclude_main=0
+					if [ "$_rt_target_type" = "bin" ]
+					then
+						_rt_exclude_main=1
+					fi
+
+					_rt_target_objs=$( collectTargetObjects \
+						"$_rt_build_dir" "$_rt_style_name" \
+						"$_rt_target" "$_rt_exclude_main" \
+						"$_rt_target_out_dir" )
+					[ -n "$_rt_target_objs" ] \
+						|| printErrorAndExit \
+							"No target objects for $_rt_target"
+
+					set --
+					while IFS= read -r _rt_obj_path \
+						|| [ -n "$_rt_obj_path" ]
+					do
+						[ -n "$_rt_obj_path" ] || continue
+						set -- "$@" "$_rt_obj_path"
+					done <<EOF
+$_rt_target_objs
+EOF
+					while IFS= read -r _rt_obj_path \
+						|| [ -n "$_rt_obj_path" ]
+					do
+						[ -n "$_rt_obj_path" ] || continue
+						set -- "$@" "$_rt_obj_path"
+					done <<EOF
+$_rt_test_objs
+EOF
+
+					if isOutdated "$_rt_test_bin_path" "$@"
+					then
+						if [ "$_rt_test_compiled" -eq 1 ]
+						then
+							printf '\n'
+						fi
+						_rt_test_bin_name=${_rt_test_bin_path##*/}
+						printf 'Linking %s [%s]...\n' \
+							"$_rt_test_bin_name" "$_rt_test_type"
+						linkBinary "$_rt_test_bin_path" "$_rt_root" \
+							"$_rt_link_flags" "$@"
+						_rt_target_had_output=1
+						_rt_test_spacing_pending=1
+					fi
+					continue
+				fi
+
+				if [ "$_rt_test_type" = "it" ] \
+					&& [ "$_rt_target_type" = "lib" ]
+				then
+					_rt_target_dir=$_rt_target_out_dir
+					_rt_dynamic_path=$_rt_target_dir/${_rt_target%.lib}$( \
+						dynamicLibExtension )
+					[ -f "$_rt_dynamic_path" ] \
+						|| printErrorAndExit \
+							"Library not found: $_rt_dynamic_path"
+
+					set --
+					while IFS= read -r _rt_obj_path \
+						|| [ -n "$_rt_obj_path" ]
+					do
+						[ -n "$_rt_obj_path" ] || continue
+						set -- "$@" "$_rt_obj_path"
+					done <<EOF
+$_rt_test_objs
+EOF
+					set -- "$@" "$_rt_dynamic_path"
+
+					if isOutdated "$_rt_test_bin_path" "$@"
+					then
+						if [ "$_rt_test_compiled" -eq 1 ]
+						then
+							printf '\n'
+						fi
+						_rt_test_bin_name=${_rt_test_bin_path##*/}
+						printf 'Linking %s [%s]...\n' \
+							"$_rt_test_bin_name" "$_rt_test_type"
+						linkBinary "$_rt_test_bin_path" "$_rt_root" \
+							"$_rt_link_flags" "$@"
+						_rt_target_had_output=1
+						_rt_test_spacing_pending=1
+					fi
+					continue
+				fi
+
+				printErrorAndExit \
+					"Unsupported test type: $_rt_target/$_rt_test_rel"
+			done <<EOF
+$_rt_tests_to_run
+EOF
+			if [ "$_rt_target_had_output" -eq 1 ]
+			then
+				printf '\n'
+			fi
+			printf 'Done.\n'
+		done <<EOF
+$_rt_targets_to_run
+EOF
+	done <<EOF
+$_rt_style_names
+EOF
+
+	while IFS= read -r _rt_style_name || [ -n "$_rt_style_name" ]
+	do
+		[ -n "$_rt_style_name" ] || continue
+
+		_rt_style_file=$( resolveTestStyleFile "$_rt_root" \
+			"$_rt_style_name" )
+		syncStyleSetVars "$_rt_style_file"
+
+		if [ "$_rt_multiple_styles" -eq 1 ]
+		then
+			printHeader "====== Testing Style $_rt_style_name ======"
+		fi
+
+		while IFS= read -r _rt_target || [ -n "$_rt_target" ]
+		do
+			[ -n "$_rt_target" ] || continue
+			_rt_target_label=$( formatTargetLabel "$_rt_target" )
+			printHeader "====== Running Tests for Target $_rt_target_label ======"
+			_rt_target_out_dir=$( testsTargetTargetDirPath "$_rt_build_dir" \
+				"$_rt_style_name" "$_rt_target" )
+
+			while IFS= read -r _rt_test_line || [ -n "$_rt_test_line" ]
+			do
+				[ -n "$_rt_test_line" ] || continue
+				parseTestLine "$_rt_test_line"
+				[ "$_pt_target" = "$_rt_target" ] || continue
+				_rt_test_rel=$_pt_rel
+				_rt_test_type=$_pt_test_type
+				_rt_target_type=$_pt_target_type
+
+				_rt_tests_root=$_rt_root/targets/$_rt_target/tests
+				_rt_test_dir=$_rt_tests_root/$_rt_test_rel
+				[ -d "$_rt_test_dir" ] || printErrorAndExit \
+					"Test not found: $_rt_target/$_rt_test_rel"
+
+				if [ "$_rt_test_type" = "it" ] \
+					&& [ "$_rt_target_type" = "bin" ]
+				then
+					_rt_target_dir=$_rt_target_out_dir
+					_rt_bin_path=$_rt_target_dir/$_rt_target
+					[ -x "$_rt_bin_path" ] || printErrorAndExit \
+						"Binary not found: $_rt_bin_path"
+
+					printf 'Running integration scripts...\n'
+					_rt_tests_run=$(( _rt_tests_run + 1 ))
+					if ! runIntegrationScripts "$_rt_test_dir" \
+						"$_rt_bin_path" "$_rt_target/$_rt_test_rel"
+					then
+						_rt_test_failures=1
+						_rt_tests_failed=$(( _rt_tests_failed + 1 ))
+					fi
+					continue
+				fi
+
+				_rt_test_out_dir=$( testsTargetBinDirPath "$_rt_build_dir" \
+					"$_rt_style_name" "$_rt_target" )
+				_rt_test_bin_path=$( testBinaryPath "$_rt_test_out_dir" \
+					"$_rt_test_rel" )
+				_rt_test_name=${_rt_test_bin_path##*/}
+
+				if [ "$_rt_test_type" = "ut" ]
+				then
+					_rt_tests_run=$(( _rt_tests_run + 1 ))
+					if ! runTestAndReport \
+						"$_rt_test_bin_path" "$_rt_test_name"
+					then
+						_rt_test_failures=1
+						_rt_tests_failed=$(( _rt_tests_failed + 1 ))
+					fi
+					continue
+				fi
+
+				if [ "$_rt_test_type" = "it" ] \
+					&& [ "$_rt_target_type" = "lib" ]
+				then
+					_rt_target_dir=$_rt_target_out_dir
+					_rt_dynamic_path=$_rt_target_dir/${_rt_target%.lib}$( \
+						dynamicLibExtension )
+					[ -f "$_rt_dynamic_path" ] \
+						|| printErrorAndExit \
+							"Library not found: $_rt_dynamic_path"
+
+					_rt_tests_run=$(( _rt_tests_run + 1 ))
+					if ! runTestAndReport \
+						"$_rt_test_bin_path" "$_rt_test_name" \
+						"$_rt_target_dir"
+					then
+						_rt_test_failures=1
+						_rt_tests_failed=$(( _rt_tests_failed + 1 ))
+					fi
+					continue
+				fi
+
+				printErrorAndExit \
+					"Unsupported test type: $_rt_target/$_rt_test_rel"
+			done <<EOF
+$_rt_tests_to_run
+EOF
+			printf 'Done.\n'
+		done <<EOF
+$_rt_targets_to_run
+EOF
+	done <<EOF
+$_rt_style_names
+EOF
+
+	printf '\n%s out of %s tests passed.\n' \
+		"$_rt_tests_failed" "$_rt_tests_run"
+
+	if [ "$_rt_tests_failed" -ne 0 ]
+	then
+		printf '\n'
+		printFailure "!!!!!! TEST FAILURES DETECTED !!!!!!"
+		printf '\n'
+	fi
+
+	printHeader "====== All Done ======"
+	if [ "$_rt_test_failures" -ne 0 ]
+	then
+		return 1
+	fi
+
+	return 0
+}
+
+
 # $1 - Tests root directory path.
 # $2 - Suite directory path.
 #
