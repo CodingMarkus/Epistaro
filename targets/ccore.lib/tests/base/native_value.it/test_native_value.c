@@ -13,6 +13,7 @@ begin_impl
 enum { kMaxTestValues = 32 };
 
 static const char kTestValueTypeName[] = "TestValue";
+static const char kTestValueAltTypeName[] = "TestValueAlt";
 
 struct TestValueState {
 	const NativeValue * value;
@@ -162,20 +163,37 @@ bool readStoragePayload(
 
 
 static const struct TypeDescriptor_NativeValue TestValueType;
+static const struct TypeDescriptor_NativeValue TestValueAltType;
 
 static
-void * copyTestValue(
-	const NativeValue * value, bool copyIsDeep )
+void * copyTestValueWithType(
+	const NativeValue * value,
+	bool copyIsDeep,
+	const struct TypeDescriptor_NativeValue * typeDesc )
 {
 	def state = requireState(value);
 	def copy = create_NativeValue(
-		false, sizeof(struct TestValuePayload), &TestValueType);
+		false, sizeof(struct TestValuePayload), typeDesc);
 	expect(copy, "create_NativeValue failed in copy");
 	def copyState = addState(copy, state->number);
 	expect(copyState, "Test value capacity exceeded");
 	((struct TestValueState *)copyState)->last_copy_is_deep =
 		copyIsDeep ? 1 : 0;
 	return copy;
+}
+
+static
+void * copyTestValue(
+	const NativeValue * value, bool copyIsDeep )
+{
+	return copyTestValueWithType(value, copyIsDeep, &TestValueType);
+}
+
+static
+void * copyTestValueAlt(
+	const NativeValue * value, bool copyIsDeep )
+{
+	return copyTestValueWithType(value, copyIsDeep, &TestValueAltType);
 }
 
 
@@ -188,17 +206,29 @@ void destroyTestValue( const NativeValue * value )
 
 
 static
-char * createDescTestValue( const NativeValue * value )
+char * createDescTestValueWithName(
+	const NativeValue * value, const char * name )
 {
 	def state = requireState(value);
-	init len = snprintf(
-		nil, 0, "%s(%d)", kTestValueTypeName, (int)state->number);
+	init len = snprintf(nil, 0, "%s(%d)", name, (int)state->number);
 	expect(len >= 0, "snprintf failed");
 	init desc = malloc((size_t)len + 1u);
 	expect(desc, "malloc failed");
 	snprintf(desc, (size_t)len + 1u, "%s(%d)",
-		kTestValueTypeName, (int)state->number);
+		name, (int)state->number);
 	return desc;
+}
+
+static
+char * createDescTestValue( const NativeValue * value )
+{
+	return createDescTestValueWithName(value, kTestValueTypeName);
+}
+
+static
+char * createDescTestValueAlt( const NativeValue * value )
+{
+	return createDescTestValueWithName(value, kTestValueAltTypeName);
 }
 
 
@@ -212,12 +242,32 @@ static const struct TypeDescriptor_NativeValue TestValueType = {
 	.destroyFunc = destroyTestValue,
 };
 
+static const struct TypeDescriptor_NativeValue TestValueAltType = {
+	.name = kTestValueAltTypeName,
+	.hashFunc = hashTestValue,
+	.copyFunc = copyTestValueAlt,
+	.equalFunc = equalTestValue,
+	.createDescFunc = createDescTestValueAlt,
+	.freezeFunc = freezeTestValue,
+	.destroyFunc = destroyTestValue,
+};
+
 
 static
 NativeValue * createTestValue( int32e number, bool immutable )
 {
 	def value = create_NativeValue(
 		immutable, sizeof(struct TestValuePayload), &TestValueType);
+	expect(value, "create_NativeValue failed");
+	expect(addState(value, number), "Test value capacity exceeded");
+	return value;
+}
+
+static
+NativeValue * createAltTestValue( int32e number, bool immutable )
+{
+	def value = create_NativeValue(
+		immutable, sizeof(struct TestValuePayload), &TestValueAltType);
 	expect(value, "create_NativeValue failed");
 	expect(addState(value, number), "Test value capacity exceeded");
 	return value;
@@ -322,6 +372,52 @@ void test_copyAndFreeze( void )
 	discard_NativeValue(unfrozen);
 }
 
+static
+void test_immutableCopyAndFreeze( void )
+{
+	def initialDestroy = g_destroy_count;
+	def value = createTestValue(55, true);
+	def state = requireState(value);
+
+	expect(state->last_copy_is_deep == -1);
+	expect(!state->frozen_called);
+
+	def shallow = copy_NativeValue(value, false);
+	def deep = copy_NativeValue(value, true);
+	expect(shallow == value);
+	expect(deep == value);
+	expect(state->last_copy_is_deep == -1);
+
+	freeze_NativeValue(value);
+	expect(!state->frozen_called);
+
+	discard_NativeValue(value);
+	expect(g_destroy_count == initialDestroy);
+	discard_NativeValue(shallow);
+	expect(g_destroy_count == initialDestroy);
+	discard_NativeValue(deep);
+	expect(g_destroy_count == initialDestroy + 1);
+}
+
+static
+void test_unfreezeNoop( void )
+{
+	def initialDestroy = g_destroy_count;
+	def value = createTestValue(77, false);
+
+	def retained = unfreeze_NativeValue(value);
+	expect(retained == value);
+	discard_NativeValue(retained);
+	expect(g_destroy_count == initialDestroy);
+	discard_NativeValue(value);
+	expect(g_destroy_count == initialDestroy + 1);
+
+	init immutable = createTestValue(88, true);
+	expect(!unfreezeInPlace_NativeValue(&immutable));
+	discard_NativeValue(immutable);
+	expect(g_destroy_count == initialDestroy + 2);
+}
+
 
 static
 void test_retainAndDiscard( void )
@@ -334,6 +430,38 @@ void test_retainAndDiscard( void )
 	expect(g_destroy_count == initialDestroy);
 	discard_NativeValue(value);
 	expect(g_destroy_count == initialDestroy + 1);
+}
+
+static
+void test_typeMismatchEquality( void )
+{
+	def value = createTestValue(7, true);
+	def otherType = createAltTestValue(7, true);
+
+	expect(!isEqual_NativeValue(value, otherType));
+
+	discard_NativeValue(value);
+	discard_NativeValue(otherType);
+}
+
+static
+void test_nilHelpers( void )
+{
+	def desc = createDescription_NativeValue(nil);
+	expect(strcmp(desc, "<nil>") == 0);
+	free((void *)desc);
+
+	def hashIntf = getDefaultHasherInterface_Hasher();
+	int8e hasherStorage1[hashIntf->getRequiredSize()];
+	def hasher1 = hashIntf->initStorage(hasherStorage1);
+	hashWithHasher_NativeValue(nil, hasher1, hashIntf);
+	def hash1 = hashIntf->finalize(hasher1);
+
+	int8e hasherStorage2[hashIntf->getRequiredSize()];
+	def hasher2 = hashIntf->initStorage(hasherStorage2);
+	def hash2 = hashIntf->finalize(hasher2);
+
+	expect(hash1 == hash2);
 }
 
 
@@ -371,11 +499,15 @@ void test_storageAccess( void )
 	expect(!called);
 
 	init value = createTestValue(10, false);
+	init readValue = -1;
+	expect(withStorage_NativeValue(value, readStoragePayload, &readValue));
+	expect(readValue == 0);
+
 	init writeValue = 123;
 	expect(withMutableStorage_NativeValue(
 		&value, writeStoragePayload, &writeValue));
 
-	init readValue = 0;
+	readValue = 0;
 	expect(withStorage_NativeValue(value, readStoragePayload, &readValue));
 	expect(readValue == writeValue);
 
@@ -407,15 +539,8 @@ void test_storageAccess( void )
 	expect(withStorage_NativeValue(optValue, readStoragePayload, &readValue));
 	expect(readValue == writeValue);
 
-	init immutable = createTestValue(30, true);
-	expect_require("!header->immutableFlag", {
-		withMutableStorage_NativeValue(
-			&immutable, writeStoragePayload, &writeValue);
-	});
-
 	discard_NativeValue(value);
 	discard_NativeValue(optValue);
-	discard_NativeValue(immutable);
 }
 
 
@@ -424,7 +549,11 @@ int main( void )
 	test_basics();
 	test_hashAndEqual();
 	test_copyAndFreeze();
+	test_immutableCopyAndFreeze();
+	test_unfreezeNoop();
 	test_retainAndDiscard();
+	test_typeMismatchEquality();
+	test_nilHelpers();
 	test_setters();
 	test_storageAccess();
 
