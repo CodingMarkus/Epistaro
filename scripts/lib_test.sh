@@ -601,12 +601,13 @@ EOF
 				_rt_test_bin_path=$( testBinaryPath "$_rt_test_out_dir" \
 					"$_rt_test_rel" )
 				_rt_test_name=${_rt_test_bin_path##*/}
+				_rt_test_label="$_rt_test_name [$_rt_test_type]"
 
 				if [ "$_rt_test_type" = "ut" ]
 				then
 					_rt_tests_run=$(( _rt_tests_run + 1 ))
 					if ! runTestAndReport \
-						"$_rt_test_bin_path" "$_rt_test_name"
+						"$_rt_test_bin_path" "$_rt_test_label"
 					then
 						_rt_test_failures=1
 						_rt_tests_failed=$(( _rt_tests_failed + 1 ))
@@ -626,7 +627,7 @@ EOF
 
 					_rt_tests_run=$(( _rt_tests_run + 1 ))
 					if ! runTestAndReport \
-						"$_rt_test_bin_path" "$_rt_test_name" \
+						"$_rt_test_bin_path" "$_rt_test_label" \
 						"$_rt_target_dir"
 					then
 						_rt_test_failures=1
