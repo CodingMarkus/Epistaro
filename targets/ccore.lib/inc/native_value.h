@@ -60,8 +60,8 @@ typedef void (DestroyFunc_NativeValue)( const NativeValue * value );
 
 
 /**
-	Create a human-readable description string of the value.
-	The caller must free the returned string.
+	Creates a human-readable description of the value.
+	Caller must free the returned string.
 */
 typedef char * (CreateDescFunc_NativeValue)( const NativeValue * value );
 
@@ -129,14 +129,14 @@ void discard_NativeValue( Opt(NativeValue *) optValue );
 
 
 /**
-	Get name of the value type as a printable string.
+	Gets the name of the value type as a printable string.
 */
 const char * getName_NativeValue( Opt(NativeValue *) optValue );
 
 
 /**
-	Create a human readable description of the value.
-	Caller must free description using `free()`.
+	Creates a human-readable description of the value.
+	Caller must free the returned string with `free()`.
 */
 const char * createDescription_NativeValue( Opt(NativeValue *) value );
 
@@ -209,8 +209,10 @@ void hashWithHasher_NativeValue(
 
 
 /**
-	Either returns the same value with an increased retain count (if
-	immutable), or returns a new copy (deep or shallow depending on flag).
+	Returns the same value with an increased retain count (if immutable), or
+	returns a new copy (deep or shallow depending on flag). Always returns a
+	new, non-thread-safe copy if the value currently is thread-safe, even if
+	immutable.
  */
 NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep );
 
@@ -236,10 +238,18 @@ bool isEqual_NativeValue(
 NativeValue * freeze_NativeValue( NativeValue * value );
 
 
+/**
+	Mark the value as thread-safe by switching to atomic refcounts and
+	freezing the value if not already frozen.
+*/
+NativeValue * makeThreadSafe_NativeValue( NativeValue * value );
+
+
 
 /**
-	If the value is not frozen, just retains the value and returns it.
-	If the value is frozen, creates a copy and returns it.
+	If the value is not frozen, retains and returns it. If the value is
+	frozen, creates a copy and returns it. If the value is thread-safe,
+	creates a non-thread-safe copy.
 */
 NativeValue * unfreeze_NativeValue( NativeValue * value );
 

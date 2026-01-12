@@ -113,6 +113,7 @@ Opt(const struct ValueFooter *) requireToBeValue( const NativeValue * value )
 	if (likely_true(!header->threadSafeFlag)) {
 		require(header->refCount > 0);
 	} else {
+		assert(header->frozenFlag);
 		def count = atomic_load(&header->atomicRefCount);
 		require(count > 0);
 	}
@@ -144,6 +145,7 @@ const void * getPayloadPtrConst( const struct ValueHeader * header )
 	return (const void *)((const int8e *)header + sizeof(struct ValueHeader));
 }
 
+
 static inline
 struct ValueHeader * incRefCount( struct ValueHeader * header )
 {
@@ -153,6 +155,7 @@ struct ValueHeader * incRefCount( struct ValueHeader * header )
 		header->refCount++;
 		return header;
 	}
+	assert(header->frozenFlag);
 	def oldCount = atomic_fetch_add(&header->atomicRefCount, 1);
 	require(oldCount > 0);
 	require(oldCount < UINT32_MAX);
@@ -167,6 +170,7 @@ bool decRefCount( struct ValueHeader * header )
 		require(header->refCount > 0);
 		return (--header->refCount != 0);
 	}
+	assert(header->frozenFlag);
 	uint_fast32_t oldCount = atomic_fetch_sub(&header->atomicRefCount, 1);
 	require(oldCount > 0);
 	return (oldCount != 1);
@@ -187,7 +191,7 @@ void decRefCountAndFree(
 
 
 static inline
-void discardValue( Opt(NativeValue *) optValue )
+void discard( Opt(NativeValue *) optValue )
 {
 	return_unless(no_value, value, optValue);
 	def footer = requireToBeValueAndGetFooter(value);
@@ -205,7 +209,11 @@ bool unfreezeInPlace( NativeValue ** valuePtr, bool allowNil )
 	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
-	if (header->immutableFlag || !header->frozenFlag) return false;
+	if (header->immutableFlag) {
+		assert(header->frozenFlag);
+		return false;
+	}
+	if (!header->frozenFlag) return false;
 
 #if HEAVY_CHECKS_ENABLED
 	def currentHash = hash_NativeValue(value);
@@ -253,6 +261,49 @@ bool withMutableStorage(
 	);
 }
 
+
+static inline
+NativeValue * freeze( NativeValue * value )
+{
+	requireToBeValue(value);
+	def header = (struct ValueHeader *)value;
+
+	// Requires no freezing?
+	if (header->immutableFlag) {
+		assert(header->frozenFlag);
+#if HEAVY_CHECKS_ENABLED
+		def footer = (struct ValueFooter *)getFooter(header);
+		footer->hash = hash_NativeValue(value);
+#endif
+		return value;
+	}
+
+	// Is already frozen?
+	if (header->frozenFlag) {
+#if HEAVY_CHECKS_ENABLED
+		def footer = (struct ValueFooter *)getFooter(header);
+		def currentHash = hash_NativeValue(value);
+		assert(
+			currentHash == footer->hash,
+			"Frozen value was modified after freezing."
+		);
+#endif
+		return value;
+	}
+
+	// Freeze it!
+	def footer = (struct ValueFooter *)getFooter(header);
+	header->frozenFlag = true;
+	guard (freezeFunc, footer->typeDesc->freezeFunc) {
+		freezeFunc(value);
+	} endguard;
+#if HEAVY_CHECKS_ENABLED
+	footer->hash = hash_NativeValue(value);
+#endif
+
+	return value;
+}
+
 // // ----------------------------------------------------------------------------
 
 public
@@ -268,7 +319,7 @@ NativeValue * retain_NativeValue( NativeValue * value )
 public
 void discard_NativeValue( Opt(NativeValue *) optValue )
 {
-	discardValue(optValue);
+	discard(optValue);
 }
 
 
@@ -366,8 +417,11 @@ NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep )
 	def header = (struct ValueHeader *)value;
 
 	if (header->immutableFlag) {
-		incRefCount(header);
-		return value;
+		assert(header->frozenFlag);
+		if (likely_true(!header->threadSafeFlag)) {
+			incRefCount(header);
+			return value;
+		}
 	}
 
 	return footer->typeDesc->copyFunc(value, copyIsDeep);
@@ -402,42 +456,26 @@ bool isEqual_NativeValue(
 public
 NativeValue * freeze_NativeValue( NativeValue * value )
 {
+	return freeze(value);
+}
+
+
+public
+NativeValue * makeThreadSafe_NativeValue( NativeValue * value )
+{
 	requireToBeValue(value);
 	def header = (struct ValueHeader *)value;
 
-	// Requires no freezing?
-	if (header->immutableFlag) {
-		assert(header->frozenFlag);
-#if HEAVY_CHECKS_ENABLED
-		def footer = (struct ValueFooter *)getFooter(header);
-		footer->hash = hash_NativeValue(value);
-#endif
-		return value;
+	if (!header->frozenFlag) freeze(value);
+
+	if (likely_true(!header->threadSafeFlag)) {
+		require(header->refCount > 0);
+		def refCount = header->refCount;
+		atomic_init(&header->atomicRefCount, refCount);
+		header->threadSafeFlag = true;
 	}
 
-	// Is already frozen?
-	if (header->frozenFlag) {
-#if HEAVY_CHECKS_ENABLED
-		def footer = (struct ValueFooter *)getFooter(header);
-		def currentHash = hash_NativeValue(value);
-		assert(
-			currentHash == footer->hash,
-			"Frozen value was modified after freezing."
-		);
-#endif
-		return value;
-	}
-
-	// Freeze it!
-	def footer = (struct ValueFooter *)getFooter(header);
-	header->frozenFlag = true;
-	guard (freezeFunc, footer->typeDesc->freezeFunc) {
-		freezeFunc(value);
-	} endguard;
-#if HEAVY_CHECKS_ENABLED
-	footer->hash = hash_NativeValue(value);
-#endif
-
+	assert(header->frozenFlag);
 	return value;
 }
 
@@ -448,9 +486,14 @@ NativeValue * unfreeze_NativeValue( NativeValue * value )
 	def footer = requireToBeValueAndGetFooter(value);
 	def header = (struct ValueHeader *)value;
 
-	if (header->immutableFlag || !header->frozenFlag) {
-		incRefCount(header);
-		return value;
+	if (likely_true(!header->threadSafeFlag)) {
+		if (header->immutableFlag || !header->frozenFlag) {
+			assert(!header->immutableFlag || header->frozenFlag);
+			incRefCount(header);
+			return value;
+		}
+	} else {
+		assert(header->frozenFlag);
 	}
 
 #if HEAVY_CHECKS_ENABLED
@@ -473,7 +516,7 @@ bool set_NativeValue( OutPtr(NativeValue *) valuePtr, NativeValue * newValue )
 
 	*valuePtr = (struct NativeValue *)incRefCount(
 		(struct ValueHeader *)newValue);
-	discardValue(oldValue);
+	discard(oldValue);
 	return true;
 }
 
@@ -490,7 +533,7 @@ bool setOpt_NativeValue(
 		(struct NativeValue *)incRefCount((struct ValueHeader *)newValue)
 		: nil
 	);
-	if (oldValue) discardValue(oldValue);
+	if (oldValue) discard(oldValue);
 	return true;
 }
 
