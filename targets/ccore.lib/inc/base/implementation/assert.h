@@ -6,11 +6,17 @@
 	#undef assert
 #endif
 
+#ifdef DEPLOYING
+	#ifndef NDEBUG
+		#define NDEBUG
+	#endif
+#endif
 #ifdef TESTING
 	#ifdef NDEBUG
 		#undef NDEBUG
 	#endif
 #endif
+
 
 // ============================================================================
 

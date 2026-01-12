@@ -1,11 +1,12 @@
 CompileFlags:
   Add:
-    # Assume DEVELOPING, TESTING, DEBUGGING, and PROFILING by default.
-    # Compile scripts can later on override that.
+    # Assume DEVELOPING, TESTING, DEBUGGING, PROFILING, and DEPLOYING
+    # by default. Compile scripts can later on override that.
     - -DDEVELOPING
     - -DTESTING
     - -DDEBUGGING
     - -DPROFILING
+    - -DDEPLOYING
 
     # ------ MARK: DEFAULT FLAGS ------
     #
@@ -26,11 +27,3 @@ CompileFlags:
     - -Wno-error=unused-function
     - -Wno-error=unused-variable
     - -Wno-error=unused-parameter
-
----
-If:
-  PathMatch: (^|.*/)targets/ccore\.lib/.*
-CompileFlags:
-  Add:
-    - -I
-    - ${workspaceRoot}/targets/ccore.lib/inc

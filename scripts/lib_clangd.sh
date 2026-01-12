@@ -56,12 +56,13 @@ updateClangd( )
 		cat <<'EOF' > "$tmpPath"
 CompileFlags:
   Add:
-    # Assume DEVELOPING, TESTING, DEBUGGING, and PROFILING by default.
-    # Compile scripts can later on override that.
+    # Assume DEVELOPING, TESTING, DEBUGGING, PROFILING, and DEPLOYING
+	# by default. Compile scripts can later on override that.
     - -DDEVELOPING
     - -DTESTING
     - -DDEBUGGING
     - -DPROFILING
+	- -DDEPLOYING
 
 EOF
 		printf '%s%s\n' "$indent" \
