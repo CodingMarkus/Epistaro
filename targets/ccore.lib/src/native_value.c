@@ -211,9 +211,11 @@ bool unfreezeInPlace( NativeValue ** valuePtr, bool allowNil )
 
 	if (header->immutableFlag) {
 		assert(header->frozenFlag);
+		if (likely_true(!header->threadSafeFlag)) return false;
+	} else if (!header->frozenFlag) {
+		assert(!header->threadSafeFlag);
 		return false;
 	}
-	if (!header->frozenFlag) return false;
 
 #if HEAVY_CHECKS_ENABLED
 	def currentHash = hash_NativeValue(value);

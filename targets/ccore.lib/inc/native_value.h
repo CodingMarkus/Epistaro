@@ -161,6 +161,10 @@ bool withStorage_NativeValue(
 
 	The storage pointer is only valid for the duration of the callback.
 	If the value is frozen, it is unfrozen in place and `valuePtr` may change.
+
+	For thread-safe values, this always creates a copy (they are implicitly
+	frozen). The new value is not thread-safe anymore.
+
 	Immutable values are not allowed.
 
 	@returns Result of the callback.
@@ -210,9 +214,11 @@ void hashWithHasher_NativeValue(
 
 /**
 	Returns the same value with an increased retain count (if immutable), or
-	returns a new copy (deep or shallow depending on flag). Always returns a
-	new, non-thread-safe copy if the value currently is thread-safe, even if
-	immutable.
+	returns a new copy (deep or shallow depending on flag).
+
+	If the value is thread-safe, this always creates a new copy and the
+	result is not thread-safe anymore, even if the original value is
+	otherwise immutable.
  */
 NativeValue * copy_NativeValue( NativeValue * value, bool copyIsDeep );
 
@@ -248,8 +254,11 @@ NativeValue * makeThreadSafe_NativeValue( NativeValue * value );
 
 /**
 	If the value is not frozen, retains and returns it. If the value is
-	frozen, creates a copy and returns it. If the value is thread-safe,
-	creates a non-thread-safe copy.
+	frozen, creates a copy and returns it.
+
+	If the value is thread-safe, this always creates a copy (it is implicitly
+	frozen). The result is not thread-safe anymore, even if the original value
+	is otherwise immutable.
 */
 NativeValue * unfreeze_NativeValue( NativeValue * value );
 
@@ -287,6 +296,10 @@ bool setOpt_NativeValue(
 	value, and replaces it with the unfrozen copy. Does nothing if the value
 	is not frozen.
 
+	For thread-safe values, this always creates a copy (they are implicitly
+	frozen). The new value is not thread-safe anymore, even if the original
+	value is otherwise immutable.
+
 	@code
 	// Equivalent code but unfreezeInPlace_NativeValue() is more efficient
 	def oldValue = *valuePtr;
@@ -302,6 +315,10 @@ bool unfreezeInPlace_NativeValue( OutPtr(NativeValue *) valuePtr );
 /**
 	Works exactly like `unfreezeInPlace_NativeValue()` but `valuePtr` may point
 	to `nil`, in which case there is nothing to unfreeze.
+
+	For thread-safe values, this always creates a copy (they are implicitly
+	frozen). The new value is not thread-safe anymore, even if the original
+	value is otherwise immutable.
 
 	@see unfreezeInPlace_NativeValue()
 */
