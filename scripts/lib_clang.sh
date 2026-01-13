@@ -13,6 +13,19 @@ __included_lib_clang_sh=1
 . lib_platform.sh
 
 
+command -v buildDebugEnabled >/dev/null 2>&1 || \
+	buildDebugEnabled( )
+	{
+		[ -n "${BUILD_DEBUG:-}" ] && [ "${BUILD_DEBUG:-}" != "0" ]
+	}
+
+command -v buildDebugPrintCommand >/dev/null 2>&1 || \
+	buildDebugPrintCommand( )
+	{
+		return 0
+	}
+
+
 # Selects the compiler binary, preferring CLANG/CC overrides.
 _resolveClangBinary( )
 {
@@ -235,6 +248,8 @@ buildFile( )
 	eval "set -- $flags"
 	(
 		cd "$workDirAbs"
+		buildDebugPrintCommand "$clang" -c -o "$objPath" \
+			"$@" "$srcPathAbs"
 		"$clang" -c -o "$objPath" "$@" "$srcPathAbs"
 	)
 )
@@ -291,6 +306,7 @@ prelinkObjects( )
 	eval "set -- $flags $objArgs"
 	(
 		cd "$workDirAbs"
+		buildDebugPrintCommand "$clang" -r -nostdlib -o "$outPath" "$@"
 		"$clang" -r -nostdlib -o "$outPath" "$@"
 	)
 )
@@ -334,7 +350,9 @@ linkDynamicLibrary( )
 	eval "set -- $flags $objArgs"
 	(
 		cd "$workDirAbs"
-		"$clang" "$( _dynamicLibFlag )" -o "$outPath" "$@"
+		_ldl_dyn=$( _dynamicLibFlag )
+		buildDebugPrintCommand "$clang" "$_ldl_dyn" -o "$outPath" "$@"
+		"$clang" "$_ldl_dyn" -o "$outPath" "$@"
 	)
 )
 
@@ -377,6 +395,7 @@ linkBinary( )
 	eval "set -- $flags $objArgs"
 	(
 		cd "$workDirAbs"
+		buildDebugPrintCommand "$clang" -o "$outPath" "$@"
 		"$clang" -o "$outPath" "$@"
 	)
 )

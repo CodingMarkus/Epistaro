@@ -275,6 +275,38 @@ eval "unset __style_saved_includeStack_$_exp_depth"
 }
 
 
+# Returns success if build debug output is enabled.
+#
+buildDebugEnabled( )
+{
+	case "${BUILD_DEBUG:-}" in
+		""|0) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+
+# $1 - Command name.
+# $2.. - Command arguments.
+#
+# Prints the full command line when build debug is enabled.
+#
+buildDebugPrintCommand( )
+{
+	_bdp_cmd=$1
+	shift
+
+	buildDebugEnabled || return 0
+
+	_bdp_line=$( quote "$_bdp_cmd" )
+	for _bdp_arg in "$@"
+	do
+		_bdp_line="$_bdp_line $( quote "$_bdp_arg" )"
+	done
+	printf '%s\n' "$_bdp_line" >&2
+}
+
+
 # $1 - Source directory to check for compile_flags.txt.
 # $2 - Project root directory.
 #
@@ -491,6 +523,110 @@ _hardcodedBuildSettings( )
 {
 	printf '%s\n' "-flto=thin"
 }
+
+
+# $1 - Quoted build settings string.
+#
+# Prints quoted build flags that should propagate to link.
+#
+_linkBuildFlagsFromSettings( )
+(
+	_lbfs_settings=$1
+
+	[ -n "$_lbfs_settings" ] || return 0
+
+	_lbfs_output=""
+	_lbfs_expect_arg=""
+
+	eval "set -- $_lbfs_settings"
+	while [ "$#" -gt 0 ]
+	do
+		_lbfs_flag=$1
+		shift
+
+		if [ -n "$_lbfs_expect_arg" ]
+		then
+			_lbfs_output=$( appendQuotedSettings \
+				"$_lbfs_output" "$( quote "$_lbfs_flag" )" )
+			_lbfs_expect_arg=""
+			continue
+		fi
+
+		case "$_lbfs_flag" in
+			-target|-mcpu|-mfpu|-mfloat-abi|-march|-mtune|-mabi|\
+			-isysroot|-stdlib|-rtlib|-unwindlib|-Xlinker)
+				_lbfs_output=$( appendQuotedSettings \
+					"$_lbfs_output" "$( quote "$_lbfs_flag" )" )
+				_lbfs_expect_arg=1
+				;;
+			-target=*|-mcpu=*|-mfpu=*|-mfloat-abi=*|-march=*|\
+			-mtune=*|-mabi=*|-isysroot=*|-stdlib=*|-rtlib=*|\
+			-unwindlib=*)
+				_lbfs_output=$( appendQuotedSettings \
+					"$_lbfs_output" "$( quote "$_lbfs_flag" )" )
+				;;
+			-g*|-O*|-flto*|-m32|-m64|-f*|-Wl,*)
+				case "$_lbfs_flag" in
+					-fsanitize|-fsanitize=*) ;;
+					*)
+						_lbfs_output=$( appendQuotedSettings \
+							"$_lbfs_output" \
+							"$( quote "$_lbfs_flag" )" )
+						;;
+				esac
+				;;
+		esac
+	done
+
+	if [ -n "$_lbfs_output" ]
+	then
+		printf '%s' "$_lbfs_output"
+	fi
+)
+
+
+# $1 - Quoted build settings string.
+#
+# Prints quoted build flags that should propagate to link.
+#
+linkBuildFlagsFromSettings( )
+(
+	_lbf_settings=$1
+
+	_linkBuildFlagsFromSettings "$_lbf_settings"
+)
+
+
+# $1 - Quoted build settings string.
+#
+# Prints quoted link flags with LTO options removed.
+#
+linkBuildFlagsWithoutLtoFromSettings( )
+(
+	_lbfl_settings=$1
+	_lbfl_flags=$( _linkBuildFlagsFromSettings "$_lbfl_settings" )
+
+	[ -n "$_lbfl_flags" ] || return 0
+
+	_lbfl_output=""
+	eval "set -- $_lbfl_flags"
+	while [ "$#" -gt 0 ]
+	do
+		case "$1" in
+			-flto|-flto=*) ;;
+			*)
+				_lbfl_output=$( appendQuotedSettings \
+					"$_lbfl_output" "$( quote "$1" )" )
+				;;
+		esac
+		shift
+	done
+
+	if [ -n "$_lbfl_output" ]
+	then
+		printf '%s' "$_lbfl_output"
+	fi
+)
 
 
 # Prints color diagnostic flags when supported.

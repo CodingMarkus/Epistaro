@@ -9,6 +9,11 @@ __included_lib_link_sh=1
 . lib_platform.sh
 . lib_quote.sh
 . lib_sanitize.sh
+. lib_error.sh
+. lib_clang.sh
+. lib_fs.sh
+. lib_outdated.sh
+. lib_build_settings.sh
 
 
 # Prints the dynamic library extension for the current platform.
@@ -34,13 +39,396 @@ _deployPostprocessFlags( )
 	if platformTargetIsApple
 	then
 		printf '%s\n' "-Wl,-dead_strip"
-		printf '%s\n' "-Wl,-S"
-		printf '%s\n' "-Wl,-x"
 	else
 		printf '%s\n' "-Wl,--gc-sections"
-		printf '%s\n' "-Wl,--strip-debug"
 	fi
 }
+
+
+
+
+# ($1) - Force deploy processing when set to 1.
+#
+# Returns success if deploy processing should be applied.
+#
+deployProcessingEnabled( )
+{
+	_dpe_force=${1:-0}
+
+	if [ -n "${__style_set_DEPLOY_PROCESSING+x}" ] \
+		|| [ "$_dpe_force" -eq 1 ]
+	then
+		return 0
+	fi
+	return 1
+}
+
+
+# $1 - Output path.
+#
+# Prints the unstripped output path for deploy processing.
+#
+deployUnstrippedPath( )
+(
+	_dup_path=$1
+
+	case "$_dup_path" in
+		*/*)
+			_dup_dir=${_dup_path%/*}
+			_dup_file=${_dup_path##*/}
+			;;
+		*)
+			_dup_dir=""
+			_dup_file=$_dup_path
+			;;
+	esac
+
+	case "$_dup_file" in
+		*.*)
+			_dup_base=${_dup_file%.*}
+			_dup_ext=.${_dup_file##*.}
+			;;
+		*)
+			_dup_base=$_dup_file
+			_dup_ext=""
+			;;
+	esac
+
+	_dup_unstripped=${_dup_base}_unstripped${_dup_ext}
+	if [ -n "$_dup_dir" ]
+	then
+		printf '%s/sym/%s\n' "$_dup_dir" "$_dup_unstripped"
+	else
+		printf '%s\n' "$_dup_unstripped"
+	fi
+)
+
+
+# $1 - Stripped output path.
+#
+# Prints the debug symbols path for deploy processing.
+#
+deployDebugSymbolsPath( )
+(
+	_ddp_stripped=$1
+
+	if platformTargetIsApple
+	then
+		_ddp_ext=".dSYM"
+	else
+		_ddp_ext=".debug"
+	fi
+
+	case "$_ddp_stripped" in
+		*/*)
+			_ddp_dir=${_ddp_stripped%/*}
+			_ddp_file=${_ddp_stripped##*/}
+			;;
+		*)
+			_ddp_dir=""
+			_ddp_file=$_ddp_stripped
+			;;
+	esac
+
+	if [ -n "$_ddp_dir" ]
+	then
+		printf '%s/sym/%s%s\n' "$_ddp_dir" "$_ddp_file" "$_ddp_ext"
+	else
+		printf '%s%s\n' "$_ddp_file" "$_ddp_ext"
+	fi
+)
+
+
+_resolveObjcopyTool( )
+{
+	if command -v objcopy >/dev/null 2>&1
+	then
+		printf '%s\n' "objcopy"
+		return 0
+	fi
+	if command -v llvm-objcopy >/dev/null 2>&1
+	then
+		printf '%s\n' "llvm-objcopy"
+		return 0
+	fi
+
+	printErrorAndExit "objcopy not found"
+}
+
+
+_resolveStripTool( )
+{
+	if command -v strip >/dev/null 2>&1
+	then
+		printf '%s\n' "strip"
+		return 0
+	fi
+	if command -v llvm-strip >/dev/null 2>&1
+	then
+		printf '%s\n' "llvm-strip"
+		return 0
+	fi
+
+	printErrorAndExit "strip not found"
+}
+
+
+# $1 - Unstripped output path.
+# $2 - Stripped output path.
+#
+# Extracts debug symbols and writes a stripped output.
+#
+deployPostprocessTarget( )
+(
+	_dpt_unstripped=$1
+	_dpt_stripped=$2
+
+	[ -e "$_dpt_unstripped" ] || printErrorAndExit \
+		"Output not found: $_dpt_unstripped"
+
+	if platformTargetIsApple
+	then
+		command -v dsymutil >/dev/null 2>&1 \
+			|| printErrorAndExit "dsymutil not found"
+		_dpt_strip=$( _resolveStripTool )
+		_dpt_dsym=$( deployDebugSymbolsPath "$_dpt_stripped" )
+		case "$_dpt_dsym" in
+			*/*) ensureDir "${_dpt_dsym%/*}" ;;
+		esac
+		buildDebugPrintCommand dsymutil "$_dpt_unstripped" \
+			-o "$_dpt_dsym"
+		dsymutil "$_dpt_unstripped" -o "$_dpt_dsym"
+		cp "$_dpt_unstripped" "$_dpt_stripped"
+		buildDebugPrintCommand "$_dpt_strip" -S "$_dpt_stripped"
+		"$_dpt_strip" -S "$_dpt_stripped"
+		return 0
+	fi
+
+	_dpt_objcopy=$( _resolveObjcopyTool )
+	_dpt_strip=$( _resolveStripTool )
+	_dpt_debug=$( deployDebugSymbolsPath "$_dpt_stripped" )
+	case "$_dpt_debug" in
+		*/*) ensureDir "${_dpt_debug%/*}" ;;
+	esac
+	buildDebugPrintCommand "$_dpt_objcopy" --only-keep-debug \
+		"$_dpt_unstripped" "$_dpt_debug"
+	"$_dpt_objcopy" --only-keep-debug "$_dpt_unstripped" \
+		"$_dpt_debug"
+	cp "$_dpt_unstripped" "$_dpt_stripped"
+	buildDebugPrintCommand "$_dpt_strip" --strip-debug \
+		"$_dpt_stripped"
+	"$_dpt_strip" --strip-debug "$_dpt_stripped"
+	buildDebugPrintCommand "$_dpt_objcopy" --add-gnu-debuglink=\
+"$_dpt_debug" "$_dpt_stripped"
+	"$_dpt_objcopy" --add-gnu-debuglink="$_dpt_debug" \
+		"$_dpt_stripped"
+)
+
+
+# $1 - Output library path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4 - Print leading spacing when set to 1.
+# ($5) - Force deploy processing when set to 1.
+# $6.. - Object file paths.
+#
+# Links a dynamic library and runs deploy processing when enabled.
+#
+linkDynamicLibraryFinal( )
+(
+	_ldlf_out=$1
+	_ldlf_work=$2
+	_ldlf_flags=$3
+	_ldlf_spacing=${4:-0}
+	_ldlf_force=${5:-0}
+	shift 5
+
+	_ldlf_deploy=0
+	if deployProcessingEnabled "$_ldlf_force"
+	then
+		_ldlf_deploy=1
+	fi
+
+	_ldlf_link_out=$_ldlf_out
+	_ldlf_link_flags=$( _linkFlagsWithLtoObjectPath "$_ldlf_flags" \
+		"${_ldlf_out}.lto" )
+	if [ "$_ldlf_deploy" -eq 1 ]
+	then
+		_ldlf_link_out=$( deployUnstrippedPath "$_ldlf_out" )
+		_ldlf_link_flags=$( _linkFlagsWithLtoObjectPath \
+			"$_ldlf_flags" "${_ldlf_link_out}.lto" )
+	fi
+
+	if [ "$_ldlf_deploy" -eq 1 ]
+	then
+		if isOutdated "$_ldlf_link_out" "$@"
+		then
+			if [ "$_ldlf_spacing" -eq 1 ]
+			then
+				printf '\n'
+				_ldlf_spacing=0
+			fi
+			printf 'Linking %s...\n' "${_ldlf_link_out##*/}"
+			linkDynamicLibrary "$_ldlf_link_out" \
+				"$_ldlf_work" "$_ldlf_link_flags" "$@"
+			printf '\n'
+		fi
+
+		_ldlf_debug=$( deployDebugSymbolsPath "$_ldlf_out" )
+		if isOutdated "$_ldlf_out" "$_ldlf_link_out" \
+			|| isOutdated "$_ldlf_debug" "$_ldlf_link_out"
+		then
+			if [ "$_ldlf_spacing" -eq 1 ]
+			then
+				printf '\n'
+				_ldlf_spacing=0
+			fi
+			printf 'Post-processing %s...\n' "${_ldlf_out##*/}"
+			deployPostprocessTarget \
+				"$_ldlf_link_out" "$_ldlf_out"
+			printf '\n'
+		fi
+		return 0
+	fi
+
+	if isOutdated "$_ldlf_out" "$@"
+	then
+		if [ "$_ldlf_spacing" -eq 1 ]
+		then
+			printf '\n'
+		fi
+		printf 'Linking %s...\n' "${_ldlf_out##*/}"
+		linkDynamicLibrary "$_ldlf_out" "$_ldlf_work" \
+			"$_ldlf_link_flags" "$@"
+		printf '\n'
+	fi
+)
+
+
+# $1 - Output binary path.
+# $2 - Working directory for clang.
+# $3 - clang flags string, already quoted for eval.
+# $4 - Print leading spacing when set to 1.
+# ($5) - Force deploy processing when set to 1.
+# $6.. - Object file paths.
+#
+# Links a binary and runs deploy processing when enabled.
+#
+linkBinaryFinal( )
+(
+	_lblf_out=$1
+	_lblf_work=$2
+	_lblf_flags=$3
+	_lblf_spacing=${4:-0}
+	_lblf_force=${5:-0}
+	shift 5
+
+	_lblf_deploy=0
+	if deployProcessingEnabled "$_lblf_force"
+	then
+		_lblf_deploy=1
+	fi
+
+	_lblf_link_out=$_lblf_out
+	_lblf_link_flags=$( _linkFlagsWithLtoObjectPath "$_lblf_flags" \
+		"${_lblf_out}.lto" )
+	if [ "$_lblf_deploy" -eq 1 ]
+	then
+		_lblf_link_out=$( deployUnstrippedPath "$_lblf_out" )
+		_lblf_link_flags=$( _linkFlagsWithLtoObjectPath \
+			"$_lblf_flags" "${_lblf_link_out}.lto" )
+	fi
+
+	if [ "$_lblf_deploy" -eq 1 ]
+	then
+		if isOutdated "$_lblf_link_out" "$@"
+		then
+			if [ "$_lblf_spacing" -eq 1 ]
+			then
+				printf '\n'
+				_lblf_spacing=0
+			fi
+			printf 'Linking %s...\n' "${_lblf_link_out##*/}"
+			linkBinary "$_lblf_link_out" "$_lblf_work" \
+				"$_lblf_link_flags" "$@"
+			printf '\n'
+		fi
+
+		_lblf_debug=$( deployDebugSymbolsPath "$_lblf_out" )
+		if isOutdated "$_lblf_out" "$_lblf_link_out" \
+			|| isOutdated "$_lblf_debug" "$_lblf_link_out"
+		then
+			if [ "$_lblf_spacing" -eq 1 ]
+			then
+				printf '\n'
+				_lblf_spacing=0
+			fi
+			printf 'Post-processing %s...\n' "${_lblf_out##*/}"
+			deployPostprocessTarget \
+				"$_lblf_link_out" "$_lblf_out"
+			printf '\n'
+		fi
+		return 0
+	fi
+
+	if isOutdated "$_lblf_out" "$@"
+	then
+		if [ "$_lblf_spacing" -eq 1 ]
+		then
+			printf '\n'
+		fi
+		printf 'Linking %s...\n' "${_lblf_out##*/}"
+		linkBinary "$_lblf_out" "$_lblf_work" \
+			"$_lblf_link_flags" "$@"
+		printf '\n'
+	fi
+)
+
+
+# $1 - Quoted clang flags string.
+#
+# Returns success if LTO flags are present.
+#
+_linkFlagsContainLto( )
+{
+	_lfcl_flags=$1
+
+	[ -n "$_lfcl_flags" ] || return 1
+
+	eval "set -- $_lfcl_flags"
+	while [ "$#" -gt 0 ]
+	do
+		case "$1" in
+			-flto|-flto=*) return 0 ;;
+		esac
+		shift
+	done
+
+	return 1
+}
+
+
+# $1 - Quoted clang flags string.
+# $2 - LTO object path.
+#
+# Prints updated flags with the LTO object path appended when needed.
+#
+_linkFlagsWithLtoObjectPath( )
+(
+	_lflop_flags=$1
+	_lflop_path=$2
+
+	if platformTargetIsApple && buildDebugEnabled \
+		&& _linkFlagsContainLto "$_lflop_flags"
+	then
+		_lflop_settings="-Wl,-object_path_lto,$_lflop_path"
+		_lflop_extra=$( quoteSettings "$_lflop_settings" )
+		appendQuotedSettings "$_lflop_flags" "$_lflop_extra"
+		return 0
+	fi
+
+	printf '%s' "$_lflop_flags"
+)
 
 
 # $1 - Quoted build settings string.
@@ -81,7 +469,7 @@ EOF
 
 # $1 - Quoted build settings string.
 # $2 - Target sanitizer settings list.
-# $3 - Include deploy post-processing flags when set to 1.
+# $3 - Force deploy post-processing flags when set to 1.
 #
 # Prints quoted link flags.
 #
@@ -92,6 +480,12 @@ linkFlagsFromSettings( )
 	_lf_include_deploy=${3:-0}
 
 	_lf_flags=""
+	_lf_build_link=$( linkBuildFlagsFromSettings "$_lf_settings" )
+	if [ -n "$_lf_build_link" ]
+	then
+		_lf_flags=$( appendQuotedSettings \
+			"$_lf_flags" "$_lf_build_link" )
+	fi
 	_lf_sanitize=$( _linkSanitizeFlagsFromSettings \
 		"$_lf_settings" "$_lf_target_sanitize" )
 	if [ -n "$_lf_sanitize" ]
@@ -100,8 +494,7 @@ linkFlagsFromSettings( )
 			"$_lf_flags" "$_lf_sanitize" )
 	fi
 
-	if [ "$_lf_include_deploy" -eq 1 ] \
-		&& [ -n "${__style_set_DEPLOY_PROCESSING+x}" ]
+	if deployProcessingEnabled "$_lf_include_deploy"
 	then
 		_lf_post=$( _deployPostprocessFlags )
 		if [ -n "$_lf_post" ]

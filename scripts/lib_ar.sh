@@ -12,6 +12,19 @@ __included_lib_ar_sh=1
 . lib_objects.sh
 
 
+command -v buildDebugEnabled >/dev/null 2>&1 || \
+	buildDebugEnabled( )
+	{
+		[ -n "${BUILD_DEBUG:-}" ] && [ "${BUILD_DEBUG:-}" != "0" ]
+	}
+
+command -v buildDebugPrintCommand >/dev/null 2>&1 || \
+	buildDebugPrintCommand( )
+	{
+		return 0
+	}
+
+
 # $1 - Output static library path.
 # $2 - Working directory for ar.
 # $3.. - Object file paths.
@@ -50,6 +63,7 @@ createStaticLibraryFromObjects( )
 	eval "set -- $objArgs"
 	(
 		cd "$workDirAbs"
+		buildDebugPrintCommand "$arTool" rcs "$outPath" "$@"
 		"$arTool" rcs "$outPath" "$@"
 	)
 )

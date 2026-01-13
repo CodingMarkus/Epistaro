@@ -278,33 +278,6 @@ EOF
 )
 
 
-# $1 - Output static library path.
-# $2 - Working directory for clang.
-# $3 - clang flags string, already quoted for eval.
-# $4.. - Object file paths.
-#
-# Pre-links objects into a single object file, then archives it.
-#
-_createStaticLibrary( )
-(
-	outPath=$1
-	workDir=$2
-	flags=$3
-	shift 3
-
-	assert "[ -n \"${outPath:-}\" ]" \
-		"_createStaticLibrary() missing output path"
-	assert "[ -n \"${workDir:-}\" ]" \
-		"_createStaticLibrary() missing work dir"
-	assert "[ -n \"${flags:-}\" ]" "_createStaticLibrary() missing flags"
-	assert "[ $# -gt 0 ]" "_createStaticLibrary() missing object files"
-
-	prelinkPath=$outPath.prelink.o
-	prelinkObjects "$prelinkPath" "$workDir" "$flags" "$@"
-	createStaticLibraryFromObjects "$outPath" "$workDir" "$prelinkPath"
-)
-
-
 # $1 - Project root directory.
 # $2 - Target name.
 # $3 - Style name.
@@ -357,7 +330,7 @@ EOF
 
 	majorSpacingDone=0
 	finalLinkFlags=$( linkFlagsFromSettings \
-		"$targetBuildSettings" "$targetSanitizeSettings" 1 )
+		"$targetBuildSettings" "$targetSanitizeSettings" )
 
 	case "$target" in
 		*.lib)
@@ -376,13 +349,16 @@ EOF
 			fi
 			printf 'Pre-Linking %s...\n' \
 				"${prelinkPath##*/}"
-			prelinkFlags="--"
+			prelinkFlags=$( \
+				linkBuildFlagsWithoutLtoFromSettings \
+					"$targetBuildSettings" )
+			[ -n "$prelinkFlags" ] || prelinkFlags="--"
 			prelinkObjects "$prelinkPath" "$projectRoot" \
 				"$prelinkFlags" "$@"
 				printf '\n'
 			fi
 
-			if isOutdated "$staticPath" "$prelinkPath"
+			if isOutdated "$staticPath" "$@"
 			then
 			if [ "${compiledAny:-0}" -eq 1 ] \
 				&& [ "$majorSpacingDone" -eq 0 ]
@@ -393,42 +369,40 @@ EOF
 			printf 'Creating archive %s...\n' \
 				"${staticPath##*/}"
 				createStaticLibraryFromObjects "$staticPath" \
-					"$projectRoot" "$prelinkPath"
+					"$projectRoot" "$@"
 				printf '\n'
 			fi
 
-			if isOutdated "$dynamicPath" "$prelinkPath"
-			then
+			_dynamic_spacing=0
 			if [ "${compiledAny:-0}" -eq 1 ] \
 				&& [ "$majorSpacingDone" -eq 0 ]
 			then
-				printf '\n'
-				majorSpacingDone=1
+				_dynamic_spacing=1
 			fi
-			printf 'Linking %s...\n' \
-				"${dynamicPath##*/}"
-				linkDynamicLibrary "$dynamicPath" \
-					"$projectRoot" "$finalLinkFlags" \
-					"$prelinkPath"
-				printf '\n'
-			fi
+			set --
+			while IFS= read -r objPath || [ -n "$objPath" ]
+			do
+				[ -n "$objPath" ] || continue
+				set -- "$@" "$objPath"
+			done <<EOF
+$( find "$objSrcRoot" -type f -name '*.o' -print )
+EOF
+			[ $# -gt 0 ] || return 0
+			linkDynamicLibraryFinal "$dynamicPath" "$projectRoot" \
+				"$finalLinkFlags" "$_dynamic_spacing" 0 \
+				"$@"
 			;;
 
 		*.bin)
 			binPath=$targetDir/$target
-			if isOutdated "$binPath" "$@"
-			then
+			_bin_spacing=0
 			if [ "${compiledAny:-0}" -eq 1 ] \
 				&& [ "$majorSpacingDone" -eq 0 ]
 			then
-				printf '\n'
-				majorSpacingDone=1
+				_bin_spacing=1
 			fi
-			printf 'Linking %s...\n' "${binPath##*/}"
-			linkBinary "$binPath" "$projectRoot" \
-				"$finalLinkFlags" "$@"
-				printf '\n'
-			fi
+			linkBinaryFinal "$binPath" "$projectRoot" \
+				"$finalLinkFlags" "$_bin_spacing" 0 "$@"
 			;;
 
 		*)
