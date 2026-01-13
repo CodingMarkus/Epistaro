@@ -268,50 +268,6 @@ _dynamicLibFlag( )
 }
 
 
-# $1 - Output object file path.
-# $2 - Working directory for clang.
-# $3 - clang flags string, already quoted for eval.
-# $4.. - Object file paths.
-#
-# Pre-links object files into a single relocatable object file.
-#
-prelinkObjects( )
-(
-	outPath=$1
-	workDir=$2
-	flags=$3
-	shift 3
-
-	assert "[ -n \"${outPath:-}\" ]" "prelinkObjects() missing output path"
-	assert "[ -n \"${workDir:-}\" ]" "prelinkObjects() missing work dir"
-	assert "[ -n \"${flags:-}\" ]" "prelinkObjects() missing flags"
-	assert "[ $# -gt 0 ]" "prelinkObjects() missing object files"
-
-	clang=$( _resolveClangBinary )
-	command -v "$clang" >/dev/null 2>&1 \
-		|| printErrorAndExit "clang not found: $clang"
-
-	case "$outPath" in
-		*/*) outDir=${outPath%/*} ;;
-		*) outDir="." ;;
-	esac
-	ensureDir "$outDir"
-
-	workDirAbs=$( absDir "$workDir" ) \
-		|| printErrorAndExit "Work dir not found: $workDir"
-	workDirAbs=$( stripTrailingSlash "$workDirAbs" )
-
-	objArgs=$( collectObjectArgs "$workDirAbs" "$@" )
-
-	eval "set -- $flags $objArgs"
-	(
-		cd "$workDirAbs"
-		buildDebugPrintCommand "$clang" -r -nostdlib -o "$outPath" "$@"
-		"$clang" -r -nostdlib -o "$outPath" "$@"
-	)
-)
-
-
 # $1 - Output dynamic library path.
 # $2 - Working directory for clang.
 # $3 - clang flags string, already quoted for eval.

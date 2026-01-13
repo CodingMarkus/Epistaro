@@ -334,29 +334,9 @@ EOF
 
 	case "$target" in
 		*.lib)
-			prelinkPath=$objDir/${target%.*}.o
 			staticPath=$targetDir/${target%.*}.a
 			dynamicPath=$targetDir/${target%.lib}$( \
 				dynamicLibExtension )
-
-			if isOutdated "$prelinkPath" "$@"
-			then
-			if [ "${compiledAny:-0}" -eq 1 ] \
-				&& [ "$majorSpacingDone" -eq 0 ]
-			then
-				printf '\n'
-				majorSpacingDone=1
-			fi
-			printf 'Pre-Linking %s...\n' \
-				"${prelinkPath##*/}"
-			prelinkFlags=$( \
-				linkBuildFlagsWithoutLtoFromSettings \
-					"$targetBuildSettings" )
-			[ -n "$prelinkFlags" ] || prelinkFlags="--"
-			prelinkObjects "$prelinkPath" "$projectRoot" \
-				"$prelinkFlags" "$@"
-				printf '\n'
-			fi
 
 			if isOutdated "$staticPath" "$@"
 			then
@@ -379,15 +359,6 @@ EOF
 			then
 				_dynamic_spacing=1
 			fi
-			set --
-			while IFS= read -r objPath || [ -n "$objPath" ]
-			do
-				[ -n "$objPath" ] || continue
-				set -- "$@" "$objPath"
-			done <<EOF
-$( find "$objSrcRoot" -type f -name '*.o' -print )
-EOF
-			[ $# -gt 0 ] || return 0
 			linkDynamicLibraryFinal "$dynamicPath" "$projectRoot" \
 				"$finalLinkFlags" "$_dynamic_spacing" 0 \
 				"$@"

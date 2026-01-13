@@ -601,32 +601,6 @@ linkBuildFlagsFromSettings( )
 #
 # Prints quoted link flags with LTO options removed.
 #
-linkBuildFlagsWithoutLtoFromSettings( )
-(
-	_lbfl_settings=$1
-	_lbfl_flags=$( _linkBuildFlagsFromSettings "$_lbfl_settings" )
-
-	[ -n "$_lbfl_flags" ] || return 0
-
-	_lbfl_output=""
-	eval "set -- $_lbfl_flags"
-	while [ "$#" -gt 0 ]
-	do
-		case "$1" in
-			-flto|-flto=*) ;;
-			*)
-				_lbfl_output=$( appendQuotedSettings \
-					"$_lbfl_output" "$( quote "$1" )" )
-				;;
-		esac
-		shift
-	done
-
-	if [ -n "$_lbfl_output" ]
-	then
-		printf '%s' "$_lbfl_output"
-	fi
-)
 
 
 # Prints color diagnostic flags when supported.

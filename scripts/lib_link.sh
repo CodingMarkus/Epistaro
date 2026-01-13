@@ -45,8 +45,6 @@ _deployPostprocessFlags( )
 }
 
 
-
-
 # ($1) - Force deploy processing when set to 1.
 #
 # Returns success if deploy processing should be applied.
@@ -104,6 +102,26 @@ deployUnstrippedPath( )
 )
 
 
+# $1 - Output path.
+#
+# Prints the deploy symbols directory for the output path.
+#
+deploySymbolsDirFromPath( )
+(
+	_dsd_path=$1
+
+	case "$_dsd_path" in
+		*/*) _dsd_dir=${_dsd_path%/*} ;;
+		*) _dsd_dir="." ;;
+	esac
+
+	case "$_dsd_dir" in
+		*/sym) printf '%s\n' "$_dsd_dir" ;;
+		*) printf '%s/sym\n' "$_dsd_dir" ;;
+	esac
+)
+
+
 # $1 - Stripped output path.
 #
 # Prints the debug symbols path for deploy processing.
@@ -139,8 +157,68 @@ deployDebugSymbolsPath( )
 )
 
 
+# $1 - Quoted clang flags string.
+#
+# Returns success if LTO flags are present.
+#
+_linkFlagsContainLto( )
+{
+	_lfcl_flags=$1
+
+	[ -n "$_lfcl_flags" ] || return 1
+
+	eval "set -- $_lfcl_flags"
+	while [ "$#" -gt 0 ]
+	do
+		case "$1" in
+			-flto|-flto=*) return 0 ;;
+		esac
+		shift
+	done
+
+	return 1
+}
+
+
+# $1 - Quoted clang flags string.
+# $2 - Output path.
+#
+# Prints updated flags with the LTO object path appended when needed.
+#
+_linkFlagsWithLtoObjectPath( )
+(
+	_lflop_flags=$1
+	_lflop_out=$2
+
+	if platformTargetIsApple && _linkFlagsContainLto "$_lflop_flags"
+	then
+		_lflop_sym_dir=$( deploySymbolsDirFromPath "$_lflop_out" )
+		ensureDir "$_lflop_sym_dir"
+		case "$_lflop_out" in
+			*/*) _lflop_file=${_lflop_out##*/} ;;
+			*) _lflop_file=$_lflop_out ;;
+		esac
+		_lflop_lto_path=$_lflop_sym_dir/${_lflop_file}.lto
+		_lflop_settings="-Wl,-object_path_lto,$_lflop_lto_path"
+		_lflop_extra=$( quoteSettings "$_lflop_settings" )
+		appendQuotedSettings "$_lflop_flags" "$_lflop_extra"
+		return 0
+	fi
+
+	printf '%s' "$_lflop_flags"
+)
+
+
 _resolveObjcopyTool( )
 {
+	if [ -n "${OBJCOPY:-}" ]
+	then
+		command -v "$OBJCOPY" >/dev/null 2>&1 \
+			|| printErrorAndExit "objcopy not found: $OBJCOPY"
+		printf '%s\n' "$OBJCOPY"
+		return 0
+	fi
+
 	if command -v objcopy >/dev/null 2>&1
 	then
 		printf '%s\n' "objcopy"
@@ -158,6 +236,14 @@ _resolveObjcopyTool( )
 
 _resolveStripTool( )
 {
+	if [ -n "${STRIP:-}" ]
+	then
+		command -v "$STRIP" >/dev/null 2>&1 \
+			|| printErrorAndExit "strip not found: $STRIP"
+		printf '%s\n' "$STRIP"
+		return 0
+	fi
+
 	if command -v strip >/dev/null 2>&1
 	then
 		printf '%s\n' "strip"
@@ -250,13 +336,12 @@ linkDynamicLibraryFinal( )
 	fi
 
 	_ldlf_link_out=$_ldlf_out
-	_ldlf_link_flags=$( _linkFlagsWithLtoObjectPath "$_ldlf_flags" \
-		"${_ldlf_out}.lto" )
+	_ldlf_link_flags=$_ldlf_flags
 	if [ "$_ldlf_deploy" -eq 1 ]
 	then
 		_ldlf_link_out=$( deployUnstrippedPath "$_ldlf_out" )
 		_ldlf_link_flags=$( _linkFlagsWithLtoObjectPath \
-			"$_ldlf_flags" "${_ldlf_link_out}.lto" )
+			"$_ldlf_flags" "$_ldlf_link_out" )
 	fi
 
 	if [ "$_ldlf_deploy" -eq 1 ]
@@ -330,13 +415,12 @@ linkBinaryFinal( )
 	fi
 
 	_lblf_link_out=$_lblf_out
-	_lblf_link_flags=$( _linkFlagsWithLtoObjectPath "$_lblf_flags" \
-		"${_lblf_out}.lto" )
+	_lblf_link_flags=$_lblf_flags
 	if [ "$_lblf_deploy" -eq 1 ]
 	then
 		_lblf_link_out=$( deployUnstrippedPath "$_lblf_out" )
 		_lblf_link_flags=$( _linkFlagsWithLtoObjectPath \
-			"$_lblf_flags" "${_lblf_link_out}.lto" )
+			"$_lblf_flags" "$_lblf_link_out" )
 	fi
 
 	if [ "$_lblf_deploy" -eq 1 ]
@@ -385,50 +469,6 @@ linkBinaryFinal( )
 )
 
 
-# $1 - Quoted clang flags string.
-#
-# Returns success if LTO flags are present.
-#
-_linkFlagsContainLto( )
-{
-	_lfcl_flags=$1
-
-	[ -n "$_lfcl_flags" ] || return 1
-
-	eval "set -- $_lfcl_flags"
-	while [ "$#" -gt 0 ]
-	do
-		case "$1" in
-			-flto|-flto=*) return 0 ;;
-		esac
-		shift
-	done
-
-	return 1
-}
-
-
-# $1 - Quoted clang flags string.
-# $2 - LTO object path.
-#
-# Prints updated flags with the LTO object path appended when needed.
-#
-_linkFlagsWithLtoObjectPath( )
-(
-	_lflop_flags=$1
-	_lflop_path=$2
-
-	if platformTargetIsApple && buildDebugEnabled \
-		&& _linkFlagsContainLto "$_lflop_flags"
-	then
-		_lflop_settings="-Wl,-object_path_lto,$_lflop_path"
-		_lflop_extra=$( quoteSettings "$_lflop_settings" )
-		appendQuotedSettings "$_lflop_flags" "$_lflop_extra"
-		return 0
-	fi
-
-	printf '%s' "$_lflop_flags"
-)
 
 
 # $1 - Quoted build settings string.
