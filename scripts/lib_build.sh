@@ -103,6 +103,42 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 
 	pruneObjectTree "$srcRoot" "$objRoot"
 
+	_style_root=$projectRoot/styles
+	_newest_style=""
+	if [ -d "$_style_root" ]
+	then
+		while IFS= read -r _style_path || [ -n "$_style_path" ]
+		do
+			[ -n "$_style_path" ] || continue
+			if [ -z "$_newest_style" ]
+			then
+				_newest_style=$_style_path
+				continue
+			fi
+			if isOutdated "$_newest_style" "$_style_path"
+			then
+				_newest_style=$_style_path
+			fi
+		done <<EOF
+$( find "$_style_root" -type f )
+EOF
+	fi
+
+	if [ -n "$_newest_style" ]
+	then
+		while IFS= read -r _dep_path || [ -n "$_dep_path" ]
+		do
+			[ -n "$_dep_path" ] || continue
+			if [ -f "$_dep_path" ] \
+				&& isOutdated "$_dep_path" "$_newest_style"
+			then
+				rm -f "$_dep_path"
+			fi
+		done <<EOF
+$( find "$objRoot" -type f -name '*.dep' )
+EOF
+	fi
+
 	targetLabel=$( formatTargetLabel "$target" )
 	printHeader "====== Building Target $targetLabel ======"
 	printf 'Using Build Style: %s\n\n' "$targetStyleName"
