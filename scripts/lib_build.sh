@@ -149,6 +149,19 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 					"$_bt_work_dir" "$_bt_file_flags"
 			fi
 
+			# Dep file must list at least one input (the source file).
+			_dep_has_entry=0
+			while IFS= read -r dep || [ -n "$dep" ]
+			do
+				[ -n "$dep" ] || continue
+				_dep_has_entry=1
+				break
+			done < "$depPath"
+			if [ "$_dep_has_entry" -eq 0 ]
+			then
+				printErrorAndExit "Dependency file is empty: $depPath"
+			fi
+
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
 			then
@@ -181,79 +194,6 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 				continue
 			fi
 
-				# Check if any dependency has been updated
-				# or is missing.
-			set --
-			while IFS= read -r dep || [ -n "$dep" ]
-			do
-				[ -n "$dep" ] || continue
-				case "$dep" in
-					/*) depPathResolved=$dep ;;
-					*) depPathResolved=$srcDir/$dep ;;
-				esac
-				set -- "$@" "$depPathResolved"
-			done < "$depPath"
-
-			if [ "$#" -eq 0 ]
-			then
-				if [ "$fileFlagsReady" -eq 0 ]
-				then
-					prepareFlags "$projectRoot" \
-						"$srcDir" \
-						"$targetBuildSettings" \
-						"$buildSanitizeSettings" \
-						"$targetSanitizeSettings" \
-						"$targetSanitizePaths" \
-						_bt_work_dir _bt_file_flags \
-						targetSanitizeSettings \
-						targetSanitizePaths
-					fileFlagsReady=1
-				fi
-				if [ "$compileSpacing" -eq 1 ]
-				then
-					printf '\n'
-				fi
-				printf 'Compiling %s...\n' "$relPath"
-				_bt_had_output=0
-				buildFileWithOutput "$projectRoot" \
-					"$srcPath" \
-					"$objPath" "$_bt_work_dir" \
-					"$_bt_file_flags" \
-					_bt_had_output
-				compileSpacing=$_bt_had_output
-				compiledAny=1
-				continue
-			fi
-
-			if isOutdated "$objPath" "$@"
-			then
-				if [ "$fileFlagsReady" -eq 0 ]
-				then
-					prepareFlags "$projectRoot" \
-						"$srcDir" \
-						"$targetBuildSettings" \
-						"$buildSanitizeSettings" \
-						"$targetSanitizeSettings" \
-						"$targetSanitizePaths" \
-						_bt_work_dir _bt_file_flags \
-						targetSanitizeSettings \
-						targetSanitizePaths
-					fileFlagsReady=1
-				fi
-				if [ "$compileSpacing" -eq 1 ]
-				then
-					printf '\n'
-				fi
-				printf 'Compiling %s...\n' "$relPath"
-				_bt_had_output=0
-				buildFileWithOutput "$projectRoot" \
-					"$srcPath" \
-					"$objPath" "$_bt_work_dir" \
-					"$_bt_file_flags" \
-					_bt_had_output
-				compileSpacing=$_bt_had_output
-				compiledAny=1
-			fi
 			done <<EOF
 $( find "$srcRoot" -type f -name '*.c' )
 EOF
