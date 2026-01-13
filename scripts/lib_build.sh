@@ -102,11 +102,10 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
 	pruneObjectTree "$srcRoot" "$objRoot"
-	purgeOutdatedDepsByStyle "$projectRoot" "$objRoot"
-
 	targetLabel=$( formatTargetLabel "$target" )
 	printHeader "====== Building Target $targetLabel ======"
 	printf 'Using Build Style: %s\n\n' "$targetStyleName"
+	purgeOutdatedDepsByStyle "$projectRoot" "$objRoot"
 
 		if [ -d "$srcRoot" ]
 		then

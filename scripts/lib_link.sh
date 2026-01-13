@@ -346,6 +346,7 @@ linkDynamicLibraryFinal( )
 
 	if [ "$_ldlf_deploy" -eq 1 ]
 	then
+		_ldlf_relinked=0
 		if isOutdated "$_ldlf_link_out" "$@"
 		then
 			if [ "$_ldlf_spacing" -eq 1 ]
@@ -357,12 +358,14 @@ linkDynamicLibraryFinal( )
 			linkDynamicLibrary "$_ldlf_link_out" \
 				"$_ldlf_work" "$_ldlf_link_flags" "$@"
 			printf '\n'
+			_ldlf_relinked=1
 		fi
 
 		_ldlf_debug=$( deployDebugSymbolsPath "$_ldlf_out" )
-		if isOutdated "$_ldlf_out" "$_ldlf_link_out" \
-			|| isOutdated "$_ldlf_debug" "$_ldlf_link_out"
+		if [ "$_ldlf_relinked" -eq 1 ]
 		then
+			rm -f "$_ldlf_out"
+			rm -rf "$_ldlf_debug"
 			if [ "$_ldlf_spacing" -eq 1 ]
 			then
 				printf '\n'
@@ -425,6 +428,7 @@ linkBinaryFinal( )
 
 	if [ "$_lblf_deploy" -eq 1 ]
 	then
+		_lblf_relinked=0
 		if isOutdated "$_lblf_link_out" "$@"
 		then
 			if [ "$_lblf_spacing" -eq 1 ]
@@ -436,12 +440,14 @@ linkBinaryFinal( )
 			linkBinary "$_lblf_link_out" "$_lblf_work" \
 				"$_lblf_link_flags" "$@"
 			printf '\n'
+			_lblf_relinked=1
 		fi
 
 		_lblf_debug=$( deployDebugSymbolsPath "$_lblf_out" )
-		if isOutdated "$_lblf_out" "$_lblf_link_out" \
-			|| isOutdated "$_lblf_debug" "$_lblf_link_out"
+		if [ "$_lblf_relinked" -eq 1 ]
 		then
+			rm -f "$_lblf_out"
+			rm -rf "$_lblf_debug"
 			if [ "$_lblf_spacing" -eq 1 ]
 			then
 				printf '\n'

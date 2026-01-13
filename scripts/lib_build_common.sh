@@ -144,6 +144,7 @@ EOF
 	[ -n "$_pobs_newest_style" ] || return 0
 	[ -d "$_pobs_obj_root" ] || return 0
 
+	_pobs_removed=0
 	while IFS= read -r _pobs_dep || [ -n "$_pobs_dep" ]
 	do
 		[ -n "$_pobs_dep" ] || continue
@@ -151,10 +152,18 @@ EOF
 			&& isOutdated "$_pobs_dep" "$_pobs_newest_style"
 		then
 			rm -f "$_pobs_dep"
+			_pobs_removed=$((_pobs_removed + 1))
 		fi
 	done <<EOF
 $( find "$_pobs_obj_root" -type f -name '*.dep' )
 EOF
+
+	if [ "$_pobs_removed" -gt 0 ]
+	then
+		printf \
+			'Removed %d dep file(s) because build style files changed.\n\n' \
+			"$_pobs_removed"
+	fi
 )
 
 
