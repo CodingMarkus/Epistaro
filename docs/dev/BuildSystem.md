@@ -29,13 +29,15 @@ Build output lives under the build root:
 
 - `builds/<style>/<target>/obj/src/` contains objects and `.dep` files.
 
-- `builds/<style>/<target>/obj/<target>.o` is the single-object prelink for `.lib` targets.
-
 - `builds/<style>/<target>/` contains final outputs.
 
-- `.lib` targets produce `builds/<style>/<target>/<target>.a` and `builds/<style>/<target>/<target>.<lib-ext>` (`.dylib` on Apple platforms, `.dll` on windows, `.so` elsewhere).
+- `.lib` targets produce `builds/<style>/<target>/<target>.a` (LTO format + Dwarf2 debug symbols) and `builds/<style>/<target>/<target>.<lib-ext>` (`.dylib` on Apple platforms, `.dll` on windows, `.so` elsewhere).
 
 - `.bin` targets produce `builds/<style>/<target>/<target>[.<ext>]` (usually no extension or `.exe` on Windows).
+
+- When deploy processing is enabled, binaries and dynamic libraries are linked to an unstripped file under `builds/<style>/<target>/sym/` with an `_unstripped` suffix, then post-processed into the final output and debug symbols.
+
+- Deploy debug symbols are stored alongside the unstripped file: `.dSYM` on Apple platforms and `.debug` elsewhere.
 
 - Library public headers are synced to `builds/<style>/<target>/inc/`.
 
