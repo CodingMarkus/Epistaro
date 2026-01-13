@@ -9,6 +9,7 @@ __included_lib_build_common_sh=1
 . lib_error.sh
 . lib_quote.sh
 . lib_clang.sh
+. lib_outdated.sh
 
 
 # $1 - Variable name.
@@ -57,6 +58,7 @@ _buildFile( )
 		"$_build_workDir" "$_build_fileFlags"
 }
 
+
 # $1 - Project root directory.
 # $2 - Source file path.
 # $3 - Object file output path.
@@ -103,3 +105,112 @@ buildFileWithOutput( )
 		return "$_build_status"
 	fi
 }
+
+
+# $1 - Project root directory.
+# $2 - Object root directory containing .dep files.
+#
+# Removes dep files older than the newest style file.
+#
+purgeOutdatedDepsByStyle( )
+(
+	_pobs_root=$1
+	_pobs_obj_root=$2
+
+	[ -n "$_pobs_root" ] || printErrorAndExit \
+		"purgeOutdatedDepsByStyle() missing project root"
+	[ -n "$_pobs_obj_root" ] || printErrorAndExit \
+		"purgeOutdatedDepsByStyle() missing object root"
+
+	_pobs_style_root=$_pobs_root/styles
+	_pobs_newest_style=""
+
+	if [ -d "$_pobs_style_root" ]
+	then
+		while IFS= read -r _pobs_style_path || [ -n "$_pobs_style_path" ]
+		do
+			[ -n "$_pobs_style_path" ] || continue
+			if [ -z "$_pobs_newest_style" ] \
+				|| isOutdated "$_pobs_newest_style" \
+					"$_pobs_style_path"
+			then
+				_pobs_newest_style=$_pobs_style_path
+			fi
+		done <<EOF
+$( find "$_pobs_style_root" -type f )
+EOF
+	fi
+
+	[ -n "$_pobs_newest_style" ] || return 0
+	[ -d "$_pobs_obj_root" ] || return 0
+
+	while IFS= read -r _pobs_dep || [ -n "$_pobs_dep" ]
+	do
+		[ -n "$_pobs_dep" ] || continue
+		if [ -f "$_pobs_dep" ] \
+			&& isOutdated "$_pobs_dep" "$_pobs_newest_style"
+		then
+			rm -f "$_pobs_dep"
+		fi
+	done <<EOF
+$( find "$_pobs_obj_root" -type f -name '*.dep' )
+EOF
+)
+
+
+# $1 - Dependency file path.
+#
+# Ensures a dep file contains at least one path entry.
+#
+assertDepFileNotEmpty( )
+(
+	_adp_path=$1
+
+	[ -n "$_adp_path" ] || printErrorAndExit \
+		"assertDepFileNotEmpty() missing dep path"
+	[ -f "$_adp_path" ] || printErrorAndExit \
+		"Dependency file not found: $_adp_path"
+
+	_adp_has_entry=0
+	while IFS= read -r _adp_dep || [ -n "$_adp_dep" ]
+	do
+		[ -n "$_adp_dep" ] || continue
+		_adp_has_entry=1
+		break
+	done < "$_adp_path"
+
+	if [ "$_adp_has_entry" -eq 0 ]
+	then
+		printErrorAndExit "Dependency file is empty: $_adp_path"
+	fi
+)
+
+
+# $1 - Source file path.
+# $2 - Dependency file path.
+# $3 - Working directory for clang.
+# $4 - Quoted clang flags string.
+#
+# Regenerates the dep file when outdated.
+#
+updateDepFileIfOutdated( )
+(
+	_ud_src=$1
+	_ud_dep=$2
+	_ud_work=$3
+	_ud_flags=$4
+
+	[ -n "$_ud_src" ] || printErrorAndExit \
+		"updateDepFileIfOutdated() missing source path"
+	[ -n "$_ud_dep" ] || printErrorAndExit \
+		"updateDepFileIfOutdated() missing dep path"
+	[ -n "$_ud_work" ] || printErrorAndExit \
+		"updateDepFileIfOutdated() missing work dir"
+	[ -n "$_ud_flags" ] || printErrorAndExit \
+		"updateDepFileIfOutdated() missing flags"
+
+	if depFileIsOutdated "$_ud_dep"
+	then
+		generateDepFile "$_ud_src" "$_ud_dep" "$_ud_work" "$_ud_flags"
+	fi
+)

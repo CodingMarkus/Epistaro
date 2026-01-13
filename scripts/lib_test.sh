@@ -363,6 +363,7 @@ EOF
 			ensureDir "$_rt_test_obj_root"
 			ensureDir "$_rt_test_out_dir"
 			pruneObjectTree "$_rt_tests_root" "$_rt_test_obj_root"
+			purgeOutdatedDepsByStyle "$_rt_root" "$_rt_test_obj_root"
 
 			while IFS= read -r _rt_test_line || [ -n "$_rt_test_line" ]
 			do
@@ -867,9 +868,11 @@ buildTestObjects( )
 					_bto_target_sanitize _bto_target_paths
 				_bto_flags_ready=1
 			fi
-			generateDepFile "$_bto_src" "$_bto_dep_path" \
+			updateDepFileIfOutdated "$_bto_src" "$_bto_dep_path" \
 				"$_bto_work_dir" "$_bto_file_flags"
 		fi
+
+		assertDepFileNotEmpty "$_bto_dep_path"
 
 		if isOutdated "$_bto_obj_path" "$_bto_dep_path"
 		then
@@ -907,92 +910,6 @@ buildTestObjects( )
 			_bto_spacing=$_bto_had_output
 			_bto_compiled=1
 			continue
-		fi
-
-		set --
-		while IFS= read -r _bto_dep || [ -n "$_bto_dep" ]
-		do
-			[ -n "$_bto_dep" ] || continue
-			case "$_bto_dep" in
-				/*) _bto_dep_res=$_bto_dep ;;
-				*) _bto_dep_res=$_bto_src_dir/$_bto_dep ;;
-			esac
-			set -- "$@" "$_bto_dep_res"
-		done < "$_bto_dep_path"
-
-		if [ "$#" -eq 0 ]
-		then
-			if [ "$_bto_flags_ready" -eq 0 ]
-			then
-				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
-					"$_bto_build_sanitize" "$_bto_target_sanitize" \
-					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
-					_bto_target_sanitize _bto_target_paths
-				_bto_flags_ready=1
-			fi
-			if [ "$_bto_spacing" -eq 1 ]
-			then
-				printf '\n'
-			fi
-			if [ -n "$_bto_label" ] \
-				&& [ "$_bto_label_printed" -eq 0 ]
-			then
-				_bto_spacing_count=$_bto_pre_spacing
-				while [ "$_bto_spacing_count" -gt 0 ]
-				do
-					printf '\n'
-					_bto_spacing_count=$(( _bto_spacing_count - 1 ))
-				done
-				printf 'Compiling %s\n' "$_bto_label"
-				printf '\n'
-				_bto_label_printed=1
-			fi
-			printf 'Compiling %s...\n' "$_bto_rel_path"
-			_bto_had_output=0
-			buildFileWithOutput "$_bto_root" "$_bto_src" \
-				"$_bto_obj_path" "$_bto_work_dir" \
-				"$_bto_file_flags" \
-				_bto_had_output
-			_bto_spacing=$_bto_had_output
-			_bto_compiled=1
-			continue
-		fi
-
-		if isOutdated "$_bto_obj_path" "$@"
-		then
-			if [ "$_bto_flags_ready" -eq 0 ]
-			then
-				prepareFlags "$_bto_root" "$_bto_src_dir" "$_bto_settings" \
-					"$_bto_build_sanitize" "$_bto_target_sanitize" \
-					"$_bto_target_paths" _bto_work_dir _bto_file_flags \
-					_bto_target_sanitize _bto_target_paths
-				_bto_flags_ready=1
-			fi
-			if [ "$_bto_spacing" -eq 1 ]
-			then
-				printf '\n'
-			fi
-			if [ -n "$_bto_label" ] \
-				&& [ "$_bto_label_printed" -eq 0 ]
-			then
-				_bto_spacing_count=$_bto_pre_spacing
-				while [ "$_bto_spacing_count" -gt 0 ]
-				do
-					printf '\n'
-					_bto_spacing_count=$(( _bto_spacing_count - 1 ))
-				done
-				printf 'Compiling %s\n' "$_bto_label"
-				printf '\n'
-				_bto_label_printed=1
-			fi
-			printf 'Compiling %s...\n' "$_bto_rel_path"
-			_bto_had_output=0
-			buildFileWithOutput "$_bto_root" "$_bto_src" \
-				"$_bto_obj_path" "$_bto_work_dir" \
-				"$_bto_file_flags" \
-				_bto_had_output
-			_bto_spacing=$_bto_had_output
-			_bto_compiled=1
 		fi
 	done <<EOF
 $_bto_src_list

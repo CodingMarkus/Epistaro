@@ -102,42 +102,7 @@ assert "[ -n \"${projectRoot:-}\" ]" \
 	[ -d "$objRoot" ] || mkdir -p "$objRoot"
 
 	pruneObjectTree "$srcRoot" "$objRoot"
-
-	_style_root=$projectRoot/styles
-	_newest_style=""
-	if [ -d "$_style_root" ]
-	then
-		while IFS= read -r _style_path || [ -n "$_style_path" ]
-		do
-			[ -n "$_style_path" ] || continue
-			if [ -z "$_newest_style" ]
-			then
-				_newest_style=$_style_path
-				continue
-			fi
-			if isOutdated "$_newest_style" "$_style_path"
-			then
-				_newest_style=$_style_path
-			fi
-		done <<EOF
-$( find "$_style_root" -type f )
-EOF
-	fi
-
-	if [ -n "$_newest_style" ]
-	then
-		while IFS= read -r _dep_path || [ -n "$_dep_path" ]
-		do
-			[ -n "$_dep_path" ] || continue
-			if [ -f "$_dep_path" ] \
-				&& isOutdated "$_dep_path" "$_newest_style"
-			then
-				rm -f "$_dep_path"
-			fi
-		done <<EOF
-$( find "$objRoot" -type f -name '*.dep' )
-EOF
-	fi
+	purgeOutdatedDepsByStyle "$projectRoot" "$objRoot"
 
 	targetLabel=$( formatTargetLabel "$target" )
 	printHeader "====== Building Target $targetLabel ======"
@@ -181,22 +146,11 @@ EOF
 						targetSanitizePaths
 					fileFlagsReady=1
 				fi
-				generateDepFile "$srcPath" "$depPath" \
+				updateDepFileIfOutdated "$srcPath" "$depPath" \
 					"$_bt_work_dir" "$_bt_file_flags"
 			fi
 
-			# Dep file must list at least one input (the source file).
-			_dep_has_entry=0
-			while IFS= read -r dep || [ -n "$dep" ]
-			do
-				[ -n "$dep" ] || continue
-				_dep_has_entry=1
-				break
-			done < "$depPath"
-			if [ "$_dep_has_entry" -eq 0 ]
-			then
-				printErrorAndExit "Dependency file is empty: $depPath"
-			fi
+			assertDepFileNotEmpty "$depPath"
 
 			# Object file older than dep file?
 			if isOutdated "$objPath" "$depPath"
