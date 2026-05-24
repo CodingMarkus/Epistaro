@@ -1,375 +1,448 @@
-Epistaro Public License (Version 1.0)
-======================================
+EpiPL-1.0 (Epistaro Public License)
+===================================
 
-This software is licensed under the _Epistaro Public License, version 1.0_.
-
-The _Epistaro Public License, version 1.0_ (abbreviated as EPL-1.0),
-is based on the _Mozilla Public License, version 2.0_ (abbreviated as MPL-2.0).
+Version 1.0
 
 
-TL;DR (Informative Summary)
----------------------------
+Introduction
+------------
 
-This summary is **not legally binding**.
-It is only intended to help you understand the main terms:
+The EpiPL-1.0 is a source-available non-commercial copyleft license.
 
-- You may use, study, and modify this software for
-**personal, educational, or research** purposes.
-
-- You may distribute modified or unmodified versions **if you also share the
-complete source code**, including your modifications, under this same license.
-
-- **No commercial use** without a separate commercial license from the
-copyright holders.
-
-- **No relicensing** under GPL or other licenses; this license is exclusive.
-
-- All other terms follow the structure of the MPL-2.0.
+The EpiPL-1.0 is an independent license and shall be interpreted
+according to its own terms.
 
 
-Epistaro Public License Text
-----------------------------
+Informative Summary (Non-Binding)
+---------------------------------
 
-### 0. Additional Terms
+This summary is informational only and is not part of the License.
 
-#### 0.1. Non-Commercial Use
+- You may use, study, and modify the software for personal, educational,
+  hobby, or research purposes.
 
-Use of this software, in whole or in part, for any **Commercial Purpose**
-is prohibited without a separate commercial license from the copyright holders.
+- Commercial Purpose is prohibited without a separate commercial
+  license.
 
-**“Commercial Purpose”** means any use intended for or directed toward
-**commercial advantage or monetary compensation**, including (without
-limitation):
+- You may distribute modified or unmodified versions if the Covered
+  Software remains under this License and complete corresponding source
+  code is made available.
 
-operating hosted or managed services; Software-as-a-Service (SaaS); resale or
-distribution for a fee; inclusion in or with commercial products; internal
-business use by a for‑profit entity.
+- Covered Software may not be relicensed under another license unless
+  expressly permitted under this License and approved by the required
+  Contributors.
 
-**Commercial Purpose** does not include personal use, hobby projects,
-academic teaching or research.
+- Submitting patches, pull requests, suggestions, or similar material
+  does not automatically grant Contributor status.
 
+- Contributors are explicitly designated in project or fork records.
 
-#### 0.2. No Secondary Licensing
+- Forks may define their own Contributors and governance.
 
-Covered Software under the EPL-1.0 may **not** be distributed, sublicensed,
-or relicensed under any other license, including any “Secondary License” such
-as the GNU General Public License, the GNU Lesser General Public License, or
-the GNU Affero General Public License.
+- Contributors designated in inherited project records remain
+  Contributors unless all of their Contributions are removed from the
+  fork or separate development line.
 
-
-#### 0.3. Supremacy of Additional Terms
-
-If any provision of the License text below would permit actions that are
-restricted by Sections 0.1 or 0.2 above, **Sections 0.1 and 0.2 control**.
+- AI or machine learning models trained or otherwise derived from
+  Covered Software are themselves Covered Software under this License.
 
 
-#### 0.4. Attribution to MPL-2.0
+1. Definitions
+---------------
 
-This license text is derived from the Mozilla Public License 2.0 under
-Section 10.3 of that license. References to the Mozilla Foundation as
-license steward have been removed, and the license has been renamed.
+1.1. “Contributor”
 
+    means any individual or legal entity explicitly designated as a
+    Contributor in the relevant source file, AUTHORS file, project
+    metadata, or other official project records maintained or approved
+    by the currently recognized Contributors.
 
-### 1. Definitions
+    Only explicitly recognized Contributors receive Contributor status
+    or Contributor-specific rights under this License.
 
-**1.1. “Contributor”**
-    means each individual or legal entity that creates, contributes to
-    the creation of, or owns Covered Software.
+    Copyright ownership shall be determined according to applicable law
+    and is not affected by omission from project records alone.
 
-**1.2. “Contributor Version”**
-    means the combination of the Contributions of others (if any) used
-    by a Contributor and that particular Contributor's Contribution.
+    A person or entity does not become a Contributor merely by
+    submitting patches, pull requests, code, documentation, bug reports,
+    or similar material which is later accepted, rewritten, adapted, or
+    applied by another Contributor.
 
-**1.3. “Contribution”**
-    means Covered Software of a particular Contributor.
+    A person or entity becomes a Contributor only if all currently
+    recognized Contributors explicitly agree and the person or entity is
+    designated as a Contributor in the relevant project records.
 
-**1.4. “Covered Software”**
-    means Source Code Form to which the initial Contributor has attached
-    the notice in Exhibit A, the Executable Form of such Source Code
-    Form, and Modifications of such Source Code Form, in each case
-    including portions thereof.
+    Contributor status applies only to the specific project, repository,
+    fork, or development line whose project records designate that
+    Contributor.
 
-**1.5. “Incompatible With Secondary Licenses”**
-    means
+    When a fork or separate development line is created, Contributors
+    designated in inherited project records remain Contributors of that
+    fork or development line unless all Contributions of such
+    Contributors have been removed from the fork or development line.
 
-* **(a)** that the initial Contributor has attached the notice described
-    in Exhibit B to the Covered Software; or
-* **(b)** that the Covered Software was made available under the terms of
-    version 1.1 or earlier of the License, but not also under the
-    terms of a Secondary License.
+    Contributor status terminates automatically:
 
-**1.6. “Executable Form”**
+    (a) for an individual Contributor, upon death;
+
+    (b) for a legal entity Contributor, upon dissolution, liquidation,
+        cessation of existence, or termination of legal existence;
+
+    (c) if the Contributor voluntarily withdraws from the project in
+        writing; or
+
+    (d) if the Contributor can no longer be contacted through the
+        contact information provided to the project and fails to respond
+        to reasonable good-faith attempts to re-establish contact within
+        60 days.
+
+    A Contributor whose status terminated under subsection (d) shall
+    have Contributor status automatically restored upon re-establishing
+    contact with any currently recognized Contributor of the relevant
+    project, repository, fork, or development line.
+
+    Restoration of Contributor status does not invalidate decisions,
+    approvals, relicensing actions, governance actions, or licenses
+    validly made during the period in which Contributor status was
+    terminated.
+
+    Termination of Contributor status terminates all
+    Contributor-specific rights under this License.
+
+    Contributor status and Contributor-specific rights are
+    non-transferable and do not transfer by sale of a business, merger,
+    acquisition, inheritance, succession, operation of law, or similar
+    legal process unless explicitly approved by all remaining
+    Contributors.
+
+    Termination of Contributor status does not affect copyright
+    ownership or licenses previously validly granted to third parties
+    under this License.
+
+1.2. “Contribution”
+
+    means any copyrightable work of authorship incorporated into Covered
+    Software under this License.
+
+    Unless explicitly agreed otherwise in writing, submission of
+    patches, pull requests, code, documentation, or similar
+    copyrightable material to a project, repository, fork, or
+    development line governed by this License grants the currently
+    recognized Contributors collectively a perpetual, irrevocable,
+    world-wide, royalty-free license to use, reproduce, modify,
+    distribute, incorporate, rewrite, adapt, and otherwise exploit such
+    material for any purpose without restriction.
+
+1.3. “Covered Software”
+
+    means:
+
+    (a) any Source Code Form to which the initial Contributor has
+        attached this License;
+
+    (b) any Executable Form of such Source Code Form;
+
+    (c) any Modification thereof; and
+
+    (d) any Machine Learning Model trained, fine-tuned, adapted,
+        distilled, or otherwise derived, in whole or in part, from
+        Covered Software.
+
+1.4. “Executable Form”
+
     means any form of the work other than Source Code Form.
 
-**1.7. “Larger Work”**
+1.5. “Larger Work”
+
     means a work that combines Covered Software with other material, in
-    a separate file or files, that is not Covered Software.
+    separate files or components, that is not Covered Software.
 
-**1.8. “License”**
-    means this document.
+1.6. “Machine Learning Model”
 
-**1.9. “Licensable”**
-    means having the right to grant, to the maximum extent possible,
-    whether at the time of the initial grant or subsequently, any and
-    all of the rights conveyed by this License.
+    means any machine learning, artificial intelligence, neural network,
+    statistical, generative, embedding, diffusion, transformer,
+    language, multimodal, or similar system, including weights,
+    checkpoints, adapters, embeddings, parameter sets, distilled models,
+    derivative models, and fine-tuned variants.
 
-**1.10. “Modifications”**
-    means any of the following:
+    For Machine Learning Models, “Source Code Form” includes all files,
+    weights, training scripts, configuration, tokenizer data, adapters,
+    prompts, and other materials reasonably required to reproduce,
+    modify, fine-tune, and operate the model.
 
-* **(a)** any file in Source Code Form that results from an addition to,
-    deletion from, or modification of the contents of Covered
-    Software; or
-* **(b)** any new file in Source Code Form that contains any Covered
-    Software.
+1.7. “Commercial Purpose”
 
-**1.11. “Patent Claims” of a Contributor**
-    means any patent claim(s), including without limitation, method,
-    process, and apparatus claims, in any patent Licensable by such
-    Contributor that would be infringed, but for the grant of the
-    License, by the making, using, selling, offering for sale, having
-    made, import, or transfer of either its Contributions or its
-    Contributor Version.
+    means any use intended for, directed toward, or resulting in
+    commercial advantage, monetary compensation, or other commercial or
+    organizational activity described in this Section.
 
-**1.12. “Secondary License”**
-    means either the GNU General Public License, Version 2.0, the GNU
-    Lesser General Public License, Version 2.1, the GNU Affero General
-    Public License, Version 3.0, or any later versions of those
-    licenses.
+    Commercial Purpose includes, without limitation:
 
-**1.13. “Source Code Form”**
+    (a) operating hosted or managed services;
+
+    (b) Software-as-a-Service (SaaS);
+
+    (c) resale or paid distribution;
+
+    (d) inclusion in commercial products or services;
+
+    (e) internal business use;
+
+    (f) use for the benefit of, on behalf of, or in the course of
+        business activities of a for-profit entity;
+
+    (g) use for the benefit of, on behalf of, or in the course of
+        activities of a political organization, political party,
+        campaign, candidate, lobbying organization, governmental entity,
+        state-owned entity, public authority, or any entity controlled
+        by a government or public authority;
+
+    (h) training, fine-tuning, evaluating, operating, or offering a
+        Machine Learning Model for commercial use;
+
+    (i) using outputs of a Machine Learning Model trained on Covered
+        Software in a commercial context or for the benefit of a
+        business or organization.
+
+    Commercial Purpose does not include personal use, hobby projects,
+    private experimentation, academic teaching, non-commercial research,
+    or genuinely non-commercial use by non-profit organizations.
+
+1.8. “Modification”
+
+    means any copyrightable modification, adaptation, derivative work,
+    translation, transformation, or alteration of Covered Software,
+    including any new file incorporating Covered Software.
+
+1.9. “Patent Claims”
+
+    means any patent claim necessarily infringed by a Contribution alone
+    or by combination of a Contribution with Covered Software.
+
+1.10. “Source Code Form”
+
     means the form of the work preferred for making modifications.
 
-**1.14. “You” (or “Your”)**
-    means an individual or a legal entity exercising rights under this
-    License. For legal entities, “You” includes any entity that
-    controls, is controlled by, or is under common control with You. For
-    purposes of this definition, “control” means **(a)** the power, direct
-    or indirect, to cause the direction or management of such entity,
-    whether by contract or otherwise, or **(b)** ownership of more than
-    fifty percent (50%) of the outstanding shares or beneficial
-    ownership of such entity.
+1.11. “You”
+
+    means any individual or legal entity exercising rights under this
+    License.
 
 
-### 2. License Grants and Conditions
+2. License Grant
+----------------
 
-#### 2.1. Grants
+Subject to the terms, conditions, and restrictions of this License,
+including the non-commercial restrictions of Section 4, each Contributor
+grants You a world-wide, royalty-free, non-exclusive license to:
 
-Each Contributor hereby grants You a world-wide, royalty-free,
-non-exclusive license:
+(a) use, reproduce, modify, display, perform, and distribute its
+    Contributions; and
 
-* **(a)** under intellectual property rights (other than patent or trademark)
-    Licensable by such Contributor to use, reproduce, make available,
-    modify, display, perform, distribute, and otherwise exploit its
-    Contributions, either on an unmodified basis, with Modifications, or
-    as part of a Larger Work; and
-* **(b)** under Patent Claims of such Contributor to make, use, sell, offer
-    for sale, have made, import, and otherwise transfer either its
-    Contributions or its Contributor Version.
+(b) create and distribute Modifications and Larger Works.
 
-#### 2.2. Effective Date
-
-The licenses granted in Section 2.1 with respect to any Contribution
-become effective for each Contribution on the date the Contributor first
-distributes such Contribution.
-
-#### 2.3. Limitations on Grant Scope
-
-The licenses granted in this Section 2 are the only rights granted under
-this License. No additional rights or licenses will be implied from the
-distribution or licensing of Covered Software under this License.
-Notwithstanding Section 2.1(b) above, no patent license is granted by a
-Contributor:
-
-* **(a)** for any code that a Contributor has removed from Covered Software;
-    or
-* **(b)** for infringements caused by: **(i)** Your and any other third party's
-    modifications of Covered Software, or **(ii)** the combination of its
-    Contributions with other software (except as part of its Contributor
-    Version); or
-* **(c)** under Patent Claims infringed by Covered Software in the absence of
-    its Contributions.
-
-This License does not grant any rights in the trademarks, service marks,
-or logos of any Contributor (except as may be necessary to comply with
-the notice requirements in Section 3.4).
-
-#### 2.4. Subsequent Licenses
-
-No Contributor makes additional grants as a result of Your choice to
-distribute the Covered Software under a subsequent version of this
-License (see Section 10.2) or under the terms of a Secondary License (if
-permitted under the terms of Section 3.3).
-
-#### 2.5. Representation
-
-Each Contributor represents that the Contributor believes its
-Contributions are its original creation(s) or it has sufficient rights
-to grant the rights to its Contributions conveyed by this License.
-
-#### 2.6. Fair Use
-
-This License is not intended to limit any rights You have under
-applicable copyright doctrines of fair use, fair dealing, or other
-equivalents.
-
-#### 2.7. Conditions
-
-Sections 3.1, 3.2, 3.3, and 3.4 are conditions of the licenses granted
-in Section 2.1.
+No trademark rights are granted under this License.
 
 
-### 3. Responsibilities
+3. Alternative Licensing
+------------------------
 
-#### 3.1. Distribution of Source Form
+A Contributor may separately distribute or license Contributions
+independently created by that Contributor and not derived from
+Contributions of other Contributors under different licensing terms,
+including commercial licenses, licenses permitting governmental or
+political use, or licenses permitting commercial machine learning or
+artificial intelligence use.
 
-All distribution of Covered Software in Source Code Form, including any
-Modifications that You create or to which You contribute, must be under
-the terms of this License. You must inform recipients that the Source
-Code Form of the Covered Software is governed by the terms of this
-License, and how they can obtain a copy of this License. You may not
-attempt to alter or restrict the recipients' rights in the Source Code
-Form.
+Covered Software in a project, repository, fork, or development line may
+only be relicensed or additionally licensed under different licensing
+terms if all currently recognized Contributors agree in writing.
 
-#### 3.2. Distribution of Executable Form
+A fork or separate development line may designate additional
+Contributors. Such designation does not remove, replace, or limit the
+Contributor status of Contributors designated in inherited project
+records.
 
-If You distribute Covered Software in Executable Form then:
-
-* **(a)** such Covered Software must also be made available in Source Code
-    Form, as described in Section 3.1, and You must inform recipients of
-    the Executable Form how they can obtain a copy of such Source Code
-    Form by reasonable means in a timely manner, at a charge no more
-    than the cost of distribution to the recipient; and
-
-* **(b)** You may distribute such Executable Form under the terms of this
-    License, or sublicense it under different terms, provided that the
-    license for the Executable Form does not attempt to limit or alter
-    the recipients' rights in the Source Code Form under this License.
-
-#### 3.3. Distribution of a Larger Work
-
-You may create and distribute a Larger Work under terms of Your choice,
-provided that You also comply with the requirements of this License for
-the Covered Software. If the Larger Work is a combination of Covered
-Software with a work governed by one or more Secondary Licenses, and the
-Covered Software is not Incompatible With Secondary Licenses, this
-License permits You to additionally distribute such Covered Software
-under the terms of such Secondary License(s), so that the recipient of
-the Larger Work may, at their option, further distribute the Covered
-Software under the terms of either this License or such Secondary
-License(s).
-
-#### 3.4. Notices
-
-You may not remove or alter the substance of any license notices
-(including copyright notices, patent notices, disclaimers of warranty,
-or limitations of liability) contained within the Source Code Form of
-the Covered Software, except that You may alter any license notices to
-the extent required to remedy known factual inaccuracies.
-
-#### 3.5. Application of Additional Terms
-
-You may choose to offer, and to charge a fee for, warranty, support,
-indemnity or liability obligations to one or more recipients of Covered
-Software. However, You may do so only on Your own behalf, and not on
-behalf of any Contributor. You must make it absolutely clear that any
-such warranty, support, indemnity, or liability obligation is offered by
-You alone, and You hereby agree to indemnify every Contributor for any
-liability incurred by such Contributor as a result of warranty, support,
-indemnity or liability terms You offer. You may include additional
-disclaimers of warranty and limitations of liability specific to any
-jurisdiction.
+Partial relicensing of a project, repository, fork, or development line
+under different licensing terms is prohibited unless the written
+agreement required above is obtained.
 
 
-### 4. Inability to Comply Due to Statute or Regulation
+4. Non-Commercial Restriction
+-----------------------------
 
-If it is impossible for You to comply with any of the terms of this
-License with respect to some or all of the Covered Software due to
-statute, judicial order, or regulation then You must: **(a)** comply with
-the terms of this License to the maximum extent possible; and **(b)**
-describe the limitations and the code they affect. Such description must
-be placed in a text file included with all distributions of the Covered
-Software under this License. Except to the extent prohibited by statute
-or regulation, such description must be sufficiently detailed for a
-recipient of ordinary skill to be able to understand it.
+The rights granted under this License may be exercised solely for
+non-commercial purposes and not for any Commercial Purpose.
+
+Any Commercial Purpose is prohibited unless You have obtained a separate
+written commercial license from the relevant copyright holder.
 
 
-### 5. Termination
+5. Distribution of Covered Software
+-----------------------------------
 
-**5.1.** The rights granted under this License will terminate automatically
-if You fail to comply with any of its terms. However, if You become
-compliant, then the rights granted under this License from a particular
-Contributor are reinstated **(a)** provisionally, unless and until such
-Contributor explicitly and finally terminates Your grants, and **(b)** on an
-ongoing basis, if such Contributor fails to notify You of the
-non-compliance by some reasonable means prior to 60 days after You have
-come back into compliance. Moreover, Your grants from a particular
-Contributor are reinstated on an ongoing basis if such Contributor
-notifies You of the non-compliance by some reasonable means, this is the
-first time You have received notice of non-compliance with this License
-from such Contributor, and You become compliant prior to 30 days after
-Your receipt of the notice.
+5.1. Source Code Distribution
 
-**5.2.** If You initiate litigation against any entity by asserting a patent
-infringement claim (excluding declaratory judgment actions,
-counter-claims, and cross-claims) alleging that a Contributor Version
-directly or indirectly infringes any patent, then the rights granted to
-You by any and all Contributors for the Covered Software under Section
-2.1 of this License shall terminate.
+Any distribution of Covered Software in Source Code Form, including
+Modifications, must:
 
-**5.3.** In the event of termination under Sections 5.1 or 5.2 above, all
-end user license agreements (excluding distributors and resellers) which
-have been validly granted by You or Your distributors under this License
-prior to termination shall survive termination.
+(a) remain under this License;
 
+(b) include a copy of this License; and
 
-### 6. Disclaimer of Warranty
+(c) preserve all copyright notices, disclaimers, and license notices.
 
-> Covered Software is provided under this License on an “as is”
-> basis, without warranty of any kind, either expressed, implied, or
-> statutory, including, without limitation, warranties that the
-> Covered Software is free of defects, merchantable, fit for a
-> particular purpose or non-infringing. The entire risk as to the
-> quality and performance of the Covered Software is with You.
-> Should any Covered Software prove defective in any respect, You
-> (not any Contributor) assume the cost of any necessary servicing,
-> repair, or correction. This disclaimer of warranty constitutes an
-> essential part of this License. No use of any Covered Software is
-> authorized under this License except under this disclaimer.
+You may not sublicense, relicense, or distribute Covered Software under
+any other license except as expressly permitted under Section 3.
 
-### 7. Limitation of Liability
+5.2. Executable Distribution
 
-> Under no circumstances and under no legal theory, whether tort
-> (including negligence), contract, or otherwise, shall any
-> Contributor, or anyone who distributes Covered Software as
-> permitted above, be liable to You for any direct, indirect,
-> special, incidental, or consequential damages of any character
-> including, without limitation, damages for lost profits, loss of
-> goodwill, work stoppage, computer failure or malfunction, or any
-> and all other commercial damages or losses, even if such party
-> shall have been informed of the possibility of such damages. This
-> limitation of liability shall not apply to liability for death or
-> personal injury resulting from such party's negligence to the
-> extent applicable law prohibits such limitation. Some
-> jurisdictions do not allow the exclusion or limitation of
-> incidental or consequential damages, so this exclusion and
-> limitation may not apply to You.
+If You distribute Covered Software in Executable Form, You must also
+make the complete corresponding Source Code Form available under this
+License by reasonable means and without charge beyond distribution cost.
+
+5.3. Larger Works
+
+You may distribute a Larger Work under terms of Your choice, provided
+that:
+
+(a) the Covered Software itself remains under this License;
+
+(b) recipients can identify which parts are Covered Software; and
+
+(c) no additional restriction limits recipients' rights under this
+    License with respect to the Covered Software.
+
+Distribution of a Larger Work does not alter the licensing terms
+applicable to non-Covered components. Additional terms may be applied to
+the Larger Work as a whole or to non-Covered components, provided such
+terms do not limit, conflict with, or circumvent the rights,
+restrictions, or requirements applicable to the Covered Software under
+this License.
+
+Any use, distribution, or operation of a Larger Work containing Covered
+Software remains subject to the restrictions of this License applicable
+to the Covered Software, including the non-commercial restrictions of
+Section 4.
 
 
-### 8. Litigation
+6. Machine Learning and AI Restrictions
+---------------------------------------
 
-Any litigation relating to this License may be brought only in the
-courts of a jurisdiction where the defendant maintains its principal
-place of business and such litigation shall be governed by laws of that
-jurisdiction, without reference to its conflict-of-law provisions.
-Nothing in this Section shall prevent a party's ability to bring
-cross-claims or counter-claims.
+6.1. AI Training
+
+Any Machine Learning Model trained, fine-tuned, adapted, distilled, or
+otherwise derived, in whole or in part, from Covered Software is itself
+Covered Software under this License.
+
+For purposes of this Section, a Machine Learning Model is considered
+"derived" from Covered Software if the Covered Software was used as
+training data, fine-tuning data, evaluation or reinforcement data
+materially influencing model behavior, or other training-related input
+materially contributing to the resulting model weights, parameters,
+embeddings, adapters, or learned behavior.
+
+6.2. Commercial AI Use
+
+You may not use Covered Software for any Commercial Purpose related to a
+Machine Learning Model, including:
+
+(a) training or fine-tuning models;
+
+(b) generating embeddings, training datasets, or fine-tuning datasets
+    for Machine Learning Models;
+
+(c) evaluation or benchmarking;
+
+(d) operating or offering AI systems or services; or
+
+(e) using outputs generated by such models in a commercial context.
+
+6.3. Distribution of Models
+
+Any distribution of a Machine Learning Model covered by this License
+must comply with all requirements applicable to Covered Software,
+including source availability and licensing under this License.
 
 
-### 9. Miscellaneous
+7. Patent Grant
+---------------
 
-This License represents the complete agreement concerning the subject
-matter hereof. If any provision of this License is held to be
-unenforceable, such provision shall be reformed only to the extent
-necessary to make it enforceable. Any law or regulation which provides
-that the language of a contract shall be construed against the drafter
-shall not be used to construe this License against a Contributor.
+Each Contributor grants You a non-exclusive, world-wide, royalty-free
+patent license under Patent Claims necessarily infringed by its
+Contributions alone or by combination of its Contributions with Covered
+Software.
+
+No patent license is granted for:
+
+(a) Your Modifications;
+
+(b) combinations with non-Covered Software; or
+
+(c) uses unrelated to the Contributor's Contributions.
+
+
+8. Termination
+--------------
+
+8.1. Automatic Termination
+
+Your rights under this License terminate automatically if You violate
+any term of this License.
+
+8.2. Reinstatement
+
+Your rights are reinstated automatically if You cure the violation
+within 30 days after becoming aware of it.
+
+8.3. Patent Litigation
+
+If You initiate patent litigation alleging that Covered Software
+infringes a patent, Your rights under this License terminate
+immediately.
+
+8.4. Survival of Downstream Licenses
+
+Termination of rights under this License does not terminate licenses
+previously and validly granted to downstream recipients.
+
+
+9. Disclaimer of Warranty
+-------------------------
+
+Covered Software is provided “as is”, without warranty of any kind,
+express or implied, including warranties of merchantability, fitness for
+a particular purpose, title, or non-infringement. You assume all risks
+associated with use of the Covered Software.
+
+
+10. Limitation of Liability
+---------------------------
+
+To the maximum extent permitted by law, no Contributor shall be liable
+for any direct, indirect, incidental, consequential, special, exemplary,
+or punitive damages arising from, related to, or connected with this
+License or the use of Covered Software.
+
+
+11. Miscellaneous
+-----------------
+
+11.1. Entire Agreement
+
+This License constitutes the complete agreement regarding Covered
+Software.
+
+11.2. Severability
+
+If any provision of this License is unenforceable, the remaining
+provisions shall remain in effect.
+
+11.3. Later Versions
+
+Covered Software may be distributed under a later version of the EpiPL
+only if all currently recognized Contributors explicitly approve use of
+that later version in writing.
+
+Publication of a later version of the EpiPL does not by itself grant
+permission to apply that version to existing Covered Software.
